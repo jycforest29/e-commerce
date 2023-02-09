@@ -6,6 +6,7 @@ import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.cart.domain.repository.CartRepository;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
+import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.order.domain.dto.OrderResponseDto;
@@ -27,9 +28,9 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService{
 
     private final OrderRepository orderRepository;
-    private final OrderUnitRepository orderUnitRepository;
     private final ItemRepository itemRepository;
     private final AuthUserRepository authUserRepository;
+    private final RedisLockRepository redisLockRepository;
 
     // !동시성 로직
     @Transactional

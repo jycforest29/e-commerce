@@ -3,7 +3,6 @@ package com.jycforest29.commerce.cart.service;
 import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
 import com.jycforest29.commerce.cart.domain.entity.Cart;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
-import com.jycforest29.commerce.cart.domain.repository.CartRepository;
 import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
@@ -20,35 +19,29 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService{
-    private final CartRepository cartRepository;
     private final CartUnitRepository cartUnitRepository;
     private final AuthUserRepository authUserRepository;
     private final ItemRepository itemRepository;
     private final RedisLockRepository redisLockRepository;
 
-
-    //! 동시성 로직 작성하기(멀티 유저가 동시에 구매할 경우 장바구니에 담을 수 없음)
     @Transactional
     @Override
-    public CartResponseDto addCartUnitToCart(Long itemId, Integer number, Long authUserId) throws InterruptedException { // item 단위 X, cartUnit 단위
+    public CartResponseDto addCartUnitToCart(Long itemId, Integer number, Long authUserId) throws InterruptedException {
         Cart cart = getAuthUser(authUserId).getCart();
-        Item item = getValidateItemByNumber(itemId, number); // number 까지 확인함.
-        CartUnit cartUnit = CartUnit.builder()
-                .cart(cart)
-                .item(item)
-                .number(number)
-                .build();
-        
         while(!redisLockRepository.lock(itemId)){
             Thread.sleep(100);
         }
-
         try{
+            Item item = getValidateItemByNumber(itemId, number); // number 까지 확인함.
+            CartUnit cartUnit = CartUnit.builder()
+                    .cart(cart)
+                    .item(item)
+                    .number(number)
+                    .build();
             cart.addCartUnitToCart(cartUnit, item.getPrice());
         }finally {
             redisLockRepository.unlock(itemId);
         }
-
         return CartResponseDto.from(cart); // UPDATE
     }
 
@@ -68,11 +61,19 @@ public class CartServiceImpl implements CartService{
 
     @Transactional
     @Override
-    public CartResponseDto deleteCartUnit(Long cartUnitId, Long authUserId) {
+    public CartResponseDto deleteCartUnit(Long cartUnitId, Long authUserId) throws InterruptedException {
         Cart cart = getAuthUser(authUserId).getCart();
         CartUnit cartUnit = cartUnitRepository.findById(cartUnitId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
-        cart.removeCartUnitFromCart(cartUnit, cartUnit.getItem().getPrice());
+        Long itemId = cartUnit.getItem().getId();
+        while(!redisLockRepository.lock(itemId)){
+            Thread.sleep(100);
+        }
+        try{
+            cart.removeCartUnitFromCart(cartUnit, cartUnit.getItem().getPrice());
+        }finally {
+            redisLockRepository.unlock(itemId);
+        }
         return CartResponseDto.from(cart);
     }
 
@@ -80,7 +81,7 @@ public class CartServiceImpl implements CartService{
     @Transactional
     public Item getValidateItemByNumber(Long itemId, Integer number){
         Item item = getItem(itemId);
-        if(item.getNumber() >= number){ // >=
+        if(item.getNumber() >= number){
             return item;
         }
         throw new CustomException(ExceptionCode.ITEM_OVER_LIMIT);

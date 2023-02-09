@@ -81,21 +81,26 @@ class CartServiceTest {
 
     @Test
     void 동시에_100명이_재고가_100개인_아이템을_각자_1개씩_장바구니에_담는다() throws InterruptedException {
+        //given
+        given(authUserRepository.findById(authUser.getId())).willReturn(Optional.of(authUser));
+        given(itemRepository.findById(item.getId())).willReturn(Optional.of(item));
+        //when
         int threadCnt = 100;
         ExecutorService executorService = Executors.newFixedThreadPool(32);
         CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
-
-//        for(int i = 0; i < threadCnt; i++){
-//            executorService.submit(() -> {
-//                try{
-//                    cartService.addCartUnitToCart()
-//                }finally {
-//                    countDownLatch.countDown();
-//                }
-//            });
-//        }
-
+        for(int i = 0; i < threadCnt; i++){
+            executorService.submit(() -> {
+                try{
+                    cartService.addCartUnitToCart(item.getId(), 1, authUser.getId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
+        }
         countDownLatch.await();
+        //then
     }
 
     @Test

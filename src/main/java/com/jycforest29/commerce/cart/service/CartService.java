@@ -7,5 +7,5 @@ public interface CartService {
     CartResponseDto addCartUnitToCart(Long itemId, Integer number, Long authUserId) throws InterruptedException;
     CartResponseDto getCartUnitList(Long authUserId);
     CartResponseDto deleteCartAll(Long authUserId);
-    CartResponseDto deleteCartUnit(Long cartUnitId, Long authUserId);
+    CartResponseDto deleteCartUnit(Long cartUnitId, Long authUserId) throws InterruptedException;
 }
