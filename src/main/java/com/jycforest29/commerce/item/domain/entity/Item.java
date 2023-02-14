@@ -3,14 +3,13 @@ package com.jycforest29.commerce.item.domain.entity;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.review.domain.entity.Review;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
 public class Item {
@@ -26,6 +25,8 @@ public class Item {
     @Column(nullable = false)
     private int price;
 
+    @Getter
+    @Setter
     private int number;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -38,6 +39,10 @@ public class Item {
 
     public void deleteReview(Review review){
         this.reviewList.remove(review);
+    }
+
+    public void decreaseItemNumber(Integer decreaseNumber){
+        this.number -= decreaseNumber.intValue();
     }
 
     @Builder

@@ -30,7 +30,7 @@ public class JwtAuthenticationController {
     @Autowired
     private JwtUserDetailsService jwtUserDetailsService;
 
-    @PostMapping
+    @PostMapping(value = "/login")
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody JwtRequest jwtRequest) throws Exception {
         authenticate(jwtRequest.getUsername(), jwtRequest.getPassword());
         final UserDetails userDetails = jwtUserDetailsService
@@ -42,7 +42,7 @@ public class JwtAuthenticationController {
     }
 
 
-    @RequestMapping(value = "/register", method = RequestMethod.POST)
+    @PostMapping(value = "/register")
     public ResponseEntity<?> saveAuthUser(@Valid @RequestBody AuthUserRequestDto authUserRequest) throws Exception {
         jwtUserDetailsService.register(authUserRequest);
         return ResponseEntity.ok().build();

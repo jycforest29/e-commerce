@@ -22,26 +22,18 @@ public class CartServiceImpl implements CartService{
     private final CartUnitRepository cartUnitRepository;
     private final AuthUserRepository authUserRepository;
     private final ItemRepository itemRepository;
-    private final RedisLockRepository redisLockRepository;
 
     @Transactional
     @Override
     public CartResponseDto addCartUnitToCart(Long itemId, Integer number, Long authUserId) throws InterruptedException {
         Cart cart = getAuthUser(authUserId).getCart();
-        while(!redisLockRepository.lock(itemId)){
-            Thread.sleep(100);
-        }
-        try{
-            Item item = getValidateItemByNumber(itemId, number); // number 까지 확인함.
-            CartUnit cartUnit = CartUnit.builder()
-                    .cart(cart)
-                    .item(item)
-                    .number(number)
-                    .build();
-            cart.addCartUnitToCart(cartUnit, item.getPrice());
-        }finally {
-            redisLockRepository.unlock(itemId);
-        }
+        Item item = getValidateItemByNumber(itemId, number); // number 까지 확인함.
+        CartUnit cartUnit = CartUnit.builder()
+                .cart(cart)
+                .item(item)
+                .number(number)
+                .build();
+        cart.addCartUnitToCart(cartUnit, item.getPrice());
         return CartResponseDto.from(cart); // UPDATE
     }
 
@@ -66,14 +58,7 @@ public class CartServiceImpl implements CartService{
         CartUnit cartUnit = cartUnitRepository.findById(cartUnitId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
         Long itemId = cartUnit.getItem().getId();
-        while(!redisLockRepository.lock(itemId)){
-            Thread.sleep(100);
-        }
-        try{
-            cart.removeCartUnitFromCart(cartUnit, cartUnit.getItem().getPrice());
-        }finally {
-            redisLockRepository.unlock(itemId);
-        }
+        cart.removeCartUnitFromCart(cartUnit, cartUnit.getItem().getPrice());
         return CartResponseDto.from(cart);
     }
 

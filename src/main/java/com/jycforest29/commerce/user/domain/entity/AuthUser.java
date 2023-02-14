@@ -6,14 +6,13 @@ import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.domain.entity.ReviewLikeUnit;
 import com.jycforest29.commerce.security.dto.register.AuthUserRequestDto;
 import com.jycforest29.commerce.user.domain.enums.Grade;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
 public class AuthUser {
@@ -40,7 +39,7 @@ public class AuthUser {
 
     // AuthUser를 주테이블로 한 일대일 단방향.
     // @JoinColumn : name 속성에는 맵핑할 외래 키 이름을 설정해주고 이 어노테이션은 생략 가능함.
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "cart_id")
     private Cart cart = new Cart();
 

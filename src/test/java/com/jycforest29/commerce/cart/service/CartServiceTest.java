@@ -2,7 +2,6 @@ package com.jycforest29.commerce.cart.service;
 
 import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
-import com.jycforest29.commerce.cart.domain.repository.CartRepository;
 import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.item.domain.entity.Item;
@@ -17,17 +16,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
-    @Mock
-    private CartRepository cartRepository;
     @Mock
     private CartUnitRepository cartUnitRepository;
     @Mock
@@ -44,7 +38,7 @@ class CartServiceTest {
         item = Item.builder()
                 .name("test_item")
                 .price(10000)
-                .number(1)
+                .number(100)
                 .build();
         item.setId(1L);
 
@@ -75,32 +69,8 @@ class CartServiceTest {
         given(itemRepository.findById(item.getId())).willReturn(Optional.of(item));
         //when, then
         assertThatThrownBy(() -> {
-            cartService.addCartUnitToCart(item.getId(), 10, authUser.getId());
+            cartService.addCartUnitToCart(item.getId(), 1000, authUser.getId());
         }).isInstanceOf(CustomException.class);
-    }
-
-    @Test
-    void 동시에_100명이_재고가_100개인_아이템을_각자_1개씩_장바구니에_담는다() throws InterruptedException {
-        //given
-        given(authUserRepository.findById(authUser.getId())).willReturn(Optional.of(authUser));
-        given(itemRepository.findById(item.getId())).willReturn(Optional.of(item));
-        //when
-        int threadCnt = 100;
-        ExecutorService executorService = Executors.newFixedThreadPool(32);
-        CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
-        for(int i = 0; i < threadCnt; i++){
-            executorService.submit(() -> {
-                try{
-                    cartService.addCartUnitToCart(item.getId(), 1, authUser.getId());
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    countDownLatch.countDown();
-                }
-            });
-        }
-        countDownLatch.await();
-        //then
     }
 
     @Test
@@ -137,10 +107,5 @@ class CartServiceTest {
         //then
         assertThat(cartResponseDto.getCartUnit().size()).isEqualTo(0);
         assertThat(cartResponseDto.getTotalPrice()).isEqualTo(0);
-    }
-
-    @Test
-    void 동시에_100명이_재고가_100개인_아이템을_각자_1개씩_장바구니에서_삭제한다(){
-
     }
 }

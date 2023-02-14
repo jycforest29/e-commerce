@@ -17,7 +17,7 @@ public class CartController {
 
     // !number 양수 @Valid로 확인
     @PostMapping(value = "{itemId}/add")
-    public ResponseEntity<CartResponseDto> addCartUnitToCart(@PathVariable("itemId") Long itemId, @RequestParam @Positive int number, @LoginAuthUser Long authUserId){
+    public ResponseEntity<CartResponseDto> addCartUnitToCart(@PathVariable("itemId") Long itemId, @RequestParam @Positive int number, @LoginAuthUser Long authUserId) throws InterruptedException {
         return ResponseEntity.status(HttpStatus.OK).body(cartService.addCartUnitToCart(itemId, number, authUserId));
     }
 
@@ -34,7 +34,7 @@ public class CartController {
 
     // Cart에 CartUnit 삭제함.
     @DeleteMapping(value = "/cart/{cartUnitId}")
-    public ResponseEntity<CartResponseDto> deleteItem(@PathVariable("cartUnitId") Long cartUnitId, @LoginAuthUser Long authUserId){
+    public ResponseEntity<CartResponseDto> deleteItem(@PathVariable("cartUnitId") Long cartUnitId, @LoginAuthUser Long authUserId) throws InterruptedException {
         return ResponseEntity.status(HttpStatus.OK).body(cartService.deleteCartUnit(cartUnitId, authUserId));
     }
 }

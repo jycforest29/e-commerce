@@ -48,11 +48,13 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @PostMapping(value = "/{itemId}/review/{reviewId}/like")
     public ResponseEntity<Object> likeReview(@PathVariable("itemId") Long itemId, @LoginAuthUser Long authUserId,@PathVariable("reviewId") Long reviewId){
         reviewService.likeReview(authUserId, reviewId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @DeleteMapping(value = "/{itemId}/review/{reviewId}/like")
     public ResponseEntity<Object> removeLikeReview(@PathVariable("itemId") Long itemId, @LoginAuthUser Long authUserId,@PathVariable("reviewId") Long reviewId){
         reviewService.removeLikeReview(authUserId, reviewId);
         return ResponseEntity.status(HttpStatus.OK).build();

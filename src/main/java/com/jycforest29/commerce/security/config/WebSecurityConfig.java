@@ -58,8 +58,9 @@ public class WebSecurityConfig implements WebMvcConfigurer {
         // 여기서는 CSRF 기능 안씀
         httpSecurity.csrf().disable()
                 // /authenticate/**에는 회원가입, 로그인 기능 존재.
-                .authorizeRequests().antMatchers("/authenticate/**").permitAll()
-                        .anyRequest().authenticated().and().
+//                .authorizeRequests().antMatchers("/**").permitAll().and()
+                .authorizeRequests().anyRequest().permitAll().and().
+//                .authorizeRequests().anyRequest().authenticated().and().
                 // make sure we use stateless session; session won't be used to
                 // store user's state.
                         exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()

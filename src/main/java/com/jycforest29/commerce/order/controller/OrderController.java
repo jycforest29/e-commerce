@@ -3,11 +3,11 @@ package com.jycforest29.commerce.order.controller;
 import com.jycforest29.commerce.common.aop.LoginAuthUser;
 import com.jycforest29.commerce.order.domain.dto.OrderResponseDto;
 import com.jycforest29.commerce.order.service.OrderService;
+import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,25 +21,34 @@ HttpStatus.OK 와 HttpStatus.ACCEPTED의 차이? OK는 처리가 완료되었음
 public class OrderController {
     private final OrderService orderService;
 
-    public ResponseEntity<OrderResponseDto> makeOrder(@PathVariable("item") Long itemId, @LoginAuthUser Long authUserId, Integer number){
+    @PostMapping(value = "/{itemId}/order")
+    public ResponseEntity<OrderResponseDto> makeOrder(@PathVariable("item") Long itemId,
+                                                      @LoginAuthUser Long authUserId,
+                                                      @RequestParam Integer number) throws InterruptedException {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrder(itemId, authUserId, number));
     }
 
     // 장바구니 그대로 주문
+    @PostMapping(value = "/cart/order")
     public ResponseEntity<OrderResponseDto> makeOrderForCart(@LoginAuthUser Long authUserId){
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(authUserId));
     }
 
-    public ResponseEntity<List<OrderResponseDto>> getOrderList(@LoginAuthUser Long authUserId){
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderList(authUserId));
+    @GetMapping(value = "/order")
+    public ResponseEntity<List<OrderResponseDto>> getOrderList(AuthUser authUser){
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderList(authUser));
     }
 
-    public ResponseEntity<OrderResponseDto> getOrder(Long orderId, @LoginAuthUser Long authUserId){
+    @GetMapping(value = "/order/{orderId}")
+    public ResponseEntity<OrderResponseDto> getOrder(@PathVariable("orderId") Long orderId,
+                                                     @LoginAuthUser Long authUserId){
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrder(orderId, authUserId));
     }
 
     // 구매 취소
-    public ResponseEntity<Object> deleteOrder(Long orderId, @LoginAuthUser Long authUserId){
+    @DeleteMapping(value = "/order/{orderId}")
+    public ResponseEntity<Object> deleteOrder(@PathVariable("orderId") Long orderId,
+                                              @LoginAuthUser Long authUserId) throws InterruptedException {
         orderService.deleteOrder(orderId, authUserId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
