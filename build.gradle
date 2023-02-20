@@ -51,6 +51,17 @@ dependencies {
 	testImplementation group: 'org.springframework.security', name: 'spring-security-test', version: '5.7.5'
 	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-redis
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis', version: '2.7.2'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.hibernate:hibernate-ehcache:5.6.5.Final'
+	// https://mvnrepository.com/artifact/org.apache.kafka/kafka
+	implementation group: 'org.apache.kafka', name: 'kafka_2.13', version: '3.4.0'
+	// https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients
+	implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '3.4.0'
+	// https://mvnrepository.com/artifact/org.springframework.kafka/spring-kafka
+	implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '3.0.2'
+	// https://mvnrepository.com/artifact/org.springframework.kafka/spring-kafka-test
+	testImplementation group: 'org.springframework.kafka', name: 'spring-kafka-test', version: '3.0.2'
+
 }
 
 tasks.named('test') {

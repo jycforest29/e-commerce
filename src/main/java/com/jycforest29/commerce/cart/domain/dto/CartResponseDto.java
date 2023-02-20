@@ -1,26 +1,26 @@
 package com.jycforest29.commerce.cart.domain.dto;
 
 import com.jycforest29.commerce.cart.domain.entity.Cart;
-import com.jycforest29.commerce.cart.domain.entity.CartUnit;
-import com.jycforest29.commerce.item.domain.entity.Item;
 import lombok.*;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
-// !from 메서드 부분 싱글톤으로 구현하기.
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자의 생성 방지
+@Getter // for 테스트
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class CartResponseDto {
-
-    private List<CartUnit> cartUnit;
-    private Integer totalPrice;
+    private List<CartUnitResponseDto> cartUnitResponseDtoList;
+    private int totalPrice;
 
     public static CartResponseDto from(Cart cart){
         return CartResponseDto.builder()
-                .cartUnit(cart.getCartUnitList())
+                .cartUnitResponseDtoList(
+                        cart.getCartUnitList().stream()
+                                .map(s -> CartUnitResponseDto.from(s))
+                                .collect(Collectors.toList())
+                )
                 .totalPrice(cart.getTotalPrice())
                 .build();
     }

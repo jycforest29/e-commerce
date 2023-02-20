@@ -1,82 +1,86 @@
 package com.jycforest29.commerce.review.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jycforest29.commerce.item.domain.entity.Item;
-import com.jycforest29.commerce.review.domain.dto.AddReviewRequestDTO;
+import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Getter
 @Entity
-public class Review {
+public class Review{
     @Id
-    @Setter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
     private String title;
 
-    @Lob
     @Column(nullable = false)
     private String contents;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
-    @CreationTimestamp
+    @CreatedDate
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
-    @UpdateTimestamp
+    @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id")
     private Item item;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "authUser_id")
     private AuthUser authUser;
 
-    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "review")
     private List<ReviewLikeUnit> reviewLikeUnitList = new ArrayList<>();
 
     @Builder
-    public Review(String title, String contents, Item item, AuthUser authUser){
+    public Review(String title, String contents){
         this.title = title;
         this.contents = contents;
-        this.item = item;
-        this.authUser = authUser;
     }
 
-    public void update(AddReviewRequestDTO addReviewRequestDTO){
-        this.title = addReviewRequestDTO.getTitle();
-        this.contents = addReviewRequestDTO.getContents();
-    }
-    public static Review of(AddReviewRequestDTO addReviewRequestDTO, Item item, AuthUser authUser){
+    public static Review from(AddReviewRequestDto addReviewRequestDTO){
         return Review.builder()
                 .title(addReviewRequestDTO.getTitle())
                 .contents(addReviewRequestDTO.getContents())
-                .item(item)
-                .authUser(authUser)
                 .build();
+    }
+
+    public void update(AddReviewRequestDto addReviewRequestDTO){
+        this.title = addReviewRequestDTO.getTitle();
+        this.contents = addReviewRequestDTO.getContents();
     }
 
     public void addReviewLikeUnit(ReviewLikeUnit reviewLikeUnit) {
         this.reviewLikeUnitList.add(reviewLikeUnit);
+        reviewLikeUnit.setReview(this);
     }
 
     public void deleteReviewLikeUnit(ReviewLikeUnit reviewLikeUnit) {
         this.reviewLikeUnitList.remove(reviewLikeUnit);
+        reviewLikeUnit.setReview(null);
     }
+
+    public void deleteAllReviewLikeUnit() {
+        for(ReviewLikeUnit reviewLikeUnit : this.reviewLikeUnitList){
+            reviewLikeUnit.setReview(null);
+        }
+        this.reviewLikeUnitList = null;
+    }
+
 }

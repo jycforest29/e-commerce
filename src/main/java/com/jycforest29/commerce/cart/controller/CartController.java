@@ -8,33 +8,33 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.Positive;
+import javax.validation.constraints.Min;
 
-@RestController
 @RequiredArgsConstructor
+@RestController
 public class CartController {
     private final CartService cartService;
-
-    // !number 양수 @Valid로 확인
+    // @RequestParam의 기본은 required = true
     @PostMapping(value = "{itemId}/add")
-    public ResponseEntity<CartResponseDto> addCartUnitToCart(@PathVariable("itemId") Long itemId, @RequestParam @Positive int number, @LoginAuthUser Long authUserId) throws InterruptedException {
+    public ResponseEntity<CartResponseDto> addCartUnitToCart(@PathVariable("itemId") Long itemId,
+                                                             @RequestParam @Min(1) int number,
+                                                             @LoginAuthUser Long authUserId) throws InterruptedException {
         return ResponseEntity.status(HttpStatus.OK).body(cartService.addCartUnitToCart(itemId, number, authUserId));
     }
 
     @GetMapping(value = "/cart")
-    public ResponseEntity<CartResponseDto> getItemList(@LoginAuthUser Long authUserId){
+    public ResponseEntity<CartResponseDto> getCartUnitList(@LoginAuthUser Long authUserId){
         return ResponseEntity.status(HttpStatus.OK).body(cartService.getCartUnitList(authUserId));
     }
 
-    // Cart 전체 초기화
     @DeleteMapping(value = "/cart")
-    public ResponseEntity<CartResponseDto> deleteItemAll(@LoginAuthUser Long authUserId){
+    public ResponseEntity<CartResponseDto> deleteCartAll(@LoginAuthUser Long authUserId){
         return ResponseEntity.status(HttpStatus.OK).body(cartService.deleteCartAll(authUserId));
     }
 
-    // Cart에 CartUnit 삭제함.
     @DeleteMapping(value = "/cart/{cartUnitId}")
-    public ResponseEntity<CartResponseDto> deleteItem(@PathVariable("cartUnitId") Long cartUnitId, @LoginAuthUser Long authUserId) throws InterruptedException {
+    public ResponseEntity<CartResponseDto> deleteCartUnit(@PathVariable("cartUnitId") Long cartUnitId,
+                                                          @LoginAuthUser Long authUserId) throws InterruptedException {
         return ResponseEntity.status(HttpStatus.OK).body(cartService.deleteCartUnit(cartUnitId, authUserId));
     }
 }

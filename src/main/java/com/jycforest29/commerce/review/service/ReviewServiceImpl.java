@@ -4,18 +4,23 @@ import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
-import com.jycforest29.commerce.review.domain.dto.AddReviewRequestDTO;
+import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.domain.entity.ReviewLikeUnit;
 import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepository;
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
+import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,90 +32,179 @@ public class ReviewServiceImpl implements ReviewService{
     private final ReviewLikeUnitRepository reviewLikeUnitRepository;
     private final AuthUserRepository authUserRepository;
 
+    @Cacheable(value = "reviewListByItem", key = "#itemId") // 리뷰가 없는(null)도 상관없음
     @Transactional(readOnly = true)
     @Override
-    public List<Review> getReviewListByItemId(Long itemId) {
-        return reviewRepository.findAllByItemId(getItem(itemId).getId())
+    public List<ReviewResponseDto> getReviewListByItem(Long itemId) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+        Item item = getItem(itemId);
+
+        // 리뷰 좋아요순으로 내림차순 정렬
+        return reviewRepository.findAllByItem(item)
                 .stream()
-                .sorted(Comparator.comparing(s -> s.getReviewLikeUnitList().size()))
+                .sorted((a, b) -> a.getReviewLikeUnitList().size() > b.getReviewLikeUnitList().size() ? -1 : 1)
+                .map(s -> ReviewResponseDto.from(s))
                 .collect(Collectors.toList());
     }
 
-    @Transactional
     @Override
-    public void addReview(Long itemId, AddReviewRequestDTO addReviewRequestDTO, Long authUserId) {
+    public ReviewResponseDto getReviewDetail(Long itemId, Long reviewId) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Item item = getItem(itemId);
-        AuthUser authUser = getAuthUser(authUserId);
-        Review review = Review.of(addReviewRequestDTO, item, authUser);
-        itemRepository.save(item.addReview(review));
-        authUserRepository.save(authUser.addReview(review));
+        Review review = getReview(reviewId);
+        return ReviewResponseDto.from(review);
     }
 
+    @CachePut(value = "reviewListByItem", key = "#itemId") // key에 대한 value 값이 변했으므로 @CachePut 사용
     @Transactional
     @Override
-    public Review updateReview(Long itemId, Long authUserId, Long reviewId, AddReviewRequestDTO addReviewRequestDTO) {
+    public void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, Long authUserId) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Item item = getItem(itemId);
         AuthUser authUser = getAuthUser(authUserId);
+
+        // 로그인한 유저가 해당 아이템을 구매했어야만 리뷰를 작성할 수 있음.
+        // 유저의 주문 목록 가져오기
+        List<OrderUnit> orderUnitList = authUser.getMadeOrderList().stream()
+                        .flatMap(s -> s.getOrderUnitList().stream())
+                        .collect(Collectors.toList());
+        // 주문 목록 중 해당 아이템을 주문한 목록이 없을 경우 401 발생
+        orderUnitList.stream()
+                .filter(s -> s.getItem().equals(item))
+                .findFirst()
+                .orElseThrow(() -> {throw new CustomException(ExceptionCode.UNAUTHORIZED);});
+
+        // 리뷰 객체 생성
+        Review review = Review.from(addReviewRequestDTO);
+        // 다대일 양방향 연관관계 매핑
+        item.addReview(review);
+        authUser.addReview(review);
+        // DB에 반영
+        reviewRepository.save(review);
+    }
+
+    @Caching(put = {
+            @CachePut(value = "reviewListByItem", key = "#itemId"),
+            @CachePut(value = "review", key = "#reviewId")
+    })
+    @Transactional
+    @Override
+    public ReviewResponseDto updateReview(Long itemId,
+                               Long reviewId,
+                               AddReviewRequestDto addReviewRequestDTO,
+                               Long authUserId) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
         if(!review.getAuthUser().getId().equals(authUserId)){
             throw new CustomException(ExceptionCode.NOT_DONE_BY_AUTHUSER);
         }
+
+        // 업데이트 및 DB에 반영
         review.update(addReviewRequestDTO);
-        return review;
+        reviewRepository.save(review);
+        return ReviewResponseDto.from(review);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "reviewListByItem", key = "#itemId"),
+            @CacheEvict(value = "review", key = "#reviewId")
+    })
     @Transactional
     @Override
-    public void deleteReview(Long itemId, Long authUserId, Long reviewId) {
-        Item item = getItem(itemId);
-        AuthUser authUser = getAuthUser(authUserId);
+    public void deleteReview(Long itemId, Long reviewId, Long authUserId) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
-        if(review.getAuthUser().getId().equals(authUserId)){
-            item.deleteReview(review);
-            authUser.deleteReview(review);
-        }else{
+        AuthUser authUser = getAuthUser(authUserId);
+        if(!review.getAuthUser().getId().equals(authUserId)){
             throw new CustomException(ExceptionCode.NOT_DONE_BY_AUTHUSER);
         }
+
+        // 해당 리뷰에 속하는 모든 reviewLikeUnit도 연관관계 제거
+        review.deleteAllReviewLikeUnit();
+        // 기존의 array 변환함
+        reviewLikeUnitRepository.findAllByReview(review).stream()
+                .forEach(s -> s.getAuthUser().deleteReviewLikeUnit(s));
+
+        // 다대일 양방향 연관관계 제거
+        Item item = review.getItem();
+        item.deleteReview(review);
+        authUser.deleteReview(review);
+
+        // DB에 반영
+        reviewLikeUnitRepository.deleteAllByReviewId(review.getId());
+        reviewRepository.deleteById(review.getId());
     }
 
-    @Transactional
-    public void likeReview(Long authUserId, Long reviewId){
-        AuthUser authUser = getAuthUser(authUserId);
-        Review review = getReview(reviewId);
-        reviewLikeUnitRepository.findByAuthUserIdAndReviewId(authUserId, reviewId)
-                        .ifPresent(s -> {throw new CustomException(ExceptionCode.REVIEW_LIKE_DUPLICATED);});
-
-        ReviewLikeUnit reviewLikeUnit = ReviewLikeUnit.builder()
-                .review(review)
-                .authUser(authUser)
-                .build();
-        authUser.addReviewLikeUnit(reviewLikeUnit);
-        review.addReviewLikeUnit(reviewLikeUnit);
-    }
-
+    @Caching(put = {
+            @CachePut(value = "reviewListByItem", key = "#itemId"),
+            @CachePut(value = "review", key = "#reviewId")
+    })
     @Transactional
     @Override
-    public void removeLikeReview(Long authUserId, Long reviewId) {
-        AuthUser authUser = getAuthUser(authUserId);
+    public ReviewResponseDto likeReview(Long itemId, Long reviewId, Long authUserId){
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
+        AuthUser authUser = getAuthUser(authUserId);
+        reviewLikeUnitRepository.findByReviewAndAuthUser(review, authUser)
+                .ifPresent(s -> {throw new CustomException(ExceptionCode.REVIEW_LIKE_DUPLICATED);});
+        if(review.getAuthUser().getId().equals(authUserId)){
+            throw new CustomException(ExceptionCode.CANNOT_LIKE_DONE_BY_AUTHUSER);
+        }
 
-        reviewLikeUnitRepository.findByAuthUserIdAndReviewId(authUserId, reviewId)
-                .ifPresent(s -> {
-                    authUser.deleteReviewLikeUnit(s);
-                    review.deleteReviewLikeUnit(s);
-                });
+        // reviewLikeUnit 생성
+        ReviewLikeUnit reviewLikeUnit = new ReviewLikeUnit();
+
+        // 다대일 양방향 연관관계 매핑
+        review.addReviewLikeUnit(reviewLikeUnit);
+        authUser.addReviewLikeUnit(reviewLikeUnit);
+
+        // DB에 반영
+        reviewLikeUnitRepository.save(reviewLikeUnit);
+        return ReviewResponseDto.from(review);
     }
 
+    @Caching(put = {
+            @CachePut(value = "reviewListByItem", key = "#itemId"),
+            @CachePut(value = "review", key = "#reviewId")
+    })
+    @Transactional
+    @Override
+    public ReviewResponseDto removeLikeReview(Long itemId, Long reviewId, Long authUserId) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+        Review review = getReview(reviewId);
+        AuthUser authUser = getAuthUser(authUserId);
+        // likeReview과 달리 reviewLikeUnit 가져옴
+        // 하나의 리뷰에 대해 한명의 유저는 딱 한번만 좋아요를 할 수 있음
+        ReviewLikeUnit reviewLikeUnit = reviewLikeUnitRepository.findByReviewAndAuthUser(review, authUser)
+                .orElseThrow(() -> {throw new CustomException(ExceptionCode.REVIEW_LIKE_NOT_EXISTS);});
+
+        // 다대일 양방향 연관관계 제거
+        authUser.deleteReviewLikeUnit(reviewLikeUnit);
+        review.deleteReviewLikeUnit(reviewLikeUnit);
+
+        // DB에 반영
+        // delete와 deleteById를 비교했을때, 성능 차이는 없어보임
+            // deleteById는 findById + delete
+            // deleteById는 findById 조회 시 데이터가 없을 경우 고정으로 발생하는 예외가 존재해 이 부분 커스텀 불가
+        reviewLikeUnitRepository.deleteById(reviewLikeUnit.getId());
+        return ReviewResponseDto.from(review);
+    }
+
+    // item은 수량 변동이 자주 일어나지만 review CRUD시 item의 요소들이 변하는 것은 아니기에 캐싱 적용함
+    // 즉 로컬 캐싱을 사용한 영역을 주문 로직과 아예 분리했기에 가능함
+    @Cacheable(value = "item", key = "#itemId", unless="#result == null")
     public Item getItem(Long itemId){
         return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 
+    @Cacheable(value = "authuser", key = "#authUserId", unless="#result == null")
     public AuthUser getAuthUser(Long authUserId){
         return authUserRepository.findById(authUserId)
-                .orElseThrow(() -> new CustomException(ExceptionCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
+    @Cacheable(value = "review", key = "#reviewId", unless="#result == null")
     public Review getReview(Long reviewId){
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));

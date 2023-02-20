@@ -1,8 +1,10 @@
 package com.jycforest29.commerce.order.domain.entity;
 
+import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 
@@ -17,17 +19,23 @@ public class OrderUnit {
     @JoinColumn(name = "item_id")
     private Item item;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "makeOrder_id")
-    private MakeOrder makeOrder;
+    private MadeOrder madeOrder;
 
-    @Column(nullable = false)
-    private Integer number;
+    private int number;
 
     @Builder
-    public OrderUnit(Item item, MakeOrder makeOrder, Integer number){
+    public OrderUnit(Item item, Integer number){
         this.item = item;
-        this.makeOrder = makeOrder;
         this.number = number;
+    }
+
+    public static OrderUnit mapToOrderUnit(CartUnit cartUnit){
+        return OrderUnit.builder()
+                .item(cartUnit.getItem())
+                .number(cartUnit.getNumber())
+                .build();
     }
 }

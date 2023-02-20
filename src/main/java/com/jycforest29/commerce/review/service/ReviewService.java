@@ -1,23 +1,27 @@
 package com.jycforest29.commerce.review.service;
 
-import com.jycforest29.commerce.review.domain.dto.AddReviewRequestDTO;
+import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.domain.entity.Review;
+import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 
 import java.util.List;
 
 public interface ReviewService {
 
-    List<Review> getReviewListByItemId(Long itemId);
+    List<ReviewResponseDto> getReviewListByItem(Long itemId);
 
-    void addReview(Long itemId, AddReviewRequestDTO addReviewRequestDTO, Long authUserId);
+    ReviewResponseDto getReviewDetail(Long itemId, Long reviewId);
 
-    Review getReview(Long reviewId);
+    void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, Long authUserId);
 
-    Review updateReview(Long itemId, Long authUserId, Long reviewId, AddReviewRequestDTO addReviewRequestDTO);
+    ReviewResponseDto updateReview(Long itemId,
+                        Long reviewId,
+                        AddReviewRequestDto addReviewRequestDTO,
+                        Long authUserId);
 
-    void deleteReview(Long itemId, Long authUserId, Long reviewId);
+    void deleteReview(Long itemId, Long reviewId, Long authUserId);
 
-    void likeReview(Long authUserId, Long reviewId);
+    ReviewResponseDto likeReview(Long itemId, Long reviewId, Long authUserId);
 
-    void removeLikeReview(Long authUserId, Long reviewId);
+    ReviewResponseDto removeLikeReview(Long itemId, Long reviewId, Long authUserId);
 }
