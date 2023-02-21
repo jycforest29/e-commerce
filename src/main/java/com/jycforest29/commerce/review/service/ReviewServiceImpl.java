@@ -32,7 +32,7 @@ public class ReviewServiceImpl implements ReviewService{
     private final ReviewLikeUnitRepository reviewLikeUnitRepository;
     private final AuthUserRepository authUserRepository;
 
-    @Cacheable(value = "reviewListByItem", key = "#itemId") // 리뷰가 없는(null)도 상관없음
+    @Cacheable(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager") // 리뷰가 없는(null)도 상관없음
     @Transactional(readOnly = true)
     @Override
     public List<ReviewResponseDto> getReviewListByItem(Long itemId) {
@@ -55,7 +55,8 @@ public class ReviewServiceImpl implements ReviewService{
         return ReviewResponseDto.from(review);
     }
 
-    @CachePut(value = "reviewListByItem", key = "#itemId") // key에 대한 value 값이 변했으므로 @CachePut 사용
+    // key에 대한 value 값이 변했으므로 @CachePut 사용
+    @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, Long authUserId) {
@@ -84,8 +85,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Caching(put = {
-            @CachePut(value = "reviewListByItem", key = "#itemId"),
-            @CachePut(value = "review", key = "#reviewId")
+            @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager"),
+            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
     })
     @Transactional
     @Override
@@ -106,8 +107,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Caching(evict = {
-            @CacheEvict(value = "reviewListByItem", key = "#itemId"),
-            @CacheEvict(value = "review", key = "#reviewId")
+            @CacheEvict(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager"),
+            @CacheEvict(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
     })
     @Transactional
     @Override
@@ -136,8 +137,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Caching(put = {
-            @CachePut(value = "reviewListByItem", key = "#itemId"),
-            @CachePut(value = "review", key = "#reviewId")
+            @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager"),
+            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
     })
     @Transactional
     @Override
@@ -164,8 +165,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Caching(put = {
-            @CachePut(value = "reviewListByItem", key = "#itemId"),
-            @CachePut(value = "review", key = "#reviewId")
+            @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager"),
+            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
     })
     @Transactional
     @Override
@@ -192,19 +193,19 @@ public class ReviewServiceImpl implements ReviewService{
 
     // item은 수량 변동이 자주 일어나지만 review CRUD시 item의 요소들이 변하는 것은 아니기에 캐싱 적용함
     // 즉 로컬 캐싱을 사용한 영역을 주문 로직과 아예 분리했기에 가능함
-    @Cacheable(value = "item", key = "#itemId", unless="#result == null")
+    @Cacheable(value = "item", key = "#itemId", unless="#result == null", cacheManager = "ehCacheManager")
     public Item getItem(Long itemId){
         return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 
-    @Cacheable(value = "authuser", key = "#authUserId", unless="#result == null")
+    @Cacheable(value = "authuser", key = "#authUserId", unless="#result == null", cacheManager = "ehCacheManager")
     public AuthUser getAuthUser(Long authUserId){
         return authUserRepository.findById(authUserId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
-    @Cacheable(value = "review", key = "#reviewId", unless="#result == null")
+    @Cacheable(value = "review", key = "#reviewId", unless="#result == null", cacheManager = "ehCacheManager")
     public Review getReview(Long reviewId){
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));

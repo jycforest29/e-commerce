@@ -3,7 +3,6 @@ package com.jycforest29.commerce.security.config;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,7 +17,6 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     public static long ACCESS_TOKEN_EXISTS = 30 * 60 * 1000; // 접근 토큰의 유효기간 30분. 30분 지나면 자동 로그아웃 됨
-    private final AuthenticationManager authenticationManager;
     @Value("${jwt.secret}")
     private String secret;
 

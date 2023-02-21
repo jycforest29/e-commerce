@@ -58,7 +58,7 @@ public class HomeServiceImpl implements HomeService {
         return homeReviewList;
     }
 
-    @Cacheable(value = "authuser", key = "#authUserId", unless="#result == null")
+    @Cacheable(value = "authuser", key = "#authUserId", unless="#result == null", cacheManager = "ehCacheManager")
     public AuthUser getAuthUser(Long authUserId){
         AuthUser authUser = authUserRepository.findById(authUserId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));

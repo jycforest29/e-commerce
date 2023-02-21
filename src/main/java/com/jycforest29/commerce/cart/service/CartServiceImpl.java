@@ -11,6 +11,8 @@ import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,8 @@ public class CartServiceImpl implements CartService{
     // A 사용자가 아이템을 장바구니에 담는것과 1ms차로 B 사용자가 아이템의 수량만큼 주문해 품절됐다면?
         // 일단 담고, order 패키지에서 품절시 pub/sub 방식으로 모든 cart의 해당 item 삭제
         // 즉 여기서 이 클래스에서 더 해줄일은 없음.
+
+    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto addCartUnitToCart(Long itemId, int number, Long authUserId) {
@@ -50,6 +54,7 @@ public class CartServiceImpl implements CartService{
         return CartResponseDto.from(cart);
     }
 
+    @Cacheable(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
     public CartResponseDto getCartUnitList(Long authUserId) {
@@ -59,6 +64,7 @@ public class CartServiceImpl implements CartService{
     }
 
     // 장바구니에서 아이템을 삭제하는 것은 아이템에 아무런 영향을 주지 않음
+    @CacheEvict(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto deleteCartAll(Long authUserId) {
@@ -76,6 +82,7 @@ public class CartServiceImpl implements CartService{
     }
 
     // 장바구니에서 아이템을 삭제하는 것은 아이템에 아무런 영향을 주지 않음
+    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto deleteCartUnit(Long cartUnitId, Long authUserId){
@@ -112,13 +119,14 @@ public class CartServiceImpl implements CartService{
     // 즉, getValidateItemByNumber()이 원하는 대로 작동하지 않을 수도 있음.
     // 따라서 getValidateItemByNumber() 내부에서 동작하는 getItem()에 캐싱을 적용하지 않음
         // 전역 캐싱으로 전환 시 수정
+    @Cacheable(value = "item", key = "#itemId", cacheManager = "redisCacheManager")
     public Item getItem(Long itemId){
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
         return item;
     }
 
-    @Cacheable(value = "authUser", key = "#authUserId", unless="#result == null")
+    @Cacheable(value = "authUser", key = "#authUserId", cacheManager = "ehCacheManager")
     public AuthUser getAuthUser(Long authUserId){
         AuthUser authUser = authUserRepository.findById(authUserId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
