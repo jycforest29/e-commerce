@@ -14,6 +14,7 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,88 +78,91 @@ class OrderServiceTest {
         cartUnitRepository.deleteAll();
     }
 
-    @Test
-    void 동시에_2명이_재고가_100개인_아이템을_각각_99개와_1개_주문하여_모두_주문에_성공한다() throws InterruptedException {
-        // 명시적으로 @Transactional을 해주지 않으면 @Test 내부에서는 transactional하게 동작하지 않음
-        Item item = itemRepository.save(
-                Item.builder()
-                        .name("test_item")
-                        .price(10000)
-                        .number(100)
-                        .build()
-        );
+    @Nested
+    class makeOrder{
+        @Test
+        void 동시에_2명이_재고가_100개인_아이템을_각각_99개와_1개_주문하여_모두_주문에_성공한다() throws InterruptedException {
+            // 명시적으로 @Transactional을 해주지 않으면 @Test 내부에서는 transactional하게 동작하지 않음
+            Item item = itemRepository.save(
+                    Item.builder()
+                            .name("test_item")
+                            .price(10000)
+                            .number(100)
+                            .build()
+            );
 
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
-        CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
+            CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
 
-        executorService.submit(() -> {
-            try{
-                orderService.makeOrder(item.getId(),99, authUser.getId());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } finally {
-                countDownLatch.countDown();
-            }
-        });
+            executorService.submit(() -> {
+                try{
+                    orderService.makeOrder(item.getId(),99, authUser.getId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
 
-        executorService.submit(() -> {
-            try{
-                orderService.makeOrder(item.getId(), 1, otherUser.getId());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } finally {
-                countDownLatch.countDown();
-            }
-        });
+            executorService.submit(() -> {
+                try{
+                    orderService.makeOrder(item.getId(), 1, otherUser.getId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
 
-        countDownLatch.await();
-        //then
-        assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
-    }
+            countDownLatch.await();
+            //then
+            assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
+        }
 
-    @Test
-    void 동시에_2명이_재고가_1개인_아이템을_1명은_장바구니_전체_주문하기로_주문하고_다른_1명은_직접_주문하여_둘중_한명은_주문을_실패한다()
-            throws InterruptedException {
-        Item item = itemRepository.save(
-                Item.builder()
-                        .name("test_item")
-                        .price(10000)
-                        .number(1)
-                        .build()
-        );
-        CartUnit cartUnit = CartUnit.builder()
-                .item(item)
-                .number(1)
-                .build();
-        authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
-        cartUnitRepository.save(cartUnit);
+        @Test
+        void 동시에_2명이_재고가_1개인_아이템을_1명은_장바구니_전체_주문하기로_주문하고_다른_1명은_직접_주문하여_둘중_한명은_주문을_실패한다()
+                throws InterruptedException {
+            Item item = itemRepository.save(
+                    Item.builder()
+                            .name("test_item")
+                            .price(10000)
+                            .number(1)
+                            .build()
+            );
+            CartUnit cartUnit = CartUnit.builder()
+                    .item(item)
+                    .number(1)
+                    .build();
+            authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
+            cartUnitRepository.save(cartUnit);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
-        CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
+            CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
 
-        executorService.submit(() -> {
-            try{
-                orderService.makeOrderForCart(authUser.getId());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } finally {
-                countDownLatch.countDown();
-            }
-        });
+            executorService.submit(() -> {
+                try{
+                    orderService.makeOrderForCart(authUser.getId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
 
-        executorService.submit(() -> {
-            try{
-                orderService.makeOrder(item.getId(), 1, otherUser.getId());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } finally {
-                countDownLatch.countDown();
-            }
-        });
+            executorService.submit(() -> {
+                try{
+                    orderService.makeOrder(item.getId(), 1, otherUser.getId());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
 
-        countDownLatch.await();
-        //then
-        assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
+            countDownLatch.await();
+            //then
+            assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
+        }
     }
 
     @Test

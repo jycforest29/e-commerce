@@ -31,15 +31,15 @@ public class AuthUser implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    private List<String> roleList = new ArrayList<>();
+//    private List<String> roleList = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        Collection<GrantedAuthority> authorities = roleList.stream()
-                .map(role -> new SimpleGrantedAuthority(username))
-                .collect(Collectors.toList());
+//        Collection<GrantedAuthority> authorities = roleList.stream()
+//                .map(role -> new SimpleGrantedAuthority(username))
+//                .collect(Collectors.toList());
 
-        return authorities;
+        return null;
     }
 
     @Column(unique = true, nullable = false)
@@ -52,7 +52,7 @@ public class AuthUser implements UserDetails {
 
     // AuthUser를 주테이블로 한 일대일 단방향.
     // @JoinColumn : name 속성에는 맵핑할 외래 키 이름을 설정해주고 이 어노테이션은 생략 가능함.
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "authuser")
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id")
     private Cart cart = new Cart();
 

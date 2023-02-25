@@ -21,7 +21,7 @@ public class OrderUnit {
 
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "makeOrder_id")
+    @JoinColumn(name = "madeOrder_id")
     private MadeOrder madeOrder;
 
     private int number;
