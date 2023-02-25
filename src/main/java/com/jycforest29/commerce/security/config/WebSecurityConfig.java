@@ -54,11 +54,11 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                 .frameOptions()
                 .sameOrigin()
                 .and()
-                .authorizeRequests().antMatchers("/authenticate/**").permitAll() // 회원가입, 로그인 허용
-                .and()
-                .authorizeRequests().antMatchers(HttpMethod.GET, "**/review/**").permitAll() // 리뷰 조회 허용
-                .and()
-                .authorizeRequests().anyRequest().authenticated()
+//                .authorizeRequests().antMatchers("/authenticate/**").permitAll() // 회원가입, 로그인 허용
+//                .and()
+//                .authorizeRequests().antMatchers(HttpMethod.GET, "**/review/**").permitAll() // 리뷰 조회 허용
+//                .and()
+                .authorizeRequests().anyRequest().permitAll()
                 .and()
                 .addFilterBefore(new JwtRequestFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 

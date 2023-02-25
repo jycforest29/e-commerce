@@ -15,12 +15,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -48,7 +47,6 @@ class HomeServiceTest {
 
     @BeforeEach
     void init(){
-        // 연관관계 생각하지 않은 가장 기본 엔티티 생성(실제 서비스에서의 모든 엔티티의 생성 방식)
         item = Item.builder()
                 .name("test_item")
                 .price(10000)
@@ -78,30 +76,42 @@ class HomeServiceTest {
                 .build();
         reviewLikeUnit = new ReviewLikeUnit();
 
-        // 연관관계 매핑
+        // otherUser가 item에 대해 review 작성
         item.addReview(review);
         otherUser.addReview(review);
+        // otherUser가 item에 대해 new_review 작성
         item.addReview(new_review);
         otherUser.addReview(new_review);
-
-        otherUser.addReviewLikeUnit(reviewLikeUnit);
+        // authUser가 review에 대해 좋아요 누름
+        authUser.addReviewLikeUnit(reviewLikeUnit);
         review.addReviewLikeUnit(reviewLikeUnit);
     }
 
     // authUser는 otherUser가 방금 전 작성한 item에 대한 review에 좋아요를 눌렀다.(모킹이므로 쿼리 테스트는 불가)
     // 이후 otherUser는 item에 대해 추가로 new_review를 작성했다.
     @Test
+    void 내가_좋아요를_눌렀던_리뷰의_작성자들을_가져온다(){
+        //given
+        given(reviewLikeUnitRepository.findAllByAuthUser(authUser))
+                .willReturn(Arrays.asList(reviewLikeUnit)); // Set의 원소로 otherUser
+        //when
+        Set<AuthUser> likedAuthUserSet = homeService.getLikedAuthor(authUser);
+        //THEN
+        assertThat(likedAuthUserSet.size()).isEqualTo(1);
+    }
+
+    @Test
     void 내가_좋아요를_눌렀던_리뷰의_작성자들이_50시간동안_작성한_리뷰를_가져온다(){
         //given-getAuthUser
         given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
         //given-getLikedAuthor
         given(reviewLikeUnitRepository.findAllByAuthUser(authUser))
-                .willReturn(Arrays.asList(reviewLikeUnit)); // Set의 원소로 otherUser
+                .willReturn(Arrays.asList(reviewLikeUnit)); // 내가_좋아요를_눌렀던_리뷰의_작성자들을_가져온다 테스트 완료
         //given-getAllHomeReviewList
         //clock 테스트를 위해 특정 시간을 리턴하도록 고정
-        given(clock.instant()).willReturn(Instant.parse("2022-08-10T00:00:00Z"));
+        given(clock.instant()).willReturn(Instant.parse("2022-08-22T10:00:00Z"));
         given(reviewRepository.findAllByAuthUserIdAndCreatedWithin50Hours(otherUserId,
-                LocalDateTime.parse("2022-08-10T00:00:00Z")))
+                LocalDateTime.ofInstant(Instant.parse("2022-08-22T10:00:00Z"), ZoneOffset.UTC)))
                 .willReturn(otherUser.getReviewList());
         //when
         List<ReviewResponseDto> result = homeService.getHomeReviewList(authUserId);

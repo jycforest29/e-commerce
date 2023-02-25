@@ -2,6 +2,7 @@ package com.jycforest29.commerce.common.cache;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.config.CacheConfiguration;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
 import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 
 import java.time.Duration;
 import java.util.Objects;
+@EnableCaching // 어플리케이션이나 캐시 설정에 붙여줌
 @Configuration
 public class CacheConfig {
     // EhCacheManagerFactoryBean은 Eh 캐시 매니저 생성 도우미로 CacheManaer의
@@ -36,7 +38,7 @@ public class CacheConfig {
                 .name("layoutCaching"); // 캐시명.
 
         // 설정을 가지고 캐시 생성
-        Cache layoutCache = new net.sf.ehcache.Cache(conf);
+        Cache layoutCache = new Cache(conf);
 
         // 캐시 팩토리에 생성한 eh 캐시를 추가
         Objects.requireNonNull(cacheManagerFactoryBean().getObject()).addCache(layoutCache);
