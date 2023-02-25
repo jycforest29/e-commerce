@@ -2,11 +2,11 @@ package com.jycforest29.commerce.common.cache;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.config.CacheConfiguration;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
 import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -23,7 +23,8 @@ public class CacheConfig {
     }
     // EhCacheCacheManager 등록
     @Bean(name = "ehCacheManager")
-    public CacheManager ehCacheManager(){
+    @Primary
+    public EhCacheCacheManager ehCacheManager(){
         // 캐시 설정
         CacheConfiguration conf = new CacheConfiguration()
                 .eternal(false) // true일 경우 timeout 관련 설정이 무시. Element가 캐시에서 삭제되지 않음.
@@ -45,14 +46,14 @@ public class CacheConfig {
     }
 
     @Bean(name = "redisCacheManager")
-    public CacheManager redisCacheManager(){
+    public RedisCacheManager redisCacheManager(){
         RedisCacheConfiguration conf = RedisCacheConfiguration
                 .defaultCacheConfig()
                 .disableCachingNullValues()
                 .entryTtl(Duration.ofSeconds(21600));
 
-        return RedisCacheManager.RedisCacheManagerBuilder.
-                fromConnectionFactory(new LettuceConnectionFactory())
+        return RedisCacheManager.RedisCacheManagerBuilder
+                .fromConnectionFactory(new LettuceConnectionFactory())
                 .cacheDefaults(conf)
                 .build();
     }
