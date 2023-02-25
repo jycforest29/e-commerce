@@ -52,7 +52,7 @@ public class AuthUser implements UserDetails {
 
     // AuthUser를 주테이블로 한 일대일 단방향.
     // @JoinColumn : name 속성에는 맵핑할 외래 키 이름을 설정해주고 이 어노테이션은 생략 가능함.
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "cart_id")
     private Cart cart = new Cart();
 
