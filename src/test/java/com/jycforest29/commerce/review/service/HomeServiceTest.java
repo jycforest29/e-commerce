@@ -101,7 +101,7 @@ class HomeServiceTest {
         //clock 테스트를 위해 특정 시간을 리턴하도록 고정
         given(clock.instant()).willReturn(Instant.parse("2022-08-10T00:00:00Z"));
         given(reviewRepository.findAllByAuthUserIdAndCreatedWithin50Hours(otherUserId,
-                LocalDateTime.from(Instant.parse("2022-08-10T00:00:00Z"))))
+                LocalDateTime.parse("2022-08-10T00:00:00Z")))
                 .willReturn(otherUser.getReviewList());
         //when
         List<ReviewResponseDto> result = homeService.getHomeReviewList(authUserId);

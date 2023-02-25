@@ -22,7 +22,7 @@ public class MadeOrder {
     private AuthUser authUser;
 
     @Setter
-    @OneToMany(mappedBy = "makeOrder")
+    @OneToMany(mappedBy = "madeOrder")
     private List<OrderUnit> orderUnitList = new ArrayList<>();
 
     @Setter

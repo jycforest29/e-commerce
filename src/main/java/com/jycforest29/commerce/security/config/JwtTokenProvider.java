@@ -67,6 +67,8 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+        // UsernamePasswordAuthenticationToken(principal, credentials, authorities)
+        // 현재 authorities는 모두 빈 리스트로 설정함 -> 변경 필요
         return new UsernamePasswordAuthenticationToken(claims.getSubject(), token, new ArrayList<>());
     }
 }
