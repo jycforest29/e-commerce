@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-public class CacheTest {
+public class CartCacheTest {
     @MockBean
     private CartUnitRepository cartUnitRepository;
     @MockBean

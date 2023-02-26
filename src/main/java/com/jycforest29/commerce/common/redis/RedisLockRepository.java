@@ -7,7 +7,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SessionCallback;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,19 +32,23 @@ public class RedisLockRepository {
     // redis는 싱글 스레드 기반으로 데이터를 처리하지만 여러 명의 클라이언트 요청에 동시에 응답하는 동시성도 갖고 있음
     // 유저 레벨에서는 싱글 스레드로 동작하지만 커널 I/O 레벨에서는 스레드 풀 이용
     @Transactional
-    public ResponseEntity<?> lock(List<Long> key){
-        redisTemplate.execute(new SessionCallback<List<Object>>() {
+    public Boolean lock(List<Long> key){
+        return redisTemplate.execute(new SessionCallback<Boolean>() {
                     @Override
-                    public <K, V> List<Object> execute(RedisOperations<K, V> operations) throws DataAccessException {
+                    public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
                         operations.multi();
                         for(Long k : key){
+                            if(operations.hasKey((K) k)){
+                                return false;
+                            }
                             operations.opsForValue().set((K) k.toString(), (V) "lock",
                                     Duration.ofMillis(3_000));
                         }
-                        return operations.exec();
+                        operations.exec();
+                        logger.info(key.toString()+"lock 되어있지 않아 설정함");
+                        return true;
                     }
                 });
-        return null;
     }
 
     public Boolean unlock(Long key){
