@@ -50,6 +50,8 @@ dependencies {
 	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.0'
 	testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.0'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-logging', version: '3.0.3'
+	// final 클래스, static 메서드 모킹 위해 필요
+	testImplementation group: 'org.mockito', name: 'mockito-inline', version: '5.1.1'
 	// kafka
 //	implementation group: 'org.apache.kafka', name: 'kafka_2.13', version: '3.4.0'
 //	implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '3.4.0'

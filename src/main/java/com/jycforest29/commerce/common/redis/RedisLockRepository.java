@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Set;
 
 @RequiredArgsConstructor
@@ -27,6 +28,9 @@ public class RedisLockRepository {
     // -> @Transactional 사용함
     // @Transactional은 thread local 기반이므로 reactive 환경에서는 동작하지 않음. reactive 환경에서 @Transactional을
     // 사용하기 위해서는 redisson 사용해야
+
+    // redis는 싱글 스레드 기반으로 데이터를 처리하지만 여러 명의 클라이언트 요청에 동시에 응답하는 동시성도 갖고 있음
+    // 유저 레벨에서는 싱글 스레드로 동작하지만 커널 I/O 레벨에서는 스레드 풀 이용
     public Boolean lock(Set<Long> key){
         return redisTemplate
                 .execute(new SessionCallback<Boolean>() {
@@ -34,15 +38,14 @@ public class RedisLockRepository {
                     public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
                         operations.multi();
                         for(Long k : key){
-                            if(operations.opsForValue().setIfAbsent((K) k.toString(), (V) "lock",
-                                    Duration.ofMillis(3_000)) == true){
-                                return false;
-                            }
+                            operations.opsForValue().setIfAbsent((K) k.toString(), (V) "lock",
+                                    Duration.ofMillis(3_000));
                             logger.info(k.toString()+"원소에 대한 배치 락 구현");
                         }
-                        operations.exec();
-                        logger.info("원소에 대한 배치 락 구현");
-                        return true;
+                        if(operations.exec().size() > 0){
+                            return true;
+                        }
+                        return false;
                     }
                 });
     }
