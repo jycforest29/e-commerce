@@ -80,7 +80,7 @@ public class Review{
         for(ReviewLikeUnit reviewLikeUnit : this.reviewLikeUnitList){
             reviewLikeUnit.setReview(null);
         }
-        this.reviewLikeUnitList = null;
+        this.reviewLikeUnitList = new ArrayList<>();
     }
 
 }

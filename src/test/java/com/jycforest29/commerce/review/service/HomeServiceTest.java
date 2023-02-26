@@ -30,11 +30,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-//@ExtendWith(MockitoExtension.class)
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 class HomeServiceTest {
-    Logger logger = LoggerFactory.getLogger(HomeServiceTest.class);
     @MockBean
     private AuthUserRepository authUserRepository;
     @MockBean
@@ -96,8 +94,6 @@ class HomeServiceTest {
         review.addReviewLikeUnit(reviewLikeUnit);
     }
 
-    // authUser는 otherUser가 방금 전 작성한 item에 대한 review에 좋아요를 눌렀다.(모킹이므로 쿼리 테스트는 불가)
-    // 이후 otherUser는 item에 대해 추가로 new_review를 작성했다.
     @Test
     void 내가_좋아요를_눌렀던_리뷰의_작성자들을_가져온다(){
         //given
@@ -109,15 +105,14 @@ class HomeServiceTest {
         assertThat(likedAuthUserSet).contains(otherUser);
     }
 
+    // authUser는 otherUser가 방금 전 작성한 item에 대한 review에 좋아요를 눌렀다.(모킹이므로 쿼리 테스트는 불가)
+    // 이후 otherUser는 item에 대해 추가로 new_review를 작성했다.
     @Test
     void 내가_좋아요를_눌렀던_리뷰의_작성자들이_50시간동안_작성한_리뷰를_가져온다(){
-        //given-getAuthUser
+        //given
         given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
-        //given-getLikedAuthor
         given(reviewLikeUnitRepository.findAllByAuthUser(authUser))
-                .willReturn(Arrays.asList(reviewLikeUnit)); // 내가_좋아요를_눌렀던_리뷰의_작성자들을_가져온다 테스트 완료
-        //given-getAllHomeReviewList
-        //clock 테스트를 위해 특정 시간을 리턴하도록 고정
+                .willReturn(Arrays.asList(reviewLikeUnit));
         LocalDateTime now = LocalDateTime.ofInstant(Instant.parse("2022-08-22T10:00:00Z"), ZoneId.systemDefault());
         given(clock.instant()).willReturn(Instant.parse("2022-08-22T10:00:00Z"));
         given(reviewRepository.findAllByAuthUserIdAndCreatedWithin50Hours(otherUserId, now))

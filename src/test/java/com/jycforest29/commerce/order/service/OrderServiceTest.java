@@ -3,7 +3,6 @@ package com.jycforest29.commerce.order.service;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.cart.domain.repository.CartRepository;
 import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
-import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
@@ -24,7 +23,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,7 +55,7 @@ class OrderServiceTest {
                 AuthUser.builder()
                         .username("test_username")
                         .password("test_password")
-                        .nickname("test_nickname_")
+                        .nickname("test_nickname")
                         .build()
         );
 
@@ -96,7 +94,6 @@ class OrderServiceTest {
         @Test
         void 동시에_2명이_재고가_100개인_아이템을_각각_99개와_1개_주문하여_모두_주문에_성공한다() throws InterruptedException {
             // 명시적으로 @Transactional을 해주지 않으면 @Test 내부에서는 transactional하게 동작하지 않음
-
             executorService.submit(() -> {
                 try {
                     orderService.makeOrder(item.getId(), 99, authUser.getId());
@@ -119,8 +116,7 @@ class OrderServiceTest {
 
             countDownLatch.await();
             //then
-            assertThat(itemRepository.findById(item.getId()).get().getNumber())
-                    .isEqualTo(0);
+            assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
         }
     }
     @Nested

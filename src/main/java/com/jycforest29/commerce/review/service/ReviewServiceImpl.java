@@ -42,7 +42,7 @@ public class ReviewServiceImpl implements ReviewService{
         // 리뷰 좋아요순으로 내림차순 정렬
         return reviewRepository.findAllByItem(item)
                 .stream()
-                .sorted((a, b) -> a.getReviewLikeUnitList().size() > b.getReviewLikeUnitList().size() ? -1 : 1)
+//                .sorted((a, b) -> a.getReviewLikeUnitList().size() > b.getReviewLikeUnitList().size() ? -1 : 1)
                 .map(s -> ReviewResponseDto.from(s))
                 .collect(Collectors.toList());
     }
@@ -96,7 +96,8 @@ public class ReviewServiceImpl implements ReviewService{
                                Long authUserId) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
-        if(!review.getAuthUser().getId().equals(authUserId)){
+        AuthUser authUser = getAuthUser(authUserId);
+        if(!review.getAuthUser().equals(authUser)){
             throw new CustomException(ExceptionCode.NOT_DONE_BY_AUTHUSER);
         }
 
@@ -116,15 +117,16 @@ public class ReviewServiceImpl implements ReviewService{
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
         AuthUser authUser = getAuthUser(authUserId);
-        if(!review.getAuthUser().getId().equals(authUserId)){
+        if(!review.getAuthUser().equals(authUser)){
             throw new CustomException(ExceptionCode.NOT_DONE_BY_AUTHUSER);
         }
 
-        // 해당 리뷰에 속하는 모든 reviewLikeUnit도 연관관계 제거
-        review.deleteAllReviewLikeUnit();
         // 기존의 array 변환함
         reviewLikeUnitRepository.findAllByReview(review).stream()
                 .forEach(s -> s.getAuthUser().deleteReviewLikeUnit(s));
+
+        // 해당 리뷰에 속하는 모든 reviewLikeUnit도 연관관계 제거
+        review.deleteAllReviewLikeUnit();
 
         // 다대일 양방향 연관관계 제거
         Item item = review.getItem();
@@ -148,7 +150,7 @@ public class ReviewServiceImpl implements ReviewService{
         AuthUser authUser = getAuthUser(authUserId);
         reviewLikeUnitRepository.findByReviewAndAuthUser(review, authUser)
                 .ifPresent(s -> {throw new CustomException(ExceptionCode.REVIEW_LIKE_DUPLICATED);});
-        if(review.getAuthUser().getId().equals(authUserId)){
+        if(review.getAuthUser().equals(authUser)){
             throw new CustomException(ExceptionCode.CANNOT_LIKE_DONE_BY_AUTHUSER);
         }
 
