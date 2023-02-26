@@ -74,5 +74,4 @@ public class CacheTest {
             verify(itemRepository, atMostOnce()).findById(itemId);
         }
     }
-
 }
