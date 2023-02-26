@@ -71,6 +71,7 @@ class ReviewServiceTest {
         Long reviewId;
         Review moreLikedReview;
         Long moreLikedReviewId;
+        ReviewLikeUnit reviewLikeUnit;
 
         @BeforeEach
         void init(){
@@ -86,11 +87,14 @@ class ReviewServiceTest {
                 .contents(addReviewRequestDto.getContents())
                 .build();
             moreLikedReviewId = 2L;
+            reviewLikeUnit = new ReviewLikeUnit();
 
             authUser.addReview(review);
             otherUser.addReview(moreLikedReview);
             item.addReview(review);
             item.addReview(moreLikedReview);
+            moreLikedReview.addReviewLikeUnit(reviewLikeUnit);
+            authUser.addReviewLikeUnit(reviewLikeUnit);
         }
 
         @Test
@@ -101,7 +105,8 @@ class ReviewServiceTest {
             //when
             List<ReviewResponseDto> result = reviewService.getReviewListByItem(itemId);
             //then
-            assertThat(result.size()).isEqualTo(2);
+            assertThat(result.get(0).getUsername()).isEqualTo(otherUser.getUsername());
+            assertThat(result.get(1).getUsername()).isEqualTo(authUser.getUsername());
         }
     }
 

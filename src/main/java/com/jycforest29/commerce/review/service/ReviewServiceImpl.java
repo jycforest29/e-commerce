@@ -42,7 +42,7 @@ public class ReviewServiceImpl implements ReviewService{
         // 리뷰 좋아요순으로 내림차순 정렬
         return reviewRepository.findAllByItem(item)
                 .stream()
-//                .sorted((a, b) -> a.getReviewLikeUnitList().size() > b.getReviewLikeUnitList().size() ? -1 : 1)
+                .sorted((a, b) -> a.getReviewLikeUnitList().size() > b.getReviewLikeUnitList().size() ? -1 : 1)
                 .map(s -> ReviewResponseDto.from(s))
                 .collect(Collectors.toList());
     }
