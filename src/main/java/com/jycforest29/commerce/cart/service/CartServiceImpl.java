@@ -11,6 +11,9 @@ import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,9 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 // @RequiredArgsConstructor : 초기화되지 않은 final 필드나 @NonNull에 대해 생성(@NotNull은 롬복의 어노테이션이 아님)
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CartServiceImpl implements CartService{
+    Logger logger = LoggerFactory.getLogger(CartServiceImpl.class);
     private final CartUnitRepository cartUnitRepository;
     private final AuthUserRepository authUserRepository;
     private final ItemRepository itemRepository;
