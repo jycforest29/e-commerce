@@ -193,24 +193,21 @@ public class ReviewServiceImpl implements ReviewService{
         return ReviewResponseDto.from(review);
     }
 
-    // item은 수량 변동이 자주 일어나지만 review CRUD시 item의 요소들이 변하는 것은 아니기에 캐싱 적용함
-    // 즉 로컬 캐싱을 사용한 영역을 주문 로직과 아예 분리했기에 가능함
-    @Cacheable(value = "item", key = "#itemId", unless="#result == null", cacheManager = "ehCacheManager")
+    @Cacheable(value = "item", key = "#itemId", cacheManager = "redisCacheManager")
     public Item getItem(Long itemId){
         return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 
-    @Cacheable(value = "authuser", key = "#authUserId", unless="#result == null", cacheManager = "ehCacheManager")
+    @Cacheable(value = "authUser", key = "#authUserId", cacheManager = "ehCacheManager")
     public AuthUser getAuthUser(Long authUserId){
         return authUserRepository.findById(authUserId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
-    @Cacheable(value = "review", key = "#reviewId", unless="#result == null", cacheManager = "ehCacheManager")
+    @Cacheable(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
     public Review getReview(Long reviewId){
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
-
 }

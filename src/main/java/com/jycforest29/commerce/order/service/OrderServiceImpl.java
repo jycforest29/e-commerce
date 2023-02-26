@@ -2,7 +2,6 @@ package com.jycforest29.commerce.order.service;
 
 import com.jycforest29.commerce.cart.domain.entity.Cart;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
-import com.jycforest29.commerce.cart.service.CartServiceImpl;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
@@ -21,7 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -38,8 +38,7 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public MadeOrderResponseDto makeOrder(Long itemId, int number, Long authUserId) throws InterruptedException {
         // 아이템 한 종류에 대해서 주문하므로 itemId를 기준으로 락을 걸어줌
-        logger.info(redisLockRepository.lock(List.of(itemId)).toString());
-        while(redisLockRepository.lock(List.of(itemId)) != null){
+        while(!redisLockRepository.lock(List.of(itemId))){
             Thread.sleep(100);
         }
         try{
