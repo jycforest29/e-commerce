@@ -1,6 +1,8 @@
 package com.jycforest29.commerce.common.redis;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -9,17 +11,17 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
 public class RedisLockRepository {
+    Logger logger = LoggerFactory.getLogger(RedisLockRepository.class);
     private final RedisTemplate<String, String> redisTemplate;
 
-    public Boolean lock(Long key){
-        return redisTemplate.opsForValue()
-                .setIfAbsent(key.toString(), "lock", Duration.ofMillis(3000));
-    }
+//    public Boolean lock(Long key){
+//        return redisTemplate.opsForValue()
+//                .setIfAbsent(key.toString(), "lock", Duration.ofMillis(3_000));
+//    }
 
     // redis의 multi-exec을 사용해 배치 단위로 커맨드 실행.
     // -> @Transactional 사용함
@@ -32,9 +34,14 @@ public class RedisLockRepository {
                     public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
                         operations.multi();
                         for(Long k : key){
-                            operations.opsForValue().setIfAbsent((K) k.toString(), (V) "lock", Duration.ofMillis(3000));
+                            if(operations.opsForValue().setIfAbsent((K) k.toString(), (V) "lock",
+                                    Duration.ofMillis(3_000)) == true){
+                                return false;
+                            }
+                            logger.info(k.toString()+"원소에 대한 배치 락 구현");
                         }
                         operations.exec();
+                        logger.info("원소에 대한 배치 락 구현");
                         return true;
                     }
                 });
@@ -44,11 +51,20 @@ public class RedisLockRepository {
         return redisTemplate.delete(key.toString());
     }
 
-    public Long unlock(Set<Long> key){
-        return redisTemplate.delete(key.stream()
-                .map(s -> s.toString())
-                .collect(Collectors.toSet())
-        );
+    public Boolean unlock(Set<Long> key){
+        return redisTemplate
+                .execute(new SessionCallback<Boolean>() {
+                    @Override
+                    public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
+                        operations.multi();
+                        for(Long k : key){
+                            logger.info(k.toString()+"원소에 대한 배치 락 해제");
+                            operations.delete((K) k.toString());
+                        }
+                        operations.exec();
+                        return true;
+                    }
+                });
     }
 }
 

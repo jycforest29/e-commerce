@@ -23,45 +23,38 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation
-	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation', version: '2.7.2'
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
-	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.7.8'
-	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api
-	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.5'
-	// https://mvnrepository.com/artifact/org.springframework.security/spring-security-core
-	implementation group: 'org.springframework.security', name: 'spring-security-core', version: '5.7.5'
-	// https://mvnrepository.com/artifact/org.springframework.security/spring-security-web
-	implementation group: 'org.springframework.security', name: 'spring-security-web', version: '5.7.5'
-	// https://mvnrepository.com/artifact/org.springframework.security/spring-security-config
-	implementation group: 'org.springframework.security', name: 'spring-security-config', version: '5.7.5'
-	// https://mvnrepository.com/artifact/mysql/mysql-connector-java
-	implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.30'
-	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl
-	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.5'
-	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson
-	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.5'
-	// https://mvnrepository.com/artifact/org.projectlombok/lombok
 	compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation
-	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation', version: '2.7.8'
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-websocket
-	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '2.7.6'
-	// https://mvnrepository.com/artifact/org.springframework.security/spring-security-test
+	// validation
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation', version: '2.7.2'
+	// security
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.7.8'
+	implementation group: 'org.springframework.security', name: 'spring-security-core', version: '5.7.5'
+	implementation group: 'org.springframework.security', name: 'spring-security-web', version: '5.7.5'
+	implementation group: 'org.springframework.security', name: 'spring-security-config', version: '5.7.5'
 	testImplementation group: 'org.springframework.security', name: 'spring-security-test', version: '5.7.5'
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-redis
+	// jwt
+	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.5'
+	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.5'
+	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.5'
+	// mysql
+	implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.30'
+	// websocket
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '2.7.6'
+	// redis
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis', version: '2.7.2'
+	// cache
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.hibernate:hibernate-ehcache:5.6.5.Final'
-	// https://mvnrepository.com/artifact/org.apache.kafka/kafka
+	implementation group: 'net.sf.ehcache', name: 'ehcache', version: '2.10.9.2'
+	// slf4j
+	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.0'
+	testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.0'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-logging', version: '3.0.3'
+	// kafka
 //	implementation group: 'org.apache.kafka', name: 'kafka_2.13', version: '3.4.0'
-//	// https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients
 //	implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '3.4.0'
-//	// https://mvnrepository.com/artifact/org.springframework.kafka/spring-kafka
 //	implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.8'
-//	// https://mvnrepository.com/artifact/org.springframework.kafka/spring-kafka-test
 //	testImplementation group: 'org.springframework.kafka', name: 'spring-kafka-test', version: '2.7.8'
-
 }
 
 tasks.named('test') {

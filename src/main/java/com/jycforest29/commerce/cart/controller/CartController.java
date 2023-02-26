@@ -18,7 +18,8 @@ public class CartController {
     @PostMapping(value = "{itemId}/add")
     public ResponseEntity<CartResponseDto> addCartUnitToCart(@PathVariable("itemId") Long itemId,
                                                              @RequestParam @Min(1) int number,
-                                                             @LoginAuthUser Long authUserId) throws InterruptedException {
+                                                             @LoginAuthUser Long authUserId)
+            throws InterruptedException {
         return ResponseEntity.status(HttpStatus.OK).body(cartService.addCartUnitToCart(itemId, number, authUserId));
     }
 
