@@ -38,11 +38,11 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public MadeOrderResponseDto makeOrder(Long itemId, int number, Long authUserId) throws InterruptedException {
         // 아이템 한 종류에 대해서 주문하므로 itemId를 기준으로 락을 걸어줌
-        while(!redisLockRepository.lock(Set.of(itemId))){
+        logger.info(redisLockRepository.lock(List.of(itemId)).toString());
+        while(redisLockRepository.lock(List.of(itemId)) != null){
             Thread.sleep(100);
         }
         try{
-            logger.info(itemId+"에 대한 단일 락 구현");
             // 엔티티 가져옴(유효성 검증은 컨트롤러에서 이미 완료함)
             AuthUser authUser = getAuthUser(authUserId);
             // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
@@ -67,7 +67,7 @@ public class OrderServiceImpl implements OrderService{
             // try에서 return 수행할 경우 finally 거쳐서 정상 종료됨.
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
-            redisLockRepository.unlock(Set.of(itemId));
+            redisLockRepository.unlock(List.of(itemId));
         }
     }
 
@@ -91,11 +91,11 @@ public class OrderServiceImpl implements OrderService{
                 .collect(Collectors.toList());
 
         // 락을 걸어야 하는 아이템리스트 추출
-        Set<Long> itemIdSetToLock = orderUnitList.stream()
+        List<Long> itemIdSetToLock = orderUnitList.stream()
                 .map(s -> s.getItem().getId())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
 
-        while(!redisLockRepository.lock(itemIdSetToLock)){
+        while(redisLockRepository.lock(itemIdSetToLock) != null){
             Thread.sleep(100);
         }
         try{
@@ -150,11 +150,11 @@ public class OrderServiceImpl implements OrderService{
         List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
         AuthUser authUser = getAuthUser(authUserId);
         // 락을 걸어야 하는 아이템리스트 추출
-        Set<Long> itemIdSetToLock = orderUnitList.stream()
+        List<Long> itemIdSetToLock = orderUnitList.stream()
                 .map(s -> s.getItem().getId())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
 
-        while(!redisLockRepository.lock(itemIdSetToLock)){
+        while(redisLockRepository.lock(itemIdSetToLock) != null){
             Thread.sleep(100);
         }
         try{

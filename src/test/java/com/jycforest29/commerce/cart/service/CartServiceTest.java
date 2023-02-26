@@ -45,7 +45,7 @@ class CartServiceTest {
     }
 
     @Nested
-    class NoItemInCart{
+    class AddToCart{
         Item item;
         Long itemId;
         @BeforeEach
@@ -83,9 +83,11 @@ class CartServiceTest {
     }
 
     @Nested
-    class OneItemInCart{
+    class GetFromCart{
         Item item;
         Long itemId;
+        CartUnit cartUnit;
+        Long cartUnitId;
         @BeforeEach
         void init(){
             item = Item.builder()
@@ -94,14 +96,17 @@ class CartServiceTest {
                     .number(100)
                     .build();
             itemId = 1L;
+            cartUnit  = CartUnit.builder()
+                    .item(item)
+                    .number(1)
+                    .build();
+            cartUnitId = 1L;
         }
         @Test
         void 내_장바구니에_담긴_모든_목록을_가져온다(){
             //given
             given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
-            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
-            // authUser의 장바구니에 item 수량 1개 추가
-            cartService.addCartUnitToCart(itemId, 1, authUserId);
+            authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
             //when
             CartResponseDto cartResponseDto = cartService.getCartUnitList(authUserId);
             //then
@@ -113,6 +118,8 @@ class CartServiceTest {
     class DeleteFromCart{
         Item item;
         Long itemId;
+        CartUnit cartUnit;
+        Long cartUnitId;
         @BeforeEach
         void init(){
             item = Item.builder()
@@ -121,15 +128,18 @@ class CartServiceTest {
                     .number(100)
                     .build();
             itemId = 1L;
+            cartUnit  = CartUnit.builder()
+                    .item(item)
+                    .number(1)
+                    .build();
+            cartUnitId = 1L;
         }
 
         @Test
         void 내_장바구니에_담긴_모든_목록을_삭제한다(){
             //given
             given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
-            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
-            // authUser의 장바구니에 item 수량 1개 추가
-            cartService.addCartUnitToCart(itemId, 1, authUserId);
+            authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
             //when
             CartResponseDto cartResponseDto = cartService.deleteCartAll(authUserId);
             //then
@@ -141,14 +151,7 @@ class CartServiceTest {
         void 내_장바구니에_담긴_특정_아이템을_모두_삭제한다(){
             //given
             given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
-            CartUnit cartUnit  = CartUnit.builder()
-                    .item(item)
-                    .number(1)
-                    .build();
-            Long cartUnitId = 1L;
             authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
-
-            // authUser의 장바구니에 item 수량 1개 추가
             given(cartUnitRepository.findById(cartUnitId)).willReturn(Optional.of(cartUnit));
             //when
             CartResponseDto cartResponseDto = cartService.deleteCartUnit(cartUnitId, authUserId);
