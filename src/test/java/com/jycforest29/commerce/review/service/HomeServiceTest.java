@@ -11,30 +11,39 @@ import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.*;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-@ExtendWith(MockitoExtension.class)
+//@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 class HomeServiceTest {
-    @Mock
+    Logger logger = LoggerFactory.getLogger(HomeServiceTest.class);
+    @MockBean
     private AuthUserRepository authUserRepository;
-    @Mock
+    @MockBean
     private ReviewRepository reviewRepository;
-    @Mock
+    @MockBean
     private ReviewLikeUnitRepository reviewLikeUnitRepository;
-    @Mock
-    private Clock clock;
-    @InjectMocks
+    @SpyBean
+    private Clock clock; // now() 는 static 이므로 @SpyBean 사용해야 함. 따라서 통합테스트로 변경.
+    @Autowired
     private HomeServiceImpl homeService;
     private Item item;
     private AuthUser authUser;
@@ -95,9 +104,9 @@ class HomeServiceTest {
         given(reviewLikeUnitRepository.findAllByAuthUser(authUser))
                 .willReturn(Arrays.asList(reviewLikeUnit)); // Set의 원소로 otherUser
         //when
-        Set<AuthUser> likedAuthUserSet = homeService.getLikedAuthor(authUser);
-        //THEN
-        assertThat(likedAuthUserSet.size()).isEqualTo(1);
+        List<AuthUser> likedAuthUserSet = homeService.getLikedAuthor(authUser);
+        //then
+        assertThat(likedAuthUserSet).contains(otherUser);
     }
 
     @Test
@@ -109,9 +118,9 @@ class HomeServiceTest {
                 .willReturn(Arrays.asList(reviewLikeUnit)); // 내가_좋아요를_눌렀던_리뷰의_작성자들을_가져온다 테스트 완료
         //given-getAllHomeReviewList
         //clock 테스트를 위해 특정 시간을 리턴하도록 고정
+        LocalDateTime now = LocalDateTime.ofInstant(Instant.parse("2022-08-22T10:00:00Z"), ZoneId.systemDefault());
         given(clock.instant()).willReturn(Instant.parse("2022-08-22T10:00:00Z"));
-        given(reviewRepository.findAllByAuthUserIdAndCreatedWithin50Hours(otherUserId,
-                LocalDateTime.ofInstant(Instant.parse("2022-08-22T10:00:00Z"), ZoneOffset.UTC)))
+        given(reviewRepository.findAllByAuthUserIdAndCreatedWithin50Hours(otherUserId, now))
                 .willReturn(otherUser.getReviewList());
         //when
         List<ReviewResponseDto> result = homeService.getHomeReviewList(authUserId);

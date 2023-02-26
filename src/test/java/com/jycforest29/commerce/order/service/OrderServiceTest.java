@@ -196,7 +196,6 @@ class OrderServiceTest {
         @Test
         void 동시에_2명이_재고가_0개인_아이템을_각각_99개와_1개씩_주문_취소한다() throws InterruptedException {
             init();
-
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
