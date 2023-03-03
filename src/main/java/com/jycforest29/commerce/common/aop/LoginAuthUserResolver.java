@@ -1,6 +1,8 @@
 package com.jycforest29.commerce.common.aop;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,6 +14,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 @RequiredArgsConstructor
 public class LoginAuthUserResolver implements HandlerMethodArgumentResolver {
+    Logger logger = LoggerFactory.getLogger(LoginAuthUserResolver.class);
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -25,6 +28,8 @@ public class LoginAuthUserResolver implements HandlerMethodArgumentResolver {
                                   WebDataBinderFactory binderFactory) throws Exception {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        logger.info("현재 SecurityContextHolder에 있는 유저: "+userDetails.getUsername());
+
         return userDetails.getUsername();
     }
 }

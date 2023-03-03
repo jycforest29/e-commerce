@@ -28,7 +28,6 @@ public class CartController {
 
     @GetMapping(value = "/cart")
     public ResponseEntity<CartResponseDto> getCartUnitList(@LoginAuthUser String username){
-        logger.info(String.valueOf(username));
         return ResponseEntity.status(HttpStatus.OK).body(cartService.getCartUnitList(username));
     }
 

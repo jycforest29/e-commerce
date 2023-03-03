@@ -1,5 +1,7 @@
 package com.jycforest29.commerce.cart.controller;
 
+import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
+import com.jycforest29.commerce.cart.domain.entity.Cart;
 import com.jycforest29.commerce.cart.service.CartService;
 import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
 import org.junit.jupiter.api.Test;
@@ -11,9 +13,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Import(LoginAuthUserResolver.class)
@@ -28,8 +33,12 @@ class CartControllerTest {
     @Test
     @WithMockUser(username = "test_user")
     void 로그인한_유저의_장바구니_목록을_가져온다() throws Exception {
-        given(cartService.getCartUnitList(anyString())).willReturn(null);
+        CartResponseDto cartResponseDto = CartResponseDto.from(new Cart());
+        given(cartService.getCartUnitList(anyString())).willReturn(cartResponseDto);
+
         mockMvc.perform(get("/cart"))
-                .andExpect(status().isOk());
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(".totalPrice", is(0)));
     }
 }
