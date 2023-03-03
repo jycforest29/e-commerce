@@ -7,6 +7,7 @@ import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
+import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
 import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
@@ -16,10 +17,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 class OrderServiceTest {
+    Logger logger = LoggerFactory.getLogger(OrderServiceTest.class);
     private static final int threadCnt = 2;
     @Autowired
     private OrderServiceImpl orderService;
@@ -113,7 +118,6 @@ class OrderServiceTest {
                     countDownLatch.countDown();
                 }
             });
-
             countDownLatch.await();
             //then
             assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
@@ -125,13 +129,13 @@ class OrderServiceTest {
                 Item.builder()
                         .name("test_item")
                         .price(10000)
-                        .number(1)
+                        .number(100)
                         .build()
         );
 
         CartUnit cartUnit = CartUnit.builder()
                 .item(item)
-                .number(1)
+                .number(99)
                 .build();
 
         void init(){
@@ -142,7 +146,7 @@ class OrderServiceTest {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
         CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
         @Test
-        void 동시에_2명이_재고가_1개인_아이템을_1명은_장바구니_전체_주문하기로_주문하고_다른_1명은_직접_주문하여_둘중_한명은_주문을_실패한다()
+        void 동시에_2명이_재고가_100개인_아이템을_1명은_장바구니_주문하기로_99개_주문하고_다른_1명은_직접_1개_주문해_모두_주문에_성공한다()
                 throws InterruptedException {
             init();
 
@@ -184,17 +188,35 @@ class OrderServiceTest {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
         CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
 
-        void init() throws InterruptedException {
-            orderService.makeOrder(item.getId(), 99, authUser.getId());
-            orderService.makeOrder(item.getId(), 1, otherUser.getId());
+        void authUser가_item_99개_주문한다(){
+            // authUser가 item 99개, otherUser가 item 1개 주문함.
+            OrderUnit orderUnit = OrderUnit.builder()
+                    .item(item)
+                    .number(99)
+                    .build();
+            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, Arrays.asList(orderUnit));
+            madeOrderRepository.save(madeOrder);
+            orderUnitRepository.save(orderUnit);
+        }
+
+        void otherUser가_item_1개_주문한다(){
+            OrderUnit orderUnit = OrderUnit.builder()
+                    .item(item)
+                    .number(1)
+                    .build();
+            MadeOrder madeOrder = MadeOrder.addOrderUnit(otherUser, Arrays.asList(orderUnit));
+            madeOrderRepository.save(madeOrder);
+            orderUnitRepository.save(orderUnit);
         }
 
         @Test
         void 동시에_2명이_재고가_0개인_아이템을_각각_99개와_1개씩_주문_취소한다() throws InterruptedException {
-            init();
+            authUser가_item_99개_주문한다();
+            otherUser가_item_1개_주문한다();
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
+                    logger.info("authUser가 주문한 주문번호"+madeOrder.getId().toString());
                     orderService.deleteOrder(madeOrder.getId(), authUser.getId());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -205,6 +227,7 @@ class OrderServiceTest {
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(otherUser).get(0);
+                    logger.info("otherUser가 주문한 주문번호"+madeOrder.getId().toString());
                     orderService.deleteOrder(madeOrder.getId(), otherUser.getId());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -217,7 +240,7 @@ class OrderServiceTest {
             assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(100);
         }
     }
-
+//
 //    @Test
 //    void 동시에_2명이_재고가_0개인_아이템을_1명은_1개를_주문취소하고_다른_1명은_1개_주문하여_주문에_성공하면_성공여부는_그때그때_다르다()
 //            throws InterruptedException {

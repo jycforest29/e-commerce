@@ -60,9 +60,9 @@ public class OrderServiceImpl implements OrderService{
             // Cart와 다르게 단방향 관계인 item의 메서드를 호출하는 이유는 Cart는 item에 영향을 주지않는 반면, OrderUnit은 영향을 줌
             logger.info(String.valueOf(item.getNumber())+"에서");
             orderUnit.getItem().decreaseItemNumber(number);
-            logger.info(number+"만큼 아이템의 수량 감소해서 현재 아이템의 수량은" +orderUnit.getItem().getNumber());
             itemRepository.save(item);
-
+            logger.info(number+"만큼 아이템의 수량 감소해서 현재 아이템의 수량은 "
+                    +itemRepository.findById(itemId).get().getNumber());
             // try에서 return 수행할 경우 finally 거쳐서 정상 종료됨.
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
@@ -94,11 +94,11 @@ public class OrderServiceImpl implements OrderService{
                 .map(s -> s.getItem().getId())
                 .collect(Collectors.toList());
 
-        while(redisLockRepository.lock(itemIdSetToLock) != null){
+        while(!redisLockRepository.lock(itemIdSetToLock)){
             Thread.sleep(100);
         }
         try{
-            logger.info(itemIdSetToLock.toString()+"에 대한 배치 락 구현");
+            logger.info(itemIdSetToLock.toString()+"에 대한 장바구니 락 구현");
             for(OrderUnit o : orderUnitList){
                 getValidateItemByNumber(o.getItem().getId(), o.getNumber());
             }
@@ -106,9 +106,11 @@ public class OrderServiceImpl implements OrderService{
             madeOrderRepository.save(madeOrder);
             orderUnitRepository.saveAll(orderUnitList);
             for(OrderUnit o : orderUnitList){
+                logger.info("현재 아이템의 db상 수량은 "+itemRepository.findById(o.getItem().getId()).get().getNumber());
                 logger.info(String.valueOf(o.getItem().getNumber())+"에서");
                 o.getItem().decreaseItemNumber(o.getNumber());
-                logger.info(o.getNumber()+"만큼 아이템의 수량 감소해서 현재 아이템의 수량은" +o.getItem().getNumber());
+                logger.info(o.getNumber()+"만큼 아이템의 수량 감소해서 현재 아이템의 수량은"
+                        +itemRepository.findById(o.getItem().getId()).get().getNumber());
                 itemRepository.save(o.getItem());
             }
             logger.info(String.valueOf("장바구니에 대한 전체 주문이 완료됨"));
@@ -153,13 +155,18 @@ public class OrderServiceImpl implements OrderService{
                 .map(s -> s.getItem().getId())
                 .collect(Collectors.toList());
 
-        while(redisLockRepository.lock(itemIdSetToLock) != null){
+        while(!redisLockRepository.lock(itemIdSetToLock)){
             Thread.sleep(100);
         }
         try{
             for(OrderUnit o : madeOrder.getOrderUnitList()){
+                logger.info("현재 아이템의 db상 수량은 "+itemRepository.findById(o.getItem().getId()).get().getNumber());
+                logger.info(String.valueOf(o.getItem().getNumber())+"에서");
                 o.getItem().increaseItemNumber(o.getNumber());
                 itemRepository.save(o.getItem());
+                logger.info(String.valueOf(o.getItem().getId()));
+                logger.info(o.getNumber()+"만큼 아이템의 수량 증가해서 현재 아이템의 수량은"
+                        +itemRepository.findById(o.getItem().getId()).get().getNumber());
             }
             // 연관관계 해제
             madeOrder.deleteOrder(authUser, orderUnitList);
@@ -169,7 +176,6 @@ public class OrderServiceImpl implements OrderService{
                             .map(s -> s.getId())
                             .collect(Collectors.toList())
             );
-
         }finally {
             redisLockRepository.unlock(itemIdSetToLock);
         }
