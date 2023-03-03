@@ -3,6 +3,7 @@ package com.jycforest29.commerce.order.service;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.cart.domain.repository.CartRepository;
 import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
+import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
@@ -216,7 +217,6 @@ class OrderServiceTest {
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
-                    logger.info("authUser가 주문한 주문번호"+madeOrder.getId().toString());
                     orderService.deleteOrder(madeOrder.getId(), authUser.getId());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -227,7 +227,6 @@ class OrderServiceTest {
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(otherUser).get(0);
-                    logger.info("otherUser가 주문한 주문번호"+madeOrder.getId().toString());
                     orderService.deleteOrder(madeOrder.getId(), otherUser.getId());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -240,47 +239,47 @@ class OrderServiceTest {
             assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(100);
         }
     }
-//
-//    @Test
-//    void 동시에_2명이_재고가_0개인_아이템을_1명은_1개를_주문취소하고_다른_1명은_1개_주문하여_주문에_성공하면_성공여부는_그때그때_다르다()
-//            throws InterruptedException {
-//        Item item = itemRepository.save(
-//                Item.builder()
-//                        .name("test_item")
-//                        .price(10000)
-//                        .number(0)
-//                        .build()
-//        );
-//        orderService.makeOrder(item.getId(), 1, authUser.getId());
-//
-//        // 고정된 스레드 풀이기에 순서가 보장되지 않음. 순서 보장을 위해선 newSingleThreadExecutor를 사용해 하나의 스레드만 생성해야 함.
-//        ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
-//        CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
-//
-//        executorService.submit(() -> {
-//            try{
-//                MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
-//                orderService.deleteOrder(madeOrder.getId(), authUser.getId());
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            } finally {
-//                countDownLatch.countDown();
-//            }
-//        });
-//        executorService.submit(() -> {
-//            try{
-//                orderService.makeOrder(item.getId(), 1, otherUser.getId());
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            } catch (CustomException e){
-//                System.out.println(e.getExceptionCode()+"발생");
-//            }
-//            finally {
-//                countDownLatch.countDown();
-//            }
-//        });
-//        countDownLatch.await();
-//        //then
-//        assertThat(itemRepository.findById(item.getId()).get().getNumber()).isLessThanOrEqualTo(1); // 항상 1이하
-//    }
+
+    @Test
+    void 동시에_2명이_재고가_0개인_아이템을_1명은_1개를_주문취소하고_다른_1명은_1개_주문하면_항상_재고가_1이하이다()
+            throws InterruptedException {
+        Item item = itemRepository.save(
+                Item.builder()
+                        .name("test_item")
+                        .price(10000)
+                        .number(0)
+                        .build()
+        );
+        orderService.makeOrder(item.getId(), 1, authUser.getId());
+
+        // 고정된 스레드 풀이기에 순서가 보장되지 않음. 순서 보장을 위해선 newSingleThreadExecutor를 사용해 하나의 스레드만 생성해야 함.
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
+        CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
+
+        executorService.submit(() -> {
+            try{
+                MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
+                orderService.deleteOrder(madeOrder.getId(), authUser.getId());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                countDownLatch.countDown();
+            }
+        });
+        executorService.submit(() -> {
+            try{
+                orderService.makeOrder(item.getId(), 1, otherUser.getId());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (CustomException e){
+                System.out.println(e.getExceptionCode()+"발생");
+            }
+            finally {
+                countDownLatch.countDown();
+            }
+        });
+        countDownLatch.await();
+        //then
+        assertThat(itemRepository.findById(item.getId()).get().getNumber()).isLessThanOrEqualTo(1); // 항상 1이하
+    }
 }
