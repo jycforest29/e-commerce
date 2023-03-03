@@ -7,7 +7,6 @@ import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepositor
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
 import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.service.ReviewServiceImpl;
-import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
