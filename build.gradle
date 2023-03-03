@@ -36,7 +36,7 @@ dependencies {
 	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.5'
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.5'
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.5'
-	// mysql
+	// jpa로 스프링부트와 mysql 연동
 	implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.30'
 	// websocket
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '2.7.6'

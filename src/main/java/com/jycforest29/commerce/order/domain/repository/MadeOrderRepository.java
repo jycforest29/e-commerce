@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface MadeOrderRepository extends JpaRepository<MadeOrder, Long> {
+    // AuthUser:MadeOrder N:1
     List<MadeOrder> findAllByAuthUserOrderByCreatedAtDesc(@Param("authUser") AuthUser authUser);
-
 }

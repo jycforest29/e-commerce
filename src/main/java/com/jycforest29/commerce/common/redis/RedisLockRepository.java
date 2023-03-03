@@ -1,8 +1,6 @@
 package com.jycforest29.commerce.common.redis;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,18 +9,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
 public class RedisLockRepository {
-    Logger logger = LoggerFactory.getLogger(RedisLockRepository.class);
     private final RedisTemplate<String, String> redisTemplate;
-
-//    public Boolean lock(Long key){
-//        return redisTemplate.opsForValue()
-//                .setIfAbsent(key.toString(), "lock", Duration.ofMillis(3_000));
-//    }
 
     // redis의 multi-exec을 사용해 배치 단위로 커맨드 실행.
     // -> @Transactional 사용함
@@ -36,40 +31,49 @@ public class RedisLockRepository {
         return redisTemplate.execute(new SessionCallback<Boolean>() {
                     @Override
                     public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
-                        operations.multi();
-                        for(Long k : key){
-                            if(operations.hasKey((K) k)){
-                                return false;
-                            }
-                            operations.opsForValue().set((K) k.toString(), (V) "lock",
-                                    Duration.ofMillis(3_000));
+                        Map<K, V> keyMap = new HashMap<>();
+                        key.stream().forEach(s -> keyMap.put((K) s.toString(), (V) "lock"));
+                        if(!operations.opsForValue().multiSetIfAbsent(keyMap)){
+                            return false;
                         }
+                        operations.multi();
+                        key.stream().forEach(s -> operations.expire((K) s.toString(), Duration.ofMillis(3_000)));
                         operations.exec();
-                        logger.info(key.toString()+"lock 되어있지 않아 설정함");
                         return true;
+//                        operations.multi();
+//                        for(K k : keyToK){
+//                            // operations.opsForValue()를 통해 레디스의 string 객체에 접근 가능함
+//                            operations.opsForValue().setIfAbsent(k, (V) "lock", Duration.ofMillis(3_000));
+//                        }
+//                        // 한번 watch를 선언한 key는 exec가 실행되면 즉시 unwatch 상태로 변경됨
+//                        // 각각의 키별로 unwatch를 직접 선언할 수 없음 주의
+//                        operations.exec();
                     }
                 });
-    }
-
-    public Boolean unlock(Long key){
-        return redisTemplate.delete(key.toString());
     }
 
     @Transactional
     public Boolean unlock(List<Long> key){
-        return redisTemplate
-                .execute(new SessionCallback<Boolean>() {
-                    @Override
-                    public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
-                        operations.multi();
-                        for(Long k : key){
-                            logger.info(k.toString()+"원소에 대한 배치 락 해제");
-                            operations.delete((K) k.toString());
-                        }
-                        operations.exec();
-                        return true;
-                    }
-                });
+        // delete 사용시 O(N), unlink 사용시 O(1)(즉 key의 개수에 상관 없음)
+        // unlink : 실제로는 keyspace에서 key를 제거하고 메모리 상의 삭제는 다른 스레드에서 비동기로 이루어짐
+        redisTemplate.unlink(key.stream()
+                .map(s -> s.toString())
+                .collect(Collectors.toList())
+        );
+        return true;
+//        return redisTemplate
+//                .execute(new SessionCallback<Boolean>() {
+//                    @Override
+//                    public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
+//                        operations.multi();
+//                        for(Long k : key){
+//                            logger.info(k.toString()+"원소에 대한 배치 락 해제");
+//                            operations.delete((K) k.toString());
+//                        }
+//                        operations.exec();
+//                        return true;
+//                    }
+//                });
     }
 }
 

@@ -1,0 +1,17 @@
+## mysql 서버와 스프링부트 어플리케이션 서버를 관리하기 위해 작성
+#version: "3" # 사용할 도커 컴포즈의 버전 지정
+#services:
+#  databases:
+#    image: mysql
+#    container_name: mysql-container
+#    environment: # 해당 이미지가 사용할 환경 변수 설정
+#      MYSQL_DATABASE: commercedb
+#      MYSQL_USER: root
+#      MYSQL_PASSWORD: 1234
+#    ports:
+#      # 호스트에서 접속할 외부 포트 : 도커 내부의 실제 포트(도커 이미지들간의 통신에 사용)
+#      # 로컬 mysql이 3306번 포트를 사용하기에 3307로 설정
+#      - '3307:3307'
+#    command:
+#      - '--character-set-server=utf8mb4'
+#      - '--collation-server=utf8mb4_unicode_ci'

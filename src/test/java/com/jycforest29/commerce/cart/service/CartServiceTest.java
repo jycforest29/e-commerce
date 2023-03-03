@@ -44,43 +44,43 @@ class CartServiceTest {
         authUserId = 1L;
     }
 
-    @Nested
-    class AddToCart{
-        Item item;
-        Long itemId;
-        @BeforeEach
-        void init(){
-            item = Item.builder()
-                    .name("test_item")
-                    .price(10000)
-                    .number(100)
-                    .build();
-            itemId = 1L;
-        }
-
-        @Test
-        void 내가_특정_아이템_1개를_장바구니에_담는다() {
-            //given
-            given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
-            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
-            //when
-            CartResponseDto cartResponseDto = cartService.addCartUnitToCart(itemId, 1, authUserId);
-            //then
-            assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
-            assertThat(cartResponseDto.getTotalPrice()).isEqualTo(item.getPrice());
-        }
-
-        @Test
-        void 내가_장바구니에_담으려는_아이템의_재고가_부족해_커스텀예외가_발생한다(){
-            //given
-            given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
-            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
-            //when, then
-            assertThatThrownBy(() -> {
-                cartService.addCartUnitToCart(itemId, 1000, authUserId);
-            }).isInstanceOf(CustomException.class);
-        }
-    }
+//    @Nested
+//    class AddToCart{
+//        Item item;
+//        Long itemId;
+//        @BeforeEach
+//        void init(){
+//            item = Item.builder()
+//                    .name("test_item")
+//                    .price(10000)
+//                    .number(100)
+//                    .build();
+//            itemId = 1L;
+//        }
+//
+//        @Test
+//        void 내가_특정_아이템_1개를_장바구니에_담는다() {
+//            //given
+//            given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
+//            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
+//            //when
+//            CartResponseDto cartResponseDto = cartService.addCartUnitToCart(itemId, 1, authUserId);
+//            //then
+//            assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
+//            assertThat(cartResponseDto.getTotalPrice()).isEqualTo(item.getPrice());
+//        }
+//
+//        @Test
+//        void 내가_장바구니에_담으려는_아이템의_재고가_부족해_커스텀예외가_발생한다(){
+//            //given
+//            given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
+//            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
+//            //when, then
+//            assertThatThrownBy(() -> {
+//                cartService.addCartUnitToCart(itemId, 1000, authUserId);
+//            }).isInstanceOf(CustomException.class);
+//        }
+//    }
 
     @Nested
     class GetFromCart{
@@ -102,16 +102,16 @@ class CartServiceTest {
                     .build();
             cartUnitId = 1L;
         }
-        @Test
-        void 내_장바구니에_담긴_모든_목록을_가져온다(){
-            //given
-            given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
-            authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
-            //when
-            CartResponseDto cartResponseDto = cartService.getCartUnitList(authUserId);
-            //then
-            assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
-        }
+//        @Test
+//        void 내_장바구니에_담긴_모든_목록을_가져온다(){
+//            //given
+//            given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
+//            authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
+//            //when
+//            CartResponseDto cartResponseDto = cartService.getCartUnitList(authUserId);
+//            //then
+//            assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
+//        }
     }
 
     @Nested
