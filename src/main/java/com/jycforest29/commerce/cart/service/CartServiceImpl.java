@@ -40,9 +40,9 @@ public class CartServiceImpl implements CartService{
     @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public CartResponseDto addCartUnitToCart(Long itemId, int number, Long authUserId) {
+    public CartResponseDto addCartUnitToCart(Long itemId, int number, String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(authUserId).getCart();
+        Cart cart = getAuthUser(username).getCart();
         Item item = getValidateItemByNumber(itemId, number);
 
         // cartUnit 생성
@@ -62,9 +62,9 @@ public class CartServiceImpl implements CartService{
     @Cacheable(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
-    public CartResponseDto getCartUnitList(Long authUserId) {
+    public CartResponseDto getCartUnitList(String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(authUserId).getCart();
+        Cart cart = getAuthUser(username).getCart();
         return CartResponseDto.from(cart);
     }
 
@@ -134,6 +134,12 @@ public class CartServiceImpl implements CartService{
     @Cacheable(value = "authUser", key = "#authUserId", cacheManager = "ehCacheManager")
     public AuthUser getAuthUser(Long authUserId){
         AuthUser authUser = authUserRepository.findById(authUserId)
+                .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
+        return authUser;
+    }
+
+    public AuthUser getAuthUser(String username){
+        AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
         return authUser;
     }

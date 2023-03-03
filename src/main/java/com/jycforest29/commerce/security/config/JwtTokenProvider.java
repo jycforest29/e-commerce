@@ -3,22 +3,29 @@ package com.jycforest29.commerce.security.config;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
-
 @Component
-@RequiredArgsConstructor
 // creation이나 validation에 대한 Jwt 연산 수행함
 public class JwtTokenProvider {
-
     public static long ACCESS_TOKEN_EXISTS = 30 * 60 * 1000; // 접근 토큰의 유효기간 30분. 30분 지나면 자동 로그아웃 됨
-    @Value("${jwt.secret}")
+    @Value("\\${jwt.secret}")
     private String secret;
+
+//    @PostConstruct
+//    protected void init() {
+//        secret = Base64.getEncoder().encodeToString(secret.getBytes());
+//    }
 
     //jwt token에서 정보를 검색하려면 비밀키가 필요함
     //Claim이란? 사용자에 대한 프로퍼티나 속성을 의미. jwt 이 Claim을 JSON을 이용해 정의함.

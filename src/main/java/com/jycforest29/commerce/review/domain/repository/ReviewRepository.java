@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 // dao VS repository : dao는 sql 수준에서 db와 맵핑, repository는 객체 수준에서 db와 맵핑.
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+    // Review:Item N:1
     List<Review> findAllByItem(Item item);
 
     // @Modifying 은 @Query를 통해 작성된 insert, update, delete (select 제외) 쿼리에서 사용됨
