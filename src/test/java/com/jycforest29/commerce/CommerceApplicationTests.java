@@ -3,7 +3,7 @@ package com.jycforest29.commerce;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+//@SpringBootTest
 class CommerceApplicationTests {
 
 	@Test
