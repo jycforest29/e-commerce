@@ -23,6 +23,8 @@ public class CartUnit {
     private Cart cart;
 
     private int number;
+    @Setter
+    private Boolean available = true;
 
     @Builder
     public CartUnit(Item item, int number){

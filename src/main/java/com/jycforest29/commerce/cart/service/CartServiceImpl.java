@@ -14,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +35,7 @@ public class CartServiceImpl implements CartService{
         // 일단 담고, order 패키지에서 품절시 pub/sub 방식으로 모든 cart의 해당 item 삭제
         // 즉 여기서 이 클래스에서 더 해줄일은 없음.
 
-    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
+//    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto addCartUnitToCart(Long itemId, int number, String username) {
@@ -46,6 +44,7 @@ public class CartServiceImpl implements CartService{
         Item item = getValidateItemByNumber(itemId, number);
 
         // cartUnit 생성
+        // 처음 카트에 담을 때는 항상 주문이 가능한 상태여야 담을 수 있음
         CartUnit cartUnit = CartUnit.builder()
                 .item(item)
                 .number(number)
@@ -59,17 +58,34 @@ public class CartServiceImpl implements CartService{
         return CartResponseDto.from(cart);
     }
 
-    @Cacheable(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
+//    @Cacheable(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
     public CartResponseDto getCartUnitList(String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Cart cart = getAuthUser(username).getCart();
+
+        // 카트 내 아이템들이 주문 가능한지 확인하는 available 변수의 상태를 바꾸기 위해서는
+            // 카트를 가져오는 해당 메서드에서 현재 로그인한 유저의 모든 카트 아이템에 대해 확인하거나(이 방식 사용함)
+                // 장점: - 요청이 들어오는 스레드들의 개수만큼 메서드 실행됨. 시간복잡도는 대략 아이템 종류 * 유저 인원수
+                //      - 어차피 장바구니에서 주문 페이지로 넘어갈 때 다시 api가 호출되므로 락을 걸 필요는 없을듯.(주문시에는 락으로 확인)
+            // order 패키지에서 아이템의 주문이 수행되어 수량이 0이 되면 해당 아이템이 담긴 카트 유닛의 available을 변경 할 수 있음.
+                // 장점: - 일종의 pub/sub 방식으로 이해가 직관적임
+                // 단점: - cartUnit과 item은 다대일 단방향 매핑으로 설계했으므로 이를 위해서는 다대일 양방향으로 수정 필요.
+                //      - cartUnit에 담긴 아이템의 개수가 0일때만 체크가 됨. 0보다 클때도 체크를 하기 위해선 백그라운드로 지속적으로
+                //          동작을 수행해야 할 것 같은데 크게 비효율적임. 이를 위해 배치를 사용해도 접근하는 모든 스레드들에 대해
+                //          수행되므로 오버헤드가 클 것 같음.
+
+        // stream의 forEach는 thread-safe 하지 않으므로 내부에서 객체를 다루지 않음.
+        // 따라서 일반 forLoop 사용함
+        cart.getCartUnitList().forEach(s -> {
+            s.setAvailable(s.getItem().getNumber() > s.getNumber() ? true : false);
+        });
         return CartResponseDto.from(cart);
     }
 
     // 장바구니에서 아이템을 삭제하는 것은 아이템에 아무런 영향을 주지 않음
-    @CacheEvict(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
+//    @CacheEvict(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto deleteCartAll(Long authUserId) {
@@ -87,7 +103,7 @@ public class CartServiceImpl implements CartService{
     }
 
     // 장바구니에서 아이템을 삭제하는 것은 아이템에 아무런 영향을 주지 않음
-    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
+//    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto deleteCartUnit(Long cartUnitId, Long authUserId){
