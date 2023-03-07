@@ -3,7 +3,6 @@ package com.jycforest29.commerce.cart.service;
 import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
-import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
@@ -19,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,6 +86,7 @@ class CartServiceTest {
         Long itemId;
         CartUnit cartUnit;
         Long cartUnitId;
+
         @BeforeEach
         void init(){
             item = Item.builder()
@@ -96,21 +95,52 @@ class CartServiceTest {
                     .number(100)
                     .build();
             itemId = 1L;
-            cartUnit  = CartUnit.builder()
-                    .item(item)
-                    .number(1)
-                    .build();
             cartUnitId = 1L;
         }
-//        @Test
-//        void 내_장바구니에_담긴_모든_목록을_가져온다(){
-//            //given
-//            given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
-//            authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
-//            //when
-//            CartResponseDto cartResponseDto = cartService.getCartUnitList(authUserId);
-//            //then
-//            assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
+
+//        @Nested
+//        class OrderAvailable{
+//            @BeforeEach
+//            void init(){
+//                cartUnit = CartUnit.builder()
+//                        .item(item)
+//                        .number(1)
+//                        .build();
+//            }
+//            @Test
+//            void 내_장바구니에_담긴_모든_목록을_가져온다(){
+//                //given
+//                given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
+//                authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
+//                //when
+//                CartResponseDto cartResponseDto = cartService.getCartUnitList(authUserId);
+//                //then
+//                assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
+//                assertThat(cartResponseDto.getCartUnitResponseDtoList().get(0).isAvailable()).isEqualTo(true);
+//            }
+//        }
+
+
+//        @Nested
+//        class OrderNotAvailable{
+//            @BeforeEach
+//            void init(){
+//                cartUnit = CartUnit.builder()
+//                        .item(item)
+//                        .number(2)
+//                        .build();
+//            }
+//            @Test
+//            void 내_장바구니에_담긴_모든_목록을_가져온다(){
+//                //given
+//                given(authUserRepository.findById(authUserId)).willReturn(Optional.of(authUser));
+//                authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
+//                //when
+//                CartResponseDto cartResponseDto = cartService.getCartUnitList(authUserId);
+//                //then
+//                assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
+//                assertThat(cartResponseDto.getCartUnitResponseDtoList().get(0).isAvailable()).isEqualTo(false);
+//            }
 //        }
     }
 
