@@ -16,11 +16,11 @@ services:
       - "--collation-server=utf8mb4_unicode_ci"
     networks:
       - test_network
-    healthcheck: # db 생성 후 app_for_test 컨테이너 생성하도록
-      test: ["CMD", "mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD"]
-      interval: 10s
-      timeout: 2s
-      retries: 100
+#    healthcheck: # db 생성 후 app_for_test 컨테이너 생성하도록
+#      test: ["CMD", "mysqladmin ping -h 127.0.0.1 -u root"]
+#      interval: 10s
+#      timeout: 2s
+#      retries: 100
 
   redis:
     image: redis
@@ -31,11 +31,11 @@ services:
       - "6379:6379"
     networks:
       - test_network
-    healthcheck: # db 생성 후 app_for_test 컨테이너 생성하도록
-      test: ["CMD", "redis-cli ping"]
-      interval: 10s
-      timeout: 2s
-      retries: 100
+#    healthcheck: # db 생성 후 app_for_test 컨테이너 생성하도록
+#      test: ["CMD", "redis-cli -h 127.0.0.1 -p 6379 ping"]
+#      interval: 10s
+#      timeout: 2s
+#      retries: 100
 
   application:
     container_name: app_for_test
@@ -48,10 +48,12 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      databases:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - databases
+      - redis
+#      databases:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
     networks:
       - test_network
 
