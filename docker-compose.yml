@@ -48,12 +48,10 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - databases
-      - redis
-#      databases:
-#        condition: service_healthy
-#      redis:
-#        condition: service_healthy
+      databases:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - test_network
 
