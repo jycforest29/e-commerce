@@ -13,12 +13,14 @@ public class CartUnitResponseDto {
     private String name;
     private int orderPrice;
     private int number;
+    private boolean available;
 
     public static CartUnitResponseDto from(CartUnit cartUnit){
         return CartUnitResponseDto.builder()
                 .name(cartUnit.getItem().getName())
                 .orderPrice(cartUnit.getItem().getPrice() )
                 .number(cartUnit.getNumber())
+                .available(cartUnit.getAvailable())
                 .build();
     }
 }
