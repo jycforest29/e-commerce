@@ -32,7 +32,7 @@ services:
     networks:
       - test_network
 #    healthcheck: # db 생성 후 app_for_test 컨테이너 생성하도록
-#      test: ["CMD", "redis-cli -h 127.0.0.1 -p 6379 ping"]
+#      test: ["CMD", "redis-cli ping"]
 #      interval: 10s
 #      timeout: 2s
 #      retries: 100

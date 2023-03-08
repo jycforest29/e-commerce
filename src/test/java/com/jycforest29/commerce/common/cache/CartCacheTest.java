@@ -37,7 +37,7 @@ public class CartCacheTest extends DockerComposeTestContainer {
     private CartServiceImpl cartService;
 
     @BeforeAll
-    static void init(){
+    static void setContainer(){
         dockerComposeContainer.start();
     }
 

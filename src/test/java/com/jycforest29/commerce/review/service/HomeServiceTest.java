@@ -32,10 +32,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-@ActiveProfiles("test") // application-test.yml을 사용하도록 세팅함
-@Testcontainers
-// 설정한 프로퍼티에 따라 데이터소스가 적용되므로 none을 사용하여 docker mysql 사용
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 //@ContextConfiguration(initializers = HomeServiceTest.ContainerPropertyInitializer.class) // Configuration custom
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
