@@ -21,14 +21,14 @@ public class CartController {
     @PostMapping(value = "{itemId}/add")
     public ResponseEntity<CartResponseDto> addCartUnitToCart(@PathVariable("itemId") Long itemId,
                                                              @RequestParam @Min(1) int number,
-                                                             @LoginAuthUser String username)
+                                                             @LoginAuthUser Long authUserId)
             throws InterruptedException {
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.addCartUnitToCart(itemId, number, username));
+        return ResponseEntity.status(HttpStatus.OK).body(cartService.addCartUnitToCart(itemId, number, authUserId));
     }
 
     @GetMapping(value = "/cart")
-    public ResponseEntity<CartResponseDto> getCartUnitList(@LoginAuthUser String username){
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.getCartUnitList(username));
+    public ResponseEntity<CartResponseDto> getCartUnitList(@LoginAuthUser Long authUserId){
+        return ResponseEntity.status(HttpStatus.OK).body(cartService.getCartUnitList(authUserId));
     }
 
     @DeleteMapping(value = "/cart")

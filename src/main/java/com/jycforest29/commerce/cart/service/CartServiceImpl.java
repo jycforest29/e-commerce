@@ -38,9 +38,9 @@ public class CartServiceImpl implements CartService{
 //    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public CartResponseDto addCartUnitToCart(Long itemId, int number, String username) {
+    public CartResponseDto addCartUnitToCart(Long itemId, int number, Long authUserId) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(username).getCart();
+        Cart cart = getAuthUser(authUserId).getCart();
         Item item = getValidateItemByNumber(itemId, number);
 
         // cartUnit 생성
@@ -61,9 +61,9 @@ public class CartServiceImpl implements CartService{
 //    @Cacheable(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
-    public CartResponseDto getCartUnitList(String username) {
+    public CartResponseDto getCartUnitList(Long authUserId) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(username).getCart();
+        Cart cart = getAuthUser(authUserId).getCart();
 
         // 카트 내 아이템들이 주문 가능한지 확인하는 available 변수의 상태를 바꾸기 위해서는
             // 카트를 가져오는 해당 메서드에서 현재 로그인한 유저의 모든 카트 아이템에 대해 확인하거나(이 방식 사용함)
@@ -147,15 +147,10 @@ public class CartServiceImpl implements CartService{
         return item;
     }
 
+
     @Cacheable(value = "authUser", key = "#authUserId", cacheManager = "ehCacheManager")
     public AuthUser getAuthUser(Long authUserId){
         AuthUser authUser = authUserRepository.findById(authUserId)
-                .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
-        return authUser;
-    }
-
-    public AuthUser getAuthUser(String username){
-        AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
         return authUser;
     }

@@ -1,6 +1,5 @@
 package com.jycforest29.commerce.common.exception;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
