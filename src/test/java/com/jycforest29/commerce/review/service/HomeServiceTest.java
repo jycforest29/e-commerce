@@ -48,10 +48,7 @@ import static org.mockito.BDDMockito.given;
 //@ContextConfiguration(initializers = HomeServiceTest.ContainerPropertyInitializer.class) // Configuration custom
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-class HomeServiceTest {
-    @Container
-    static final DockerComposeContainer dockerComposeContainer;
-
+class HomeServiceTest extends DockerComposeTestContainer{
 //    public static class ContainerPropertyInitializer
 //            implements ApplicationContextInitializer<ConfigurableApplicationContext>{
 //
@@ -63,15 +60,6 @@ class HomeServiceTest {
 //        }
 //    }
 
-    static{
-        dockerComposeContainer = new DockerComposeContainer(
-                new File("src/test/resources/docker-compose-test.yml"))
-                .withExposedService("databases_1", 3306, Wait.forListeningPort())
-                .withExposedService("redis_1", 6379, Wait.forListeningPort())
-                .withLocalCompose(true);
-        dockerComposeContainer.start();
-        System.out.println(dockerComposeContainer.getServiceHost("databases_1", 3307));
-    }
     @MockBean
     private AuthUserRepository authUserRepository;
     @MockBean
@@ -93,6 +81,7 @@ class HomeServiceTest {
 
     @BeforeEach
     void init(){
+        dockerComposeContainer.start();
         item = Item.builder()
                 .name("test_item")
                 .price(10000)
