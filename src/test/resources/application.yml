@@ -1,6 +1,4 @@
 spring:
   datasource:
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
-    url: jdbc:mysql://databases:3306/commercedb
-    username: root
-    password: 1234
+    url: jdbc:tc:mysql://localhost:3307/commercedb

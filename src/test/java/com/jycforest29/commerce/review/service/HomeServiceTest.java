@@ -6,19 +6,30 @@ import com.jycforest29.commerce.review.domain.entity.ReviewLikeUnit;
 import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepository;
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
 import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import org.junit.ClassRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.File;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -30,9 +41,37 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
+@ActiveProfiles("test") // application-test.yml을 사용하도록 세팅함
+@Testcontainers
+// 설정한 프로퍼티에 따라 데이터소스가 적용되므로 none을 사용하여 docker mysql 사용
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+//@ContextConfiguration(initializers = HomeServiceTest.ContainerPropertyInitializer.class) // Configuration custom
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 class HomeServiceTest {
+    @Container
+    static final DockerComposeContainer dockerComposeContainer;
+
+//    public static class ContainerPropertyInitializer
+//            implements ApplicationContextInitializer<ConfigurableApplicationContext>{
+//
+//        @Override
+//        public void initialize(ConfigurableApplicationContext applicationContext) {
+//            TestPropertyValues.of(dockerComposeContainer
+//                            .getServiceHost("databases_1", 3306)+"= databases")
+//                    .applyTo(applicationContext);
+//        }
+//    }
+
+    static{
+        dockerComposeContainer = new DockerComposeContainer(
+                new File("src/test/resources/docker-compose-test.yml"))
+                .withExposedService("databases_1", 3306, Wait.forListeningPort())
+                .withExposedService("redis_1", 6379, Wait.forListeningPort())
+                .withLocalCompose(true);
+        dockerComposeContainer.start();
+        System.out.println(dockerComposeContainer.getServiceHost("databases_1", 3307));
+    }
     @MockBean
     private AuthUserRepository authUserRepository;
     @MockBean

@@ -49,13 +49,15 @@ dependencies {
 	implementation 'org.hibernate:hibernate-ehcache:5.6.5.Final'
 	implementation group: 'net.sf.ehcache', name: 'ehcache', version: '2.10.9.2'
 	// log
-	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.0'
-	testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.0'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-logging', version: '2.7.0'
 	// final 클래스, static 메서드 모킹 위해 필요
 	testImplementation group: 'org.mockito', name: 'mockito-inline', version: '5.1.1'
 	// json
 	implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.7.0'
+	// test container
+	testImplementation group: 'org.testcontainers', name: 'testcontainers', version: '1.17.6'
+	testImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: '1.17.6'
+	testImplementation group: 'org.testcontainers', name: 'mysql', version: '1.17.6'
 	// kafka
 //	implementation group: 'org.apache.kafka', name: 'kafka_2.13', version: '3.4.0'
 //	implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '3.4.0'
