@@ -52,9 +52,6 @@ dependencies {
 	// lombok
 	compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
 	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
-	// lombok - test 환경에서 slf4j를 사용하기 위해 필요
-	testCompileOnly 'org.projectlombok:lombok'
-	testAnnotationProcessor 'org.projectlombok:lombok'
 	// security
 	testImplementation group: 'org.springframework.security', name: 'spring-security-test', version: '5.7.5'
 	// jwt

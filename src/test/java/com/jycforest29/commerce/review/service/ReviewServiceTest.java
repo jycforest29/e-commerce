@@ -13,6 +13,7 @@ import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
+@Slf4j
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
     @Mock
@@ -99,6 +101,7 @@ class ReviewServiceTest {
 
         @Test
         void 클릭한_아이템의_모든_리뷰가_리뷰의_좋아요개수_기준으로_내림차순_정렬되어_리턴된다(){
+            log.info("클릭한_아이템의_모든_리뷰가_리뷰의_좋아요개수_기준으로_내림차순_정렬되어_리턴된다 로그");
             // given
             given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
             given(reviewRepository.findAllByItem(item)).willReturn(Arrays.asList(review, moreLikedReview));
