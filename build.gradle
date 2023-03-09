@@ -59,6 +59,9 @@ dependencies {
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.5'
 	// final 클래스, static 메서드 모킹 위해 필요
 	testImplementation group: 'org.mockito', name: 'mockito-inline', version: '5.1.1'
+	// lombok - test 환경에서 slf4j를 사용하기 위해 필요
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
 	// test container
 	testImplementation group: 'org.testcontainers', name: 'testcontainers', version: '1.17.6'
 	testImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: '1.17.6'
