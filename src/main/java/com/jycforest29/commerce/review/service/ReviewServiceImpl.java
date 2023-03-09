@@ -14,6 +14,7 @@ import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ReviewServiceImpl implements ReviewService{
@@ -36,6 +38,7 @@ public class ReviewServiceImpl implements ReviewService{
     @Transactional(readOnly = true)
     @Override
     public List<ReviewResponseDto> getReviewListByItem(Long itemId) {
+        log.info("getReviewListByItem()가 호출됨");
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Item item = getItem(itemId);
 

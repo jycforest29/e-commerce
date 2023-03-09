@@ -15,6 +15,7 @@ import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,10 +25,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class OrderServiceImpl implements OrderService{
-    Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
     private final MadeOrderRepository madeOrderRepository;
     private final OrderUnitRepository orderUnitRepository;
     private final ItemRepository itemRepository;
@@ -37,6 +38,7 @@ public class OrderServiceImpl implements OrderService{
     @Transactional
     @Override
     public MadeOrderResponseDto makeOrder(Long itemId, int number, Long authUserId) throws InterruptedException {
+        log.info("makeOrder()가 호출되었음 ");
         // 아이템 한 종류에 대해서 주문하므로 itemId를 기준으로 락을 걸어줌
         while(!redisLockRepository.lock(List.of(itemId))){
             Thread.sleep(100);
@@ -58,17 +60,17 @@ public class OrderServiceImpl implements OrderService{
             orderUnitRepository.save(orderUnit);
 
             // Cart와 다르게 단방향 관계인 item의 메서드를 호출하는 이유는 Cart는 item에 영향을 주지않는 반면, OrderUnit은 영향을 줌
-            logger.info("전: "+item.getNumber());
-            logger.info("전(db): "+itemRepository.findById(itemId).get().getNumber());
+            log.info("전: "+item.getNumber());
+            log.info("전(db): "+itemRepository.findById(itemId).get().getNumber());
             item.decreaseItemNumber(number);
             itemRepository.save(item);
-            logger.info("후: " +item.getNumber()+"(-"+number+")");
-            logger.info("후(db): "+itemRepository.findById(itemId).get().getNumber());
+            log.info("후: " +item.getNumber()+"(-"+number+")");
+            log.info("후(db): "+itemRepository.findById(itemId).get().getNumber());
             // try에서 return 수행할 경우 finally 거쳐서 정상 종료됨.
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
             redisLockRepository.unlock(List.of(itemId));
-            logger.info("연관관계 해제");
+            log.info("연관관계 해제");
         }
     }
 
@@ -108,17 +110,17 @@ public class OrderServiceImpl implements OrderService{
             orderUnitRepository.saveAll(orderUnitList);
             for(OrderUnit o : orderUnitList){
                 Item item = o.getItem();
-                logger.info("전: "+item.getNumber());
-                logger.info("전(db): "+itemRepository.findById(item.getId()).get().getNumber());
+                log.info("전: "+item.getNumber());
+                log.info("전(db): "+itemRepository.findById(item.getId()).get().getNumber());
                 item.decreaseItemNumber(o.getNumber());
                 itemRepository.save(item);
-                logger.info("후: " +item.getNumber()+"(-"+o.getNumber()+")");
-                logger.info("후(db): "+itemRepository.findById(item.getId()).get().getNumber());
+                log.info("후: " +item.getNumber()+"(-"+o.getNumber()+")");
+                log.info("후(db): "+itemRepository.findById(item.getId()).get().getNumber());
             }
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
             redisLockRepository.unlock(itemIdSetToLock);
-            logger.info("연관관계 해제");
+            log.info("연관관계 해제");
         }
     }
 
@@ -164,12 +166,12 @@ public class OrderServiceImpl implements OrderService{
             for(OrderUnit o : madeOrder.getOrderUnitList()){
                 Item item = itemRepository.findById(o.getItem().getId())
                         .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
-                logger.info("전: "+item.getNumber());
-                logger.info("전(db): "+item.getId()+", "+itemRepository.findById(item.getId()).get().getNumber());
+                log.info("전: "+item.getNumber());
+                log.info("전(db): "+item.getId()+", "+itemRepository.findById(item.getId()).get().getNumber());
                 item.increaseItemNumber(o.getNumber());
                 itemRepository.save(item);
-                logger.info("후: " +item.getNumber()+"(+"+o.getNumber()+")");
-                logger.info("후(db): "+item.getId()+", "+itemRepository.findById(item.getId()).get().getNumber());
+                log.info("후: " +item.getNumber()+"(+"+o.getNumber()+")");
+                log.info("후(db): "+item.getId()+", "+itemRepository.findById(item.getId()).get().getNumber());
             }
             // 연관관계 해제
             madeOrder.deleteOrder(authUser, orderUnitList);
@@ -181,7 +183,7 @@ public class OrderServiceImpl implements OrderService{
             );
         }finally {
             redisLockRepository.unlock(itemIdSetToLock);
-            logger.info("연관관계 해제");
+            log.info("연관관계 해제");
         }
     }
 
