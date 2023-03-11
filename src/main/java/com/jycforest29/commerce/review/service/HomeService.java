@@ -5,5 +5,5 @@ import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import java.util.List;
 
 public interface HomeService {
-    List<ReviewResponseDto> getHomeReviewList(final Long authUserId);
+    List<ReviewResponseDto> getHomeReviewList(final String username);
 }

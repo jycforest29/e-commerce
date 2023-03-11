@@ -39,7 +39,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     // 따라서 UserDetails를 상속받는 User를 만들어야 함.
                     SecurityContextHolder.getContext().setAuthentication(authentication); // 유저 인증됨
                 }
-                filterChain.doFilter(request, response);
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("헤더에 access token이 없음");
             } catch (ExpiredJwtException e) {
@@ -48,5 +47,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         } else {
             logger.warn("Bearer 형식이 아님");
         }
+        filterChain.doFilter(request, response);
     }
 }

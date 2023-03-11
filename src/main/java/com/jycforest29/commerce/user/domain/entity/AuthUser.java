@@ -5,17 +5,17 @@ import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.domain.entity.ReviewLikeUnit;
 import com.jycforest29.commerce.user.domain.enums.Grade;
-import lombok.*;
+import com.jycforest29.commerce.user.domain.enums.Role;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -31,15 +31,17 @@ public class AuthUser implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-//    private List<String> roleList = new ArrayList<>();
+    // 스프링 시큐리티에서 Authorities와 Role은 인가된 사용자들에게 부여된 권한을 표현하는데 사용됨
+    // Authorities는 작명 규칙은 따로 존재하지 않음
+    // Role은 여러 Authorities를 포함할 수 있고 prefix에 반드시 'ROLE_'이 필요한 작명 규칙을 가짐
+    @Column(nullable = false)
+    private Role role = Role.USER;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-//        Collection<GrantedAuthority> authorities = roleList.stream()
-//                .map(role -> new SimpleGrantedAuthority(username))
-//                .collect(Collectors.toList());
-
-        return null;
+        Set<GrantedAuthority> roles = new HashSet<>();
+        roles.add(new SimpleGrantedAuthority(role.getValue()));
+        return roles;
     }
 
     @Column(unique = true, nullable = false)

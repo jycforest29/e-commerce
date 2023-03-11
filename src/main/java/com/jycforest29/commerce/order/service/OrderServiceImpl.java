@@ -16,8 +16,6 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,16 +36,16 @@ public class OrderServiceImpl implements OrderService{
     @Transactional
     @Override
     public MadeOrderResponseDto makeOrder(Long itemId, int number, Long authUserId) throws InterruptedException {
-        log.info("makeOrder()가 호출되었음 ");
+//        Thread.sleep(100);
         // 아이템 한 종류에 대해서 주문하므로 itemId를 기준으로 락을 걸어줌
         while(!redisLockRepository.lock(List.of(itemId))){
             Thread.sleep(100);
         }
         try{
-            // 엔티티 가져옴(유효성 검증은 컨트롤러에서 이미 완료함)
-            AuthUser authUser = getAuthUser(authUserId);
             // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
             Item item = getValidateItemByNumber(itemId, number);
+            // 엔티티 가져옴(유효성 검증은 컨트롤러에서 이미 완료함)
+            AuthUser authUser = getAuthUser(authUserId);
             OrderUnit orderUnit = OrderUnit.builder()
                     .item(item)
                     .number(number)
@@ -63,7 +61,7 @@ public class OrderServiceImpl implements OrderService{
             log.info("전: "+item.getNumber());
             log.info("전(db): "+itemRepository.findById(itemId).get().getNumber());
             item.decreaseItemNumber(number);
-            itemRepository.save(item);
+            itemRepository.saveAndFlush(item);
             log.info("후: " +item.getNumber()+"(-"+number+")");
             log.info("후(db): "+itemRepository.findById(itemId).get().getNumber());
             // try에서 return 수행할 경우 finally 거쳐서 정상 종료됨.
@@ -83,6 +81,7 @@ public class OrderServiceImpl implements OrderService{
     @Transactional
     @Override
     public MadeOrderResponseDto makeOrderForCart(Long authUserId) throws InterruptedException {
+        Thread.sleep(100);
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         AuthUser authUser = getAuthUser(authUserId);
         Cart cart = authUser.getCart();
@@ -94,11 +93,11 @@ public class OrderServiceImpl implements OrderService{
                 .collect(Collectors.toList());
 
         // 락을 걸어야 하는 아이템리스트 추출
-        List<Long> itemIdSetToLock = orderUnitList.stream()
+        List<Long> itemIdListToLock = orderUnitList.stream()
                 .map(s -> s.getItem().getId())
                 .collect(Collectors.toList());
 
-        while(!redisLockRepository.lock(itemIdSetToLock)){
+        while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }
         try{
@@ -113,13 +112,13 @@ public class OrderServiceImpl implements OrderService{
                 log.info("전: "+item.getNumber());
                 log.info("전(db): "+itemRepository.findById(item.getId()).get().getNumber());
                 item.decreaseItemNumber(o.getNumber());
-                itemRepository.save(item);
+                itemRepository.saveAndFlush(item);
                 log.info("후: " +item.getNumber()+"(-"+o.getNumber()+")");
                 log.info("후(db): "+itemRepository.findById(item.getId()).get().getNumber());
             }
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
-            redisLockRepository.unlock(itemIdSetToLock);
+            redisLockRepository.unlock(itemIdListToLock);
             log.info("연관관계 해제");
         }
     }
@@ -191,6 +190,7 @@ public class OrderServiceImpl implements OrderService{
     public Item getValidateItemByNumber(Long itemId, int number){
         Item item = getItem(itemId);
         if(item.getNumber() >= number){
+            log.info("getValidateItemByNumber(): "+item.getNumber());
             return item;
         }
         throw new CustomException(ExceptionCode.ITEM_OVER_LIMIT);
@@ -206,10 +206,12 @@ public class OrderServiceImpl implements OrderService{
         return authUser;
     }
 
+    @Transactional
     // 현재 로컬 캐싱이므로 재고와 직접적으로 관련있는 Item에는 캐싱 걸면 안됨
     public Item getItem(Long itemId){
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
+        log.info("getItem(): "+item.getNumber());
         return item;
     }
 

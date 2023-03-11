@@ -9,14 +9,17 @@ import com.jycforest29.commerce.user.dto.authenticate.LoginRequestDto;
 import com.jycforest29.commerce.user.dto.authenticate.LoginResponseDto;
 import com.jycforest29.commerce.user.dto.register.RegisterRequestDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AuthUserService {
@@ -59,7 +62,11 @@ public class AuthUserService {
         } catch (DisabledException e) {
             throw new Exception("USER_DISABLED", e);
         } catch (BadCredentialsException e) {
+            log.info(e.getMessage());
             throw new Exception("INVALID_CREDENTIALS", e);
+        } catch (Exception e){
+            log.info(e.getMessage());
+            throw new Exception();
         }
     }
 

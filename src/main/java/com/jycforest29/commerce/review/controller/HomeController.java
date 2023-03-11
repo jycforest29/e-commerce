@@ -17,7 +17,7 @@ public class HomeController {
     private final HomeService homeService;
 
     @GetMapping(value = "/home")
-    public ResponseEntity<List<ReviewResponseDto>> getHomeReviewList(@LoginAuthUser Long authUserId){
-        return ResponseEntity.status(HttpStatus.OK).body(homeService.getHomeReviewList(authUserId));
+    public ResponseEntity<List<ReviewResponseDto>> getHomeReviewList(@LoginAuthUser String username){
+        return ResponseEntity.status(HttpStatus.OK).body(homeService.getHomeReviewList(username));
     }
 }

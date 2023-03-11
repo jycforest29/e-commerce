@@ -15,7 +15,6 @@ import javax.validation.constraints.Min;
 @RequiredArgsConstructor
 @RestController
 public class CartController {
-    Logger logger = LoggerFactory.getLogger(CartController.class);
     private final CartService cartService;
     // @RequestParam의 기본은 required = true
     @PostMapping(value = "{itemId}/add")
@@ -27,8 +26,8 @@ public class CartController {
     }
 
     @GetMapping(value = "/cart")
-    public ResponseEntity<CartResponseDto> getCartUnitList(@LoginAuthUser Long authUserId){
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.getCartUnitList(authUserId));
+    public ResponseEntity<CartResponseDto> getCartUnitList(@LoginAuthUser String username){
+        return ResponseEntity.status(HttpStatus.OK).body(cartService.getCartUnitList(username));
     }
 
     @DeleteMapping(value = "/cart")

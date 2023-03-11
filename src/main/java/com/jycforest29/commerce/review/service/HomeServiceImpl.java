@@ -33,9 +33,9 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<ReviewResponseDto> getHomeReviewList(Long authUserId) {
+    public List<ReviewResponseDto> getHomeReviewList(String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        AuthUser authUser = getAuthUser(authUserId);
+        AuthUser authUser = getAuthUser(username);
         List<AuthUser> likedAuthor = getLikedAuthor(authUser);
 
         return getAllHomeReviewList(likedAuthor)
@@ -62,6 +62,12 @@ public class HomeServiceImpl implements HomeService {
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
         return homeReviewList;
+    }
+
+    public AuthUser getAuthUser(String username){
+        AuthUser authUser = authUserRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
+        return authUser;
     }
 
     @Cacheable(value = "authUser", key = "#authUserId",  cacheManager = "ehCacheManager")

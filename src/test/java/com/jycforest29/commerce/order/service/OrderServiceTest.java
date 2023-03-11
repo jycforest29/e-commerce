@@ -14,10 +14,7 @@ import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +94,7 @@ class OrderServiceTest extends DockerComposeTestContainer {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
         CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
 
-        @Test
+        @RepeatedTest(10)
         void 동시에_2명이_재고가_100개인_아이템을_각각_99개와_1개_주문하여_모두_주문에_성공한다() throws InterruptedException {
             // 명시적으로 @Transactional을 해주지 않으면 @Test 내부에서는 transactional하게 동작하지 않음
             executorService.submit(() -> {
@@ -141,7 +138,7 @@ class OrderServiceTest extends DockerComposeTestContainer {
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
         CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
-        @Test
+        @RepeatedTest(10)
         void 동시에_2명이_재고가_100개인_아이템을_1명은_장바구니_주문하기로_99개_주문하고_다른_1명은_직접_1개_주문해_모두_주문에_성공한다()
                 throws InterruptedException {
             // authUser의 장바구니에 item 개수 1개 추가
