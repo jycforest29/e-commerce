@@ -1,6 +1,5 @@
 package com.jycforest29.commerce.security.config;
 
-import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -57,11 +54,12 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                 .frameOptions()
                 .sameOrigin()
                 .and()
-                .authorizeRequests().antMatchers("/authenticate/**").permitAll()// 회원가입, 로그인 허용
+                .authorizeRequests()
+                    .antMatchers("/authenticate/**").permitAll()// 회원가입, 로그인 허용
+                    .antMatchers(HttpMethod.GET, "/review/**").permitAll() // 리뷰 조회 허용
                 .and()
-                .authorizeRequests().antMatchers(HttpMethod.GET, "**/review/**").permitAll() // 리뷰 조회 허용
-                .and()
-                .authorizeRequests().anyRequest().authenticated()
+                .authorizeRequests()
+                    .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(new JwtRequestFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 

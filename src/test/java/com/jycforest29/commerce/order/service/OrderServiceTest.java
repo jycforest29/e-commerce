@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-class OrderServiceTest extends DockerComposeTestContainer {
+class OrderServiceTest extends DockerComposeTestContainer{
     private static final int threadCnt = 2;
     @Autowired
     private OrderServiceImpl orderService;
@@ -180,6 +180,8 @@ class OrderServiceTest extends DockerComposeTestContainer {
                         .number(0)
                         .build()
         );
+        Long authUserMadeOrderId;
+        Long otherUserMadeOrderId;
 
         void authUser가_item_99개_주문한다(){
             // authUser가 item 99개, otherUser가 item 1개 주문함.
@@ -188,7 +190,7 @@ class OrderServiceTest extends DockerComposeTestContainer {
                     .number(99)
                     .build();
             MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, Arrays.asList(orderUnit));
-            madeOrderRepository.save(madeOrder);
+            authUserMadeOrderId = madeOrderRepository.save(madeOrder).getId();
             orderUnitRepository.save(orderUnit);
         }
 
@@ -198,7 +200,7 @@ class OrderServiceTest extends DockerComposeTestContainer {
                     .number(1)
                     .build();
             MadeOrder madeOrder = MadeOrder.addOrderUnit(otherUser, Arrays.asList(orderUnit));
-            madeOrderRepository.save(madeOrder);
+            otherUserMadeOrderId = madeOrderRepository.save(madeOrder).getId();
             orderUnitRepository.save(orderUnit);
         }
 
@@ -212,8 +214,7 @@ class OrderServiceTest extends DockerComposeTestContainer {
 
             executorService.submit(() -> {
                 try{
-                    MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
-                    orderService.deleteOrder(madeOrder.getId(), authUser.getId());
+                    orderService.deleteOrder(authUserMadeOrderId, authUser.getId());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -222,8 +223,7 @@ class OrderServiceTest extends DockerComposeTestContainer {
             });
             executorService.submit(() -> {
                 try{
-                    MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(otherUser).get(0);
-                    orderService.deleteOrder(madeOrder.getId(), otherUser.getId());
+                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getId());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -259,8 +259,8 @@ class OrderServiceTest extends DockerComposeTestContainer {
         @Test
         void 동시에_2명이_재고가_0개인_아이템을_1명은_1개를_주문취소하고_다른_1명은_1개_주문하면_항상_재고가_1이하이다()
                 throws InterruptedException {
-
             authUser가_item_1개_주문한다();
+
             // 고정된 스레드 풀이기에 순서가 보장되지 않음. 순서 보장을 위해선 newSingleThreadExecutor를 사용해 하나의 스레드만 생성해야 함.
             ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
             CountDownLatch countDownLatch = new CountDownLatch(threadCnt);

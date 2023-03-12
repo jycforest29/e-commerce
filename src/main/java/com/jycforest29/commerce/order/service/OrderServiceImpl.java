@@ -19,6 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
+import javax.transaction.Transaction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,11 +37,12 @@ public class OrderServiceImpl implements OrderService{
     private final ItemRepository itemRepository;
     private final AuthUserRepository authUserRepository;
     private final RedisLockRepository redisLockRepository;
+    // thread safe
+    private EntityManagerFactory emf = Persistence.createEntityManagerFactory("forItemSync");
 
     @Transactional
     @Override
     public MadeOrderResponseDto makeOrder(Long itemId, int number, Long authUserId) throws InterruptedException {
-//        Thread.sleep(100);
         // 아이템 한 종류에 대해서 주문하므로 itemId를 기준으로 락을 걸어줌
         while(!redisLockRepository.lock(List.of(itemId))){
             Thread.sleep(100);
@@ -81,7 +87,7 @@ public class OrderServiceImpl implements OrderService{
     @Transactional
     @Override
     public MadeOrderResponseDto makeOrderForCart(Long authUserId) throws InterruptedException {
-        Thread.sleep(100);
+        Thread.sleep(500);
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         AuthUser authUser = getAuthUser(authUserId);
         Cart cart = authUser.getCart();
@@ -145,7 +151,6 @@ public class OrderServiceImpl implements OrderService{
         return MadeOrderResponseDto.from(madeOrder);
     }
 
-    @Transactional
     @Override
     public void deleteOrder(Long madeOrderId, Long authUserId) throws InterruptedException {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
@@ -153,44 +158,77 @@ public class OrderServiceImpl implements OrderService{
         // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
         List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
         AuthUser authUser = getAuthUser(authUserId);
+        log.info("스레드의 deleteOrder() 호출됨 ");
         // 락을 걸어야 하는 아이템리스트 추출
         List<Long> itemIdSetToLock = orderUnitList.stream()
                 .map(s -> s.getItem().getId())
                 .collect(Collectors.toList());
-
+        log.info("스레드의 deleteOrder() 호출됨_ ");
+        EntityManager em = emf.createEntityManager();
+//        EntityTransaction transaction = em.getTransaction();
         while(!redisLockRepository.lock(itemIdSetToLock)){
             Thread.sleep(100);
         }
         try{
+            // 이 부분에서 계속 두개의 스레드간 db 비정합성이 발생한다.
+            // jdbcTemplate 인스턴스는 상태를 갖지 않고 메서드 내에서 생성된 리소스들을 정리하기 때문에 thread safe
+            // not thread safe -> thread간의 락을 걸어줘서 괜찮을 것 같다
+//            transaction.begin();
+
             for(OrderUnit o : madeOrder.getOrderUnitList()){
-                Item item = itemRepository.findById(o.getItem().getId())
-                        .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
-                log.info("전: "+item.getNumber());
-                log.info("전(db): "+item.getId()+", "+itemRepository.findById(item.getId()).get().getNumber());
+//                Item item = getItem(o.getItem().getId());
+//                em.persist(item);
+//
+//                Long itemId = item.getId();
+//                log.info("전: "+item.getNumber());
+//                log.info("전(db): "+item.getId()+", "+getItem(itemId).getNumber());
+//                item.increaseItemNumber(o.getNumber());
+//                log.info("후: " +item.getNumber()+"(+"+o.getNumber()+")");
+//                log.info("후(db): "+item.getId()+", "+getItem(itemId).getNumber());
+                Item item = em.find(Item.class, o.getItem().getId());
                 item.increaseItemNumber(o.getNumber());
-                itemRepository.save(item);
-                log.info("후: " +item.getNumber()+"(+"+o.getNumber()+")");
-                log.info("후(db): "+item.getId()+", "+itemRepository.findById(item.getId()).get().getNumber());
+                em.flush();
+                em.close();
+                em.clear();
+                em.remove(item);
+                log.info("item 변경: "+item.getNumber());
             }
-            // 연관관계 해제
             madeOrder.deleteOrder(authUser, orderUnitList);
             madeOrderRepository.deleteById(madeOrder.getId());
             orderUnitRepository.deleteAllByOrderUnitIdList(
                     orderUnitList.stream()
                             .map(s -> s.getId())
-                            .collect(Collectors.toList())
-            );
-        }finally {
+                            .collect(Collectors.toList()));
+//            transaction.commit();
+        }catch (RuntimeException e){
+//            transaction.rollback();
+        }
+        finally {
             redisLockRepository.unlock(itemIdSetToLock);
             log.info("연관관계 해제");
         }
     }
 
+//    @Transactional
+//    public void deleteOrderCommit(MadeOrder madeOrder){
+//        log.info("스레드의 deleteOrder() 호출됨 ");
+//        for(OrderUnit o : madeOrder.getOrderUnitList()){
+//            Item item = getItem(o.getItem().getId());
+//            Long itemId = item.getId();
+//            log.info("전: "+item.getNumber());
+//            log.info("전(db): "+item.getId()+", "+getItem(itemId).getNumber());
+//            item.increaseItemNumber(o.getNumber());
+//            itemRepository.saveAndFlush(item);
+//            log.info("후: " +item.getNumber()+"(+"+o.getNumber()+")");
+//            log.info("후(db): "+item.getId()+", "+getItem(itemId).getNumber());
+//        }
+//    }
+
     @Transactional
     public Item getValidateItemByNumber(Long itemId, int number){
         Item item = getItem(itemId);
+        log.info("getValidateItemByNumber()의 item 개수: "+item.getNumber());
         if(item.getNumber() >= number){
-            log.info("getValidateItemByNumber(): "+item.getNumber());
             return item;
         }
         throw new CustomException(ExceptionCode.ITEM_OVER_LIMIT);
@@ -211,7 +249,6 @@ public class OrderServiceImpl implements OrderService{
     public Item getItem(Long itemId){
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
-        log.info("getItem(): "+item.getNumber());
         return item;
     }
 

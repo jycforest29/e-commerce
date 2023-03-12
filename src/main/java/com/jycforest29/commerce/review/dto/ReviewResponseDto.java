@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
 public class ReviewResponseDto {
     private String title;
     private String contents;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul") // respones 가능
     private LocalDateTime createdAt;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime updatedAt;
     private Long itemId;
     private String username;

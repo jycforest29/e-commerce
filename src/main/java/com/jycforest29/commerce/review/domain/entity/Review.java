@@ -82,5 +82,4 @@ public class Review{
         }
         this.reviewLikeUnitList = new ArrayList<>();
     }
-
 }

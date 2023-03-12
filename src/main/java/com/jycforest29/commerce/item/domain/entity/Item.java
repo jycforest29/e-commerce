@@ -27,7 +27,7 @@ public class Item {
     private List<Review> reviewList = new ArrayList<>();
 
     @Builder
-    public Item(String name, Integer price, Integer number){
+    public Item(String name, int price, int number){
         this.name = name;
         this.price = price;
         this.number = number;

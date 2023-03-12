@@ -12,16 +12,16 @@ public interface ReviewService {
 
     ReviewResponseDto getReviewDetail(Long itemId, Long reviewId);
 
-    void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, Long authUserId);
+    void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, String username);
 
     ReviewResponseDto updateReview(Long itemId,
                         Long reviewId,
                         AddReviewRequestDto addReviewRequestDTO,
-                        Long authUserId);
+                                   String username);
 
-    void deleteReview(Long itemId, Long reviewId, Long authUserId);
+    void deleteReview(Long itemId, Long reviewId, String username);
 
-    ReviewResponseDto likeReview(Long itemId, Long reviewId, Long authUserId);
+    ReviewResponseDto likeReview(Long itemId, Long reviewId, String username);
 
-    ReviewResponseDto removeLikeReview(Long itemId, Long reviewId, Long authUserId);
+    ReviewResponseDto removeLikeReview(Long itemId, Long reviewId, String username);
 }

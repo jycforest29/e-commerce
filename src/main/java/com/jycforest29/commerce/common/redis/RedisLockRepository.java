@@ -19,6 +19,10 @@ import java.util.stream.Collectors;
 public class RedisLockRepository {
     private final RedisTemplate<String, String> redisTemplate;
 
+    public Boolean lock(Long key){
+        return redisTemplate.opsForValue().setIfAbsent(key.toString(), "lock", Duration.ofMillis(3_000));
+    }
+
     // redis의 multi-exec을 사용해 배치 단위로 커맨드 실행.
     // -> @Transactional 사용함
     // @Transactional은 thread local 기반이므로 reactive 환경에서는 동작하지 않음. reactive 환경에서 @Transactional을
@@ -74,6 +78,11 @@ public class RedisLockRepository {
 //                        return true;
 //                    }
 //                });
+    }
+
+    @Transactional
+    public Boolean unlock(Long key){
+        return redisTemplate.delete(key.toString());
     }
 }
 
