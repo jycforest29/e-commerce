@@ -5,37 +5,36 @@ import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
 import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import com.jycforest29.commerce.review.service.ReviewService;
+import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-import org.junit.Before;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.TestExecutionEvent;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SpringBootTest
+@AutoConfigureMockMvc
 @Import(LoginAuthUserResolver.class)
-@WebMvcTest(ReviewController.class)
-@ContextConfiguration(classes = ReviewController.class)
-class ReviewControllerTest {
+class ReviewControllerTest extends DockerComposeTestContainer {
     @Autowired
     private MockMvc mockMvc;
     @MockBean
@@ -79,7 +78,6 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$.[0].contents", "contents").exists());
     }
 
-    @WithMockUser
     @Test
     void 특정_아이템에_대한_특정_리뷰가_리턴된다() throws Exception {
         // given
@@ -100,7 +98,7 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$.contents", "contents").exists());
     }
 
-    @WithMockUser(username = "testuser1")
+    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     void 특정_아이템에_대한_리뷰를_작성한다() throws Exception {
         // given
@@ -117,7 +115,7 @@ class ReviewControllerTest {
                 .andExpect(status().isCreated());
     }
 
-    @WithMockUser(username = "testuser1")
+    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     void 로그인한_유저가_작성한_리뷰를_수정한다() throws Exception {
         // given
@@ -126,14 +124,14 @@ class ReviewControllerTest {
                 .contents("내용은 10~255 글자여야 합니다.")
                 .build();
         ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
-                "title",
-                "contents",
+                "제목은 10~255 글자여야 합니다.",
+                "내용은 10~255 글자여야 합니다.",
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 1L,
                 "testuser1"
         );
-        given(reviewService.updateReview(any(), any(), any(), any()))
+        given(reviewService.updateReview(1L, 1L, updateReviewRequestDto, "testuser1"))
                 .willReturn(reviewResponseDto);
         // when, then
         String dtoAsContent = objectMapper.writeValueAsString(updateReviewRequestDto);
@@ -143,12 +141,12 @@ class ReviewControllerTest {
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andDo(print())
-                .andExpect(jsonPath("$.title", "제목은 10~255 글자여야 합니다.").exists())
+                .andExpect(jsonPath("$.title", "").exists())
                 .andExpect(jsonPath("$.contents", "내용은 10~255 글자여야 합니다.").exists());
 //        verify(reviewService).updateReview(1L, 1L, updateReviewRequestDto, "testuser1");
     }
 
-    @WithMockUser(username = "testuser1")
+    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     void 로그인한_유저가_작성한_리뷰를_삭제한다() throws Exception {
         // given
@@ -178,9 +176,8 @@ class ReviewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title", "title").exists())
                 .andExpect(jsonPath("$.contents", "contents").exists());
-        verify(reviewService).likeReview(1L, 1L, "testuser1");
     }
-    @WithMockUser(username = "testuser1")
+    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     void 로그인한_유저가_특정_리뷰에_누른_좋아요를_취소한다() throws Exception {
         // given

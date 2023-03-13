@@ -146,16 +146,8 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional
     @Override
-    public void deleteOrder(Long madeOrderId, Long authUserId, List<Long> itemIdListToLock) throws InterruptedException {
-//        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-//        MadeOrder madeOrder = getOrder(madeOrderId);
-//        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
-//        List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
-//        AuthUser authUser = getAuthUser(authUserId);
-//        // 락을 걸어야 하는 아이템리스트 추출
-//        List<Long> itemIdSetToLock = orderUnitList.stream()
-//                .map(s -> s.getItem().getId())
-//                .collect(Collectors.toList());
+    public void deleteOrder(Long madeOrderId, Long authUserId, List<Long> itemIdListToLock)
+            throws InterruptedException {
         while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }

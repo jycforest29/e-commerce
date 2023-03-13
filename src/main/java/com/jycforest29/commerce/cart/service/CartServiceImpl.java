@@ -37,9 +37,9 @@ public class CartServiceImpl implements CartService{
 //    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public CartResponseDto addCartUnitToCart(Long itemId, int number, Long authUserId) {
+    public CartResponseDto addCartUnitToCart(Long itemId, int number, String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(authUserId).getCart();
+        Cart cart = getAuthUser(username).getCart();
         Item item = getValidateItemByNumber(itemId, number);
 
         // cartUnit 생성
@@ -78,7 +78,7 @@ public class CartServiceImpl implements CartService{
         // stream의 forEach는 thread-safe 하지 않으므로 내부에서 객체를 다루지 않음.
         // 따라서 일반 forLoop 사용함
         cart.getCartUnitList().forEach(s -> {
-            s.setAvailable(s.getItem().getNumber() > s.getNumber() ? true : false);
+            s.setAvailable(s.getItem().getNumber() >= s.getNumber() ? true : false);
         });
         log.info("cart: "+cart.getCartUnitList().size());
         return CartResponseDto.from(cart);
@@ -88,9 +88,9 @@ public class CartServiceImpl implements CartService{
 //    @CacheEvict(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public CartResponseDto deleteCartAll(Long authUserId) {
+    public CartResponseDto deleteCartAll(String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(authUserId).getCart();
+        Cart cart = getAuthUser(username).getCart();
 
         // cart와 다대일 양방향 연관관계 제거
         List<CartUnit> cartUnitList = cart.removeAllCartUnit();
@@ -106,9 +106,9 @@ public class CartServiceImpl implements CartService{
 //    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public CartResponseDto deleteCartUnit(Long cartUnitId, Long authUserId){
+    public CartResponseDto deleteCartUnit(Long cartUnitId, String username){
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(authUserId).getCart();
+        Cart cart = getAuthUser(username).getCart();
         CartUnit cartUnit = cartUnitRepository.findById(cartUnitId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
 

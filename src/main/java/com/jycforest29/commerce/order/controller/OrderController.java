@@ -1,5 +1,7 @@
 package com.jycforest29.commerce.order.controller;
 
+import com.jycforest29.commerce.common.aop.DeleteItemIdList;
+import com.jycforest29.commerce.common.aop.CartItemIdList;
 import com.jycforest29.commerce.common.aop.LoginAuthUser;
 import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
 import com.jycforest29.commerce.order.service.OrderService;
@@ -30,9 +32,11 @@ public class OrderController {
 
     @PostMapping(value = "/cart/order")
     public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser Long authUserId,
-                                                                 List<Long> itemIdListLock)
+                                                                 List<Long> itemIdListToLock)
             throws InterruptedException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(authUserId, itemIdListLock));
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(orderService.makeOrderForCart(authUserId, itemIdListToLock));
     }
 
     @GetMapping(value = "/order")
@@ -49,8 +53,10 @@ public class OrderController {
     @DeleteMapping(value = "/order/{orderId}")
     public ResponseEntity<Object> deleteOrder(@PathVariable("orderId") Long orderId,
                                               @LoginAuthUser Long authUserId,
-                                              List<Long> itemIdListLock) throws InterruptedException {
-        orderService.deleteOrder(orderId, authUserId, itemIdListLock);
+                                              List<Long> itemIdListToLock) throws InterruptedException {
+
+
+        orderService.deleteOrder(orderId, authUserId, itemIdListToLock);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

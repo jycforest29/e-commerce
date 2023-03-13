@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.validation.constraints.Size;
 
+@EqualsAndHashCode
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
