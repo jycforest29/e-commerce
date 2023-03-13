@@ -2,6 +2,7 @@ package com.jycforest29.commerce.order.domain.entity;
 
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import lombok.*;
+import org.hibernate.criterion.Order;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
@@ -53,11 +54,13 @@ public class MadeOrder {
     }
 
     public void deleteOrder(AuthUser authUser, List<OrderUnit> orderUnitList){
+        // AuthUser와 MadeOrder
         authUser.getMadeOrderList().remove(this);
+        // MadeOrder와 OrderUnit
         for(OrderUnit o : orderUnitList){
-            this.orderUnitList.remove(o);
             o.setMadeOrder(null);
         }
+        this.orderUnitList.removeAll(orderUnitList);
         this.totalPrice = 0;
     }
 }

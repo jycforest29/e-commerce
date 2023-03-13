@@ -19,11 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
-import javax.transaction.Transaction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,17 +61,12 @@ public class OrderServiceImpl implements OrderService{
             orderUnitRepository.save(orderUnit);
 
             // Cart와 다르게 단방향 관계인 item의 메서드를 호출하는 이유는 Cart는 item에 영향을 주지않는 반면, OrderUnit은 영향을 줌
-            log.info("전: "+item.getNumber());
-            log.info("전(db): "+itemRepository.findById(itemId).get().getNumber());
             item.decreaseItemNumber(number);
             itemRepository.saveAndFlush(item);
-            log.info("후: " +item.getNumber()+"(-"+number+")");
-            log.info("후(db): "+itemRepository.findById(itemId).get().getNumber());
             // try에서 return 수행할 경우 finally 거쳐서 정상 종료됨.
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
             redisLockRepository.unlock(List.of(itemId));
-            log.info("연관관계 해제");
         }
     }
 
@@ -86,27 +78,33 @@ public class OrderServiceImpl implements OrderService{
     // -> setnx에 exec 사용해 방법2로 구현
     @Transactional
     @Override
-    public MadeOrderResponseDto makeOrderForCart(Long authUserId) throws InterruptedException {
-        Thread.sleep(500);
-        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        AuthUser authUser = getAuthUser(authUserId);
-        Cart cart = authUser.getCart();
-        List<CartUnit> cartUnitList = cart.getCartUnitList();
-
-        // List<CartUnit>를 List<OrderUnit>으로 변환
-        List<OrderUnit> orderUnitList = cartUnitList.stream()
-                .map(s -> OrderUnit.mapToOrderUnit(s))
-                .collect(Collectors.toList());
-
-        // 락을 걸어야 하는 아이템리스트 추출
-        List<Long> itemIdListToLock = orderUnitList.stream()
-                .map(s -> s.getItem().getId())
-                .collect(Collectors.toList());
+    public MadeOrderResponseDto makeOrderForCart(Long authUserId, List<Long> itemIdListToLock)
+            throws InterruptedException {
+//        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+//        AuthUser authUser = getAuthUser(authUserId);
+//        Cart cart = authUser.getCart();
+//        List<CartUnit> cartUnitList = cart.getCartUnitList();
+//
+//        // List<CartUnit>를 List<OrderUnit>으로 변환
+//        List<OrderUnit> orderUnitList = cartUnitList.stream()
+//                .map(s -> OrderUnit.mapToOrderUnit(s))
+//                .collect(Collectors.toList());
+//
+//        // 락을 걸어야 하는 아이템리스트 추출
+//        List<Long> itemIdListToLock = orderUnitList.stream()
+//                .map(s -> s.getItem().getId())
+//                .collect(Collectors.toList());
 
         while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }
         try{
+            AuthUser authUser = getAuthUser(authUserId);
+            Cart cart = authUser.getCart();
+            List<CartUnit> cartUnitList = cart.getCartUnitList();
+            List<OrderUnit> orderUnitList = cartUnitList.stream()
+                .map(s -> OrderUnit.mapToOrderUnit(s))
+                .collect(Collectors.toList());
             for(OrderUnit o : orderUnitList){
                 getValidateItemByNumber(o.getItem().getId(), o.getNumber());
             }
@@ -115,17 +113,12 @@ public class OrderServiceImpl implements OrderService{
             orderUnitRepository.saveAll(orderUnitList);
             for(OrderUnit o : orderUnitList){
                 Item item = o.getItem();
-                log.info("전: "+item.getNumber());
-                log.info("전(db): "+itemRepository.findById(item.getId()).get().getNumber());
                 item.decreaseItemNumber(o.getNumber());
                 itemRepository.saveAndFlush(item);
-                log.info("후: " +item.getNumber()+"(-"+o.getNumber()+")");
-                log.info("후(db): "+itemRepository.findById(item.getId()).get().getNumber());
             }
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
             redisLockRepository.unlock(itemIdListToLock);
-            log.info("연관관계 해제");
         }
     }
 
@@ -151,83 +144,59 @@ public class OrderServiceImpl implements OrderService{
         return MadeOrderResponseDto.from(madeOrder);
     }
 
+    @Transactional
     @Override
-    public void deleteOrder(Long madeOrderId, Long authUserId) throws InterruptedException {
-        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        MadeOrder madeOrder = getOrder(madeOrderId);
-        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
-        List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
-        AuthUser authUser = getAuthUser(authUserId);
-        log.info("스레드의 deleteOrder() 호출됨 ");
-        // 락을 걸어야 하는 아이템리스트 추출
-        List<Long> itemIdSetToLock = orderUnitList.stream()
-                .map(s -> s.getItem().getId())
-                .collect(Collectors.toList());
-        log.info("스레드의 deleteOrder() 호출됨_ ");
-        EntityManager em = emf.createEntityManager();
-//        EntityTransaction transaction = em.getTransaction();
-        while(!redisLockRepository.lock(itemIdSetToLock)){
+    public void deleteOrder(Long madeOrderId, Long authUserId, List<Long> itemIdListToLock) throws InterruptedException {
+//        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+//        MadeOrder madeOrder = getOrder(madeOrderId);
+//        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
+//        List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
+//        AuthUser authUser = getAuthUser(authUserId);
+//        // 락을 걸어야 하는 아이템리스트 추출
+//        List<Long> itemIdSetToLock = orderUnitList.stream()
+//                .map(s -> s.getItem().getId())
+//                .collect(Collectors.toList());
+        while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }
         try{
-            // 이 부분에서 계속 두개의 스레드간 db 비정합성이 발생한다.
-            // jdbcTemplate 인스턴스는 상태를 갖지 않고 메서드 내에서 생성된 리소스들을 정리하기 때문에 thread safe
-            // not thread safe -> thread간의 락을 걸어줘서 괜찮을 것 같다
-//            transaction.begin();
-
+            MadeOrder madeOrder = getOrder(madeOrderId);
+            List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
+            AuthUser authUser = getAuthUser(authUserId);
             for(OrderUnit o : madeOrder.getOrderUnitList()){
-//                Item item = getItem(o.getItem().getId());
-//                em.persist(item);
-//
-//                Long itemId = item.getId();
-//                log.info("전: "+item.getNumber());
-//                log.info("전(db): "+item.getId()+", "+getItem(itemId).getNumber());
-//                item.increaseItemNumber(o.getNumber());
-//                log.info("후: " +item.getNumber()+"(+"+o.getNumber()+")");
-//                log.info("후(db): "+item.getId()+", "+getItem(itemId).getNumber());
-                Item item = em.find(Item.class, o.getItem().getId());
+                Item item = getItem(o.getItem().getName());
                 item.increaseItemNumber(o.getNumber());
-                em.flush();
-                em.close();
-                em.clear();
-                em.remove(item);
-                log.info("item 변경: "+item.getNumber());
+                itemRepository.saveAndFlush(item);
             }
-            madeOrder.deleteOrder(authUser, orderUnitList);
-            madeOrderRepository.deleteById(madeOrder.getId());
-            orderUnitRepository.deleteAllByOrderUnitIdList(
-                    orderUnitList.stream()
-                            .map(s -> s.getId())
-                            .collect(Collectors.toList()));
-//            transaction.commit();
-        }catch (RuntimeException e){
-//            transaction.rollback();
+            try{
+                madeOrder.deleteOrder(authUser, orderUnitList); // dirty checking 을 사용해 madeOrder, orderUnit delete
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+//        try{
+//            madeOrderRepository.deleteById(madeOrder.getId());
+//        }catch (Exception e){
+//            log.info("madeOrder.deleteById");
+//            e.printStackTrace();
+//        }
+//        try{
+//            orderUnitRepository.deleteAllByOrderUnitIdList(
+//                    orderUnitList.stream()
+//                            .map(s -> s.getId())
+//                            .collect(Collectors.toList()));
+//        }catch (Exception e){
+//            log.info("orderUnitRepository.deleteAllByOrderUnitIdList");
+//            e.printStackTrace();
+//        }
         }
         finally {
-            redisLockRepository.unlock(itemIdSetToLock);
-            log.info("연관관계 해제");
+            redisLockRepository.unlock(itemIdListToLock);
         }
     }
-
-//    @Transactional
-//    public void deleteOrderCommit(MadeOrder madeOrder){
-//        log.info("스레드의 deleteOrder() 호출됨 ");
-//        for(OrderUnit o : madeOrder.getOrderUnitList()){
-//            Item item = getItem(o.getItem().getId());
-//            Long itemId = item.getId();
-//            log.info("전: "+item.getNumber());
-//            log.info("전(db): "+item.getId()+", "+getItem(itemId).getNumber());
-//            item.increaseItemNumber(o.getNumber());
-//            itemRepository.saveAndFlush(item);
-//            log.info("후: " +item.getNumber()+"(+"+o.getNumber()+")");
-//            log.info("후(db): "+item.getId()+", "+getItem(itemId).getNumber());
-//        }
-//    }
 
     @Transactional
     public Item getValidateItemByNumber(Long itemId, int number){
         Item item = getItem(itemId);
-        log.info("getValidateItemByNumber()의 item 개수: "+item.getNumber());
         if(item.getNumber() >= number){
             return item;
         }
@@ -244,10 +213,16 @@ public class OrderServiceImpl implements OrderService{
         return authUser;
     }
 
-    @Transactional
     // 현재 로컬 캐싱이므로 재고와 직접적으로 관련있는 Item에는 캐싱 걸면 안됨
     public Item getItem(Long itemId){
         Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
+        return item;
+    }
+
+    // 현재 로컬 캐싱이므로 재고와 직접적으로 관련있는 Item에는 캐싱 걸면 안됨
+    public Item getItem(String name){
+        Item item = itemRepository.findByName(name)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
         return item;
     }

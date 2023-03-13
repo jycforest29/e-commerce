@@ -29,9 +29,10 @@ public class OrderController {
     }
 
     @PostMapping(value = "/cart/order")
-    public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser Long authUserId)
+    public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser Long authUserId,
+                                                                 List<Long> itemIdListLock)
             throws InterruptedException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(authUserId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(authUserId, itemIdListLock));
     }
 
     @GetMapping(value = "/order")
@@ -47,8 +48,9 @@ public class OrderController {
 
     @DeleteMapping(value = "/order/{orderId}")
     public ResponseEntity<Object> deleteOrder(@PathVariable("orderId") Long orderId,
-                                              @LoginAuthUser Long authUserId) throws InterruptedException {
-        orderService.deleteOrder(orderId, authUserId);
+                                              @LoginAuthUser Long authUserId,
+                                              List<Long> itemIdListLock) throws InterruptedException {
+        orderService.deleteOrder(orderId, authUserId, itemIdListLock);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

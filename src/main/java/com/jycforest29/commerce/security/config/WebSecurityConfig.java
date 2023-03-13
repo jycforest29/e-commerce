@@ -16,6 +16,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import static org.springframework.http.HttpMethod.GET;
+
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -55,8 +57,8 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                 .sameOrigin()
                 .and()
                 .authorizeRequests()
-                    .antMatchers("/authenticate/**").permitAll()// 회원가입, 로그인 허용
-                    .antMatchers(HttpMethod.GET, "/review/**").permitAll() // 리뷰 조회 허용
+                .antMatchers(GET, "/review/**").permitAll() // 리뷰 조회 허용
+                .antMatchers("/authenticate/**").permitAll()// 회원가입, 로그인 허용
                 .and()
                 .authorizeRequests()
                     .anyRequest().authenticated()

@@ -5,13 +5,18 @@ import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
 import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import com.jycforest29.commerce.review.service.ReviewService;
-import org.junit.jupiter.api.Test;
+import com.jycforest29.commerce.user.domain.entity.AuthUser;
+import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import org.junit.Before;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.TestExecutionEvent;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -19,14 +24,13 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Import(LoginAuthUserResolver.class)
 @WebMvcTest(ReviewController.class)
@@ -37,8 +41,24 @@ class ReviewControllerTest {
     @MockBean
     private ReviewService reviewService;
     @Autowired
+    private AuthUserRepository authUserRepository;
+    @Autowired
     private ObjectMapper objectMapper;
-    @WithMockUser
+    @BeforeEach
+    void init(){
+        authUserRepository.save(AuthUser.builder()
+                        .username("testuser1")
+                        .password("pw1234@")
+                        .nickname("testuser")
+                .build()
+        );
+    }
+
+    @AfterEach
+    void after(){
+        authUserRepository.deleteAll();
+    }
+
     @Test
     void 특정_아이템에_대한_리뷰가_모두_리턴된다() throws Exception {
         // given
@@ -55,8 +75,8 @@ class ReviewControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/review/{itemId}", 1L)
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$..title", "title").exists())
-                .andExpect(jsonPath("$..contents", "contents").exists());
+                .andExpect(jsonPath("$.[0].title", "title").exists())
+                .andExpect(jsonPath("$.[0].contents", "contents").exists());
     }
 
     @WithMockUser
@@ -138,7 +158,7 @@ class ReviewControllerTest {
                 .andExpect(status().isOk());
     }
 
-    @WithMockUser(username = "testuser1")
+    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     void 로그인한_유저가_특정_리뷰에_좋아요를_누른다() throws Exception {
         // given
@@ -155,9 +175,9 @@ class ReviewControllerTest {
         // when, then
         mockMvc.perform(MockMvcRequestBuilders.post("/review/{itemId}/{reviewId}/like", 1L, 1L)
                         .with(csrf()))
-                .andExpect(status().isOk());
-//                .andExpect(jsonPath("$.title", "title").exists())
-//                .andExpect(jsonPath("$.contents", "contents").exists());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", "title").exists())
+                .andExpect(jsonPath("$.contents", "contents").exists());
         verify(reviewService).likeReview(1L, 1L, "testuser1");
     }
     @WithMockUser(username = "testuser1")

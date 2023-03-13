@@ -16,8 +16,6 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -147,7 +145,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.makeOrderForCart(authUser.getId());
+                    orderService.makeOrderForCart(authUser.getId(), Arrays.asList(item.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -164,7 +162,6 @@ class OrderServiceTest extends DockerComposeTestContainer{
                     countDownLatch.countDown();
                 }
             });
-
             countDownLatch.await();
             //then
             assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
@@ -207,14 +204,14 @@ class OrderServiceTest extends DockerComposeTestContainer{
         ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
         CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
 
-        @Test
+        @RepeatedTest(10)
         void 동시에_2명이_재고가_0개인_아이템을_각각_99개와_1개씩_주문_취소한다() throws InterruptedException {
             authUser가_item_99개_주문한다();
             otherUser가_item_1개_주문한다();
 
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(authUserMadeOrderId, authUser.getId());
+                    orderService.deleteOrder(authUserMadeOrderId, authUser.getId(), Arrays.asList(item.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -223,7 +220,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             });
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getId());
+                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getId(), Arrays.asList(item.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -256,7 +253,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             orderUnitRepository.save(orderUnit);
         }
 
-        @Test
+        @RepeatedTest(10)
         void 동시에_2명이_재고가_0개인_아이템을_1명은_1개를_주문취소하고_다른_1명은_1개_주문하면_항상_재고가_1이하이다()
                 throws InterruptedException {
             authUser가_item_1개_주문한다();
@@ -268,7 +265,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
-                    orderService.deleteOrder(madeOrder.getId(), authUser.getId());
+                    orderService.deleteOrder(madeOrder.getId(), authUser.getId(), Arrays.asList(item.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -289,8 +286,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             });
             countDownLatch.await();
             //then
-            assertThat(itemRepository.findById(item.getId()).get().getNumber()).isLessThanOrEqualTo(1); // 항상 1이하
+            assertThat(itemRepository.findById(item.getId()).get().getNumber()).isLessThanOrEqualTo(1); // <= 1
         }
     }
-
 }
