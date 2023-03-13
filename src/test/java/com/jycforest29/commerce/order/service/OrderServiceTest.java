@@ -128,10 +128,22 @@ class OrderServiceTest extends DockerComposeTestContainer{
                         .number(100)
                         .build()
         );
+        Item otherItem = itemRepository.save(
+                Item.builder()
+                        .name("test_item_other")
+                        .price(10000)
+                        .number(1)
+                        .build()
+        );
 
         CartUnit cartUnit = CartUnit.builder()
                 .item(item)
                 .number(99)
+                .build();
+
+        CartUnit cartUnitOther = CartUnit.builder()
+                .item(otherItem)
+                .number(1)
                 .build();
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
@@ -141,11 +153,13 @@ class OrderServiceTest extends DockerComposeTestContainer{
                 throws InterruptedException {
             // authUser의 장바구니에 item 개수 1개 추가
             authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
+            authUser.getCart().addCartUnitToCart(cartUnitOther, otherItem.getPrice());
             cartUnitRepository.save(cartUnit);
+            cartUnitRepository.save(cartUnitOther);
 
             executorService.submit(() -> {
                 try{
-                    orderService.makeOrderForCart(authUser.getId(), Arrays.asList(item.getId()));
+                    orderService.makeOrderForCart(authUser.getId(), Arrays.asList(item.getId(), otherItem.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -165,7 +179,9 @@ class OrderServiceTest extends DockerComposeTestContainer{
             countDownLatch.await();
             //then
             assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
+            assertThat(itemRepository.findById(otherItem.getId()).get().getNumber()).isEqualTo(0);
         }
+
     }
 
     @Nested
