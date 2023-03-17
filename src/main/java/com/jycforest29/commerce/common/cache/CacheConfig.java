@@ -2,7 +2,6 @@ package com.jycforest29.commerce.common.cache;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.config.CacheConfiguration;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
@@ -13,7 +12,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -35,6 +33,10 @@ public class CacheConfig {
     @Bean("ehCacheManager")
     @Primary
     public CacheManager ehCacheManager(){
+        // authUser의 key : AuthUser.username
+        // cart의 key : AuthUser.username
+        // reviewListByItem의 key : Item.id
+        // review의 key : Review.id
         List<String> cacheNames = List.of("authUser", "cart", "reviewListByItem", "review");
 
         for(String cacheName: cacheNames){

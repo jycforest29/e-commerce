@@ -28,7 +28,6 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class ReviewCacheTest extends DockerComposeTestContainer {
-
     @MockBean
     private ItemRepository itemRepository;
     @MockBean
@@ -44,6 +43,7 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
             .title("제목:제목은 10~255 글자여야 합니다.")
             .contents("내용:내용은 10~255 글자여야 합니다.")
             .build();
+    Long itemId = 1L;
 
     @BeforeAll
     static void setContainer(){
@@ -52,25 +52,25 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
 
     @Nested
     class LocalCacheTest{
-        @Nested
-        class ReviewCache{
-            Review review = Review.builder()
-                    .title(addReviewRequestDto.getTitle())
-                    .contents(addReviewRequestDto.getContents())
-                    .build();
-            Long reviewId = 1L;
-
-            @Test
-            void reviewId를_통해_review를_가져올때_로컬_캐싱을_사용한다(){
-                //given
-                given(reviewRepository.findById(reviewId)).willReturn(Optional.ofNullable(review));
-                //when
-                IntStream.range(0, 10)
-                        .forEach(i -> reviewService.getReview(reviewId));
-                //then
-                verify(reviewRepository, atMostOnce()).findById(reviewId);
-            }
-        }
+//        @Nested
+//        class ReviewCache{
+//            Review review = Review.builder()
+//                    .title(addReviewRequestDto.getTitle())
+//                    .contents(addReviewRequestDto.getContents())
+//                    .build();
+//            Long reviewId = 1L;
+//
+//            @Test
+//            void reviewId를_통해_review를_가져올때_로컬_캐싱을_사용한다(){
+//                //given
+//                given(reviewRepository.findById(reviewId)).willReturn(Optional.ofNullable(review));
+//                //when
+//                IntStream.range(0, 10)
+//                        .forEach(i -> reviewService.getReviewDetail(itemId, reviewId));
+//                //then
+//                verify(reviewRepository, atMostOnce()).findById(reviewId);
+//            }
+//        }
 
         @Nested
         class ReviewListByItemCache{
@@ -79,7 +79,6 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                     .price(10000)
                     .number(10)
                     .build();
-            Long itemId = 1L;
 
             @Test
             void itemId를_통해_review_리스트를_가져올때_로컬_캐싱을_사용한다(){

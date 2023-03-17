@@ -12,8 +12,8 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +34,7 @@ public class CartServiceImpl implements CartService{
         // 일단 담고, order 패키지에서 품절시 pub/sub 방식으로 모든 cart의 해당 item 삭제
         // 즉 여기서 이 클래스에서 더 해줄일은 없음.
 
-//    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
+    @CachePut(value = "cart", key = "#username", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto addCartUnitToCart(Long itemId, int number, String username) {
@@ -57,7 +57,7 @@ public class CartServiceImpl implements CartService{
         return CartResponseDto.from(cart);
     }
 
-//    @Cacheable(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
+    @Cacheable(value = "cart", key = "#username", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
     public CartResponseDto getCartUnitList(String username) {
@@ -80,12 +80,10 @@ public class CartServiceImpl implements CartService{
         cart.getCartUnitList().forEach(s -> {
             s.setAvailable(s.getItem().getNumber() >= s.getNumber() ? true : false);
         });
-        log.info("cart: "+cart.getCartUnitList().size());
         return CartResponseDto.from(cart);
     }
 
-    // 장바구니에서 아이템을 삭제하는 것은 아이템에 아무런 영향을 주지 않음
-//    @CacheEvict(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
+    @CacheEvict(value = "cart", key = "#username", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto deleteCartAll(String username) {
@@ -102,8 +100,7 @@ public class CartServiceImpl implements CartService{
         return CartResponseDto.from(cart); // UPDATE
     }
 
-    // 장바구니에서 아이템을 삭제하는 것은 아이템에 아무런 영향을 주지 않음
-//    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
+    @CachePut(value = "cart", key = "#username", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto deleteCartUnit(Long cartUnitId, String username){
@@ -124,7 +121,7 @@ public class CartServiceImpl implements CartService{
     }
 
     @Transactional
-    public Item getValidateItemByNumber(Long itemId, int number){
+    private Item getValidateItemByNumber(Long itemId, int number){
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Item item = getItem(itemId);
         // 수량 검증
@@ -141,14 +138,14 @@ public class CartServiceImpl implements CartService{
     // 따라서 getValidateItemByNumber() 내부에서 동작하는 getItem()에 캐싱을 적용하지 않음
         // 전역 캐싱으로 전환 시 수정
     @Cacheable(value = "item", key = "#itemId", cacheManager = "redisCacheManager")
-    public Item getItem(Long itemId){
+    private Item getItem(Long itemId){
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
         return item;
     }
 
     @Cacheable(value = "authUser", key = "#username", cacheManager = "ehCacheManager")
-    public AuthUser getAuthUser(String username){
+    private AuthUser getAuthUser(String username){
         AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
         return authUser;

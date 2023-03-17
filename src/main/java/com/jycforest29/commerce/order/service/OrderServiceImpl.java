@@ -195,7 +195,7 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Transactional
-    public Item getValidateItemByNumber(Long itemId, int number){
+    private Item getValidateItemByNumber(Long itemId, int number){
         Item item = getItem(itemId);
         if(item.getNumber() >= number){
             return item;
@@ -207,28 +207,28 @@ public class OrderServiceImpl implements OrderService{
     // 따라서 메인 서버의 DB와 동기화 시차 때문에 주문 취소를
     // 했는데 반영되지 않은 상태로 캐시에 남아있는 경우가 있을 수 있음.
     // 이 경우 프로그램의 신뢰도가 떨어지므로 아예 캐싱을 사용하지 않음.
-    public AuthUser getAuthUser(String username){
+    private AuthUser getAuthUser(String username){
         AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
         return authUser;
     }
 
     // 현재 로컬 캐싱이므로 재고와 직접적으로 관련있는 Item에는 캐싱 걸면 안됨
-    public Item getItem(Long itemId){
+    private Item getItem(Long itemId){
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
         return item;
     }
 
     // 현재 로컬 캐싱이므로 재고와 직접적으로 관련있는 Item에는 캐싱 걸면 안됨
-    public Item getItem(String name){
+    private Item getItem(String name){
         Item item = itemRepository.findByName(name)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
         return item;
     }
 
     // 현재 로컬 캐싱이므로 재고와 직접적으로 관련있는 MadeOrder에는 캐싱 걸면 안됨
-    public MadeOrder getOrder(Long madeOrderId){
+    private MadeOrder getOrder(Long madeOrderId){
         MadeOrder madeOrder = madeOrderRepository.findById(madeOrderId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
         return madeOrder;

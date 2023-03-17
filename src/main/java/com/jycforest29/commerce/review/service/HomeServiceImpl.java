@@ -10,8 +10,6 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,9 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -45,16 +41,14 @@ public class HomeServiceImpl implements HomeService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<AuthUser> getLikedAuthor(AuthUser authUser){
+    private List<AuthUser> getLikedAuthor(AuthUser authUser){
         return reviewLikeUnitRepository.findAllByAuthUser(authUser)
                 .stream()
                 .map(s -> s.getReview().getAuthUser())
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<Review> getAllHomeReviewList(List<AuthUser> likedReviewSet){
+    private List<Review> getAllHomeReviewList(List<AuthUser> likedReviewSet){
         LocalDateTime now = LocalDateTime.now(clock);
 
         List<Review> homeReviewList = likedReviewSet.stream()
@@ -66,10 +60,9 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Cacheable(value = "authUser", key = "#username",  cacheManager = "ehCacheManager")
-    public AuthUser getAuthUser(String username){
+    private AuthUser getAuthUser(String username){
         AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
         return authUser;
     }
-
 }

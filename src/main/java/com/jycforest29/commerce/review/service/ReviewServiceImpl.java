@@ -34,7 +34,7 @@ public class ReviewServiceImpl implements ReviewService{
     private final ReviewLikeUnitRepository reviewLikeUnitRepository;
     private final AuthUserRepository authUserRepository;
 
-    @Cacheable(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager") // 리뷰가 없는(null)도 상관없음
+    @Cacheable(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
     public List<ReviewResponseDto> getReviewListByItem(Long itemId) {
@@ -87,8 +87,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Caching(put = {
+            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager"),
             @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager"),
-            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
     })
     @Transactional
     @Override
@@ -108,10 +108,8 @@ public class ReviewServiceImpl implements ReviewService{
         return ReviewResponseDto.from(review);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager"),
-            @CacheEvict(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
-    })
+    @CacheEvict(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
+    @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public void deleteReview(Long itemId, Long reviewId, String username) {
@@ -140,8 +138,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Caching(put = {
-            @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager"),
-            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
+            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager"),
+            @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     })
     @Transactional
     @Override
@@ -168,8 +166,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Caching(put = {
-            @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager"),
-            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
+            @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager"),
+            @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     })
     @Transactional
     @Override
@@ -195,19 +193,19 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Cacheable(value = "item", key = "#itemId", cacheManager = "redisCacheManager")
-    public Item getItem(Long itemId){
+    private Item getItem(Long itemId){
         return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 
-    @Cacheable(value = "authUser", key = "#authUserId", cacheManager = "ehCacheManager")
-    public AuthUser getAuthUser(String username){
+    @Cacheable(value = "authUser", key = "#username", cacheManager = "ehCacheManager")
+    private AuthUser getAuthUser(String username){
         return authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
     @Cacheable(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
-    public Review getReview(Long reviewId){
+    private Review getReview(Long reviewId){
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }

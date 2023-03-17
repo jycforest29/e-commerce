@@ -29,7 +29,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-//@ContextConfiguration(initializers = HomeServiceTest.ContainerPropertyInitializer.class) // Configuration custom
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 class HomeServiceTest extends DockerComposeTestContainer{
@@ -93,17 +92,6 @@ class HomeServiceTest extends DockerComposeTestContainer{
         // authUser가 review에 대해 좋아요 누름
         authUser.addReviewLikeUnit(reviewLikeUnit);
         review.addReviewLikeUnit(reviewLikeUnit);
-    }
-
-    @Test
-    void 내가_좋아요를_눌렀던_리뷰의_작성자들을_가져온다(){
-        //given
-        given(reviewLikeUnitRepository.findAllByAuthUser(authUser))
-                .willReturn(Arrays.asList(reviewLikeUnit)); // Set의 원소로 otherUser
-        //when
-        List<AuthUser> likedAuthUserSet = homeService.getLikedAuthor(authUser);
-        //then
-        assertThat(likedAuthUserSet).contains(otherUser);
     }
 
     // authUser는 otherUser가 방금 전 작성한 item에 대한 review에 좋아요를 눌렀다.(모킹이므로 쿼리 테스트는 불가)
