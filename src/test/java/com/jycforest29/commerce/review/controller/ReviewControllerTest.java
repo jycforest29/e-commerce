@@ -116,37 +116,37 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 .andExpect(status().isCreated());
     }
 
-//    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
-//    @Test
-//    void 로그인한_유저가_작성한_리뷰를_수정한다() throws Exception {
-//        // given
-//        AddReviewRequestDto updateReviewRequestDto = AddReviewRequestDto.builder()
-//                .title("제목은 10~255 글자여야 합니다.")
-//                .contents("내용은 10~255 글자여야 합니다.")
-//                .build();
-//        ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
-//                "제목은 10~255 글자여야 합니다.",
-//                "내용은 10~255 글자여야 합니다.",
-//                LocalDateTime.now(),
-//                LocalDateTime.now(),
-//                1L,
-//                "testuser1"
-//        );
-//        given(reviewService.updateReview(1L, 1L, updateReviewRequestDto, "testuser1"))
-//                .willReturn(reviewResponseDto);
-//        // when, then
-//        String dtoAsContent = objectMapper.writeValueAsString(updateReviewRequestDto);
-//        mockMvc.perform(MockMvcRequestBuilders.put("/review/{itemId}/{reviewId}", 1L, 1L)
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content(dtoAsContent)
-//                        .with(csrf()))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.title", "제목은 10~255 글자여야 합니다.")
-//                        .value("제목은 10~255 글자여야 합니다."))
-//                .andExpect(jsonPath("$.contents", "내용은 10~255 글자여야 합니다.")
-//                        .value("내용은 10~255 글자여야 합니다."));
-////        verify(reviewService).updateReview(1L, 1L, updateReviewRequestDto, "testuser1");
-//    }
+    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
+    @Test
+    void 로그인한_유저가_작성한_리뷰를_수정한다() throws Exception {
+        // given
+        AddReviewRequestDto updateReviewRequestDto = AddReviewRequestDto.builder()
+                .title("제목은 10~255 글자여야 합니다.")
+                .contents("내용은 10~255 글자여야 합니다.")
+                .build();
+        ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
+                "제목은 10~255 글자여야 합니다.",
+                "내용은 10~255 글자여야 합니다.",
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                1L,
+                "testuser1"
+        );
+        given(reviewService.updateReview(1L, 1L, updateReviewRequestDto, "testuser1"))
+                .willReturn(reviewResponseDto);
+        // when, then
+        String dtoAsContent = objectMapper.writeValueAsString(updateReviewRequestDto);
+        mockMvc.perform(MockMvcRequestBuilders.put("/review/{itemId}/{reviewId}", 1L, 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(dtoAsContent)
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", "제목은 10~255 글자여야 합니다.")
+                        .value("제목은 10~255 글자여야 합니다."))
+                .andExpect(jsonPath("$.contents", "내용은 10~255 글자여야 합니다.")
+                        .value("내용은 10~255 글자여야 합니다."));
+//        verify(reviewService).updateReview(1L, 1L, updateReviewRequestDto, "testuser1");
+    }
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
