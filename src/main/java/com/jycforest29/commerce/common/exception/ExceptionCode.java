@@ -3,7 +3,6 @@ package com.jycforest29.commerce.common.exception;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-// !Exception 분리 생각
 @Getter
 @RequiredArgsConstructor
 public enum ExceptionCode {

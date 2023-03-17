@@ -3,9 +3,9 @@ package com.jycforest29.commerce.cart.domain.dto;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import lombok.*;
 
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Getter
 @Builder
 public class CartUnitResponseDto {
     private String name;

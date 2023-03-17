@@ -40,17 +40,17 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderList(username));
     }
 
-    @GetMapping(value = "/order/{orderId}")
-    public ResponseEntity<MadeOrderResponseDto> getOrder(@PathVariable("orderId") Long orderId,
+    @GetMapping(value = "/order/{madeOrderId}")
+    public ResponseEntity<MadeOrderResponseDto> getOrder(@PathVariable("madeOrderId") Long madeOrderId,
                                                          @LoginAuthUser String username){
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrder(orderId, username));
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrder(madeOrderId, username));
     }
 
-    @DeleteMapping(value = "/order/{orderId}")
-    public ResponseEntity<Object> deleteOrder(@PathVariable("orderId") Long orderId,
+    @DeleteMapping(value = "/order/{madeOrderId}")
+    public ResponseEntity<Object> deleteOrder(@PathVariable("madeOrderId") Long madeOrderId,
                                               @LoginAuthUser String username,
                                               List<Long> itemIdListLock) throws InterruptedException {
-        orderService.deleteOrder(orderId, username, itemIdListLock);
+        orderService.deleteOrder(madeOrderId, username, itemIdListLock);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

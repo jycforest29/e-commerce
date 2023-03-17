@@ -9,8 +9,8 @@ import lombok.Setter;
 
 import javax.persistence.*;
 
-@NoArgsConstructor
 @Getter
+@NoArgsConstructor
 @Entity
 public class OrderUnit {
     @Id

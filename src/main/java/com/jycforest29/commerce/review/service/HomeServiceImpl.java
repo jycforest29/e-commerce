@@ -59,7 +59,7 @@ public class HomeServiceImpl implements HomeService {
 
         List<Review> homeReviewList = likedReviewSet.stream()
                 .distinct()
-                .map(s -> reviewRepository.findAllByAuthUserIdAndCreatedWithin50Hours(2L, now))
+                .map(s -> reviewRepository.findAllByAuthUserIdAndCreatedWithin72Hours(2L, now))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
         return homeReviewList;

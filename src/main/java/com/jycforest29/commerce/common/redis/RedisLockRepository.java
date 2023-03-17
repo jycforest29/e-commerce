@@ -19,10 +19,6 @@ import java.util.stream.Collectors;
 public class RedisLockRepository {
     private final RedisTemplate<String, String> redisTemplate;
 
-    public Boolean lock(Long key){
-        return redisTemplate.opsForValue().setIfAbsent(key.toString(), "lock", Duration.ofMillis(3_000));
-    }
-
     // redis의 multi-exec을 사용해 배치 단위로 커맨드 실행.
     // -> @Transactional 사용함
     // @Transactional은 thread local 기반이므로 reactive 환경에서는 동작하지 않음. reactive 환경에서 @Transactional을
@@ -44,14 +40,6 @@ public class RedisLockRepository {
                         key.stream().forEach(s -> operations.expire((K) s.toString(), Duration.ofMillis(3_000)));
                         operations.exec();
                         return true;
-//                        operations.multi();
-//                        for(K k : keyToK){
-//                            // operations.opsForValue()를 통해 레디스의 string 객체에 접근 가능함
-//                            operations.opsForValue().setIfAbsent(k, (V) "lock", Duration.ofMillis(3_000));
-//                        }
-//                        // 한번 watch를 선언한 key는 exec가 실행되면 즉시 unwatch 상태로 변경됨
-//                        // 각각의 키별로 unwatch를 직접 선언할 수 없음 주의
-//                        operations.exec();
                     }
                 });
     }
@@ -65,25 +53,8 @@ public class RedisLockRepository {
                 .collect(Collectors.toList())
         );
         return true;
-//        return redisTemplate
-//                .execute(new SessionCallback<Boolean>() {
-//                    @Override
-//                    public <K, V> Boolean execute(RedisOperations<K, V> operations) throws DataAccessException {
-//                        operations.multi();
-//                        for(Long k : key){
-//                            logger.info(k.toString()+"원소에 대한 배치 락 해제");
-//                            operations.delete((K) k.toString());
-//                        }
-//                        operations.exec();
-//                        return true;
-//                    }
-//                });
     }
 
-    @Transactional
-    public Boolean unlock(Long key){
-        return redisTemplate.delete(key.toString());
-    }
 }
 
 

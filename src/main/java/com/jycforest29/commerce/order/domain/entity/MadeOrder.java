@@ -2,7 +2,6 @@ package com.jycforest29.commerce.order.domain.entity;
 
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import lombok.*;
-import org.hibernate.criterion.Order;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;

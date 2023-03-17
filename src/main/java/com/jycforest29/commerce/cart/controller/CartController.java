@@ -4,8 +4,6 @@ import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
 import com.jycforest29.commerce.cart.service.CartService;
 import com.jycforest29.commerce.common.aop.LoginAuthUser;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +14,7 @@ import javax.validation.constraints.Min;
 @RestController
 public class CartController {
     private final CartService cartService;
+
     // @RequestParam의 기본은 required = true
     @PostMapping(value = "{itemId}/add")
     public ResponseEntity<CartResponseDto> addCartUnitToCart(@PathVariable("itemId") Long itemId,

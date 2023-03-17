@@ -116,7 +116,7 @@ class HomeServiceTest extends DockerComposeTestContainer{
                 .willReturn(Arrays.asList(reviewLikeUnit));
         LocalDateTime now = LocalDateTime.ofInstant(Instant.parse("2022-08-22T10:00:00Z"), ZoneId.systemDefault());
         given(clock.instant()).willReturn(Instant.parse("2022-08-22T10:00:00Z"));
-        given(reviewRepository.findAllByAuthUserIdAndCreatedWithin50Hours(otherUserId, now))
+        given(reviewRepository.findAllByAuthUserIdAndCreatedWithin72Hours(otherUserId, now))
                 .willReturn(otherUser.getReviewList());
         //when
         List<ReviewResponseDto> result = homeService.getHomeReviewList(authUser.getUsername());

@@ -7,8 +7,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Builder
 public class ReviewResponseDto {
     private String title;

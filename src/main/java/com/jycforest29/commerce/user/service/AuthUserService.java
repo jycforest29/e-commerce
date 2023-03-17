@@ -69,5 +69,4 @@ public class AuthUserService {
             throw new Exception();
         }
     }
-
 }

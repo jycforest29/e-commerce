@@ -15,8 +15,8 @@ public interface ReviewService {
     void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, String username);
 
     ReviewResponseDto updateReview(Long itemId,
-                        Long reviewId,
-                        AddReviewRequestDto addReviewRequestDTO,
+                                   Long reviewId,
+                                   AddReviewRequestDto addReviewRequestDTO,
                                    String username);
 
     void deleteReview(Long itemId, Long reviewId, String username);

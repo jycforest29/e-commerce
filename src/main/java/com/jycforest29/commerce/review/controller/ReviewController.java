@@ -12,9 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 
-@RequiredArgsConstructor
 @RequestMapping(value = "/review")
-@CrossOrigin
+@RequiredArgsConstructor
 @RestController
 public class ReviewController { // Long과 long의 차이 : Long은 클래스, long은 8bytes의 한계를 가진 primitive 자료형.
     private final ReviewService reviewService;
