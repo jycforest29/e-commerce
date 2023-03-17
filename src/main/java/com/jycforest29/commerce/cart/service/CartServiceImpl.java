@@ -78,7 +78,7 @@ public class CartServiceImpl implements CartService{
         // stream의 forEach는 thread-safe 하지 않으므로 내부에서 객체를 다루지 않음.
         // 따라서 일반 forLoop 사용함
         cart.getCartUnitList().forEach(s -> {
-            s.setAvailable(s.getItem().getNumber() > s.getNumber() ? true : false);
+            s.setAvailable(s.getItem().getNumber() >= s.getNumber() ? true : false);
         });
         log.info("cart: "+cart.getCartUnitList().size());
         return CartResponseDto.from(cart);

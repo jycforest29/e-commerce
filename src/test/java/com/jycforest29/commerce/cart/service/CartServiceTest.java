@@ -101,27 +101,27 @@ class CartServiceTest{
             cartUnitId = 1L;
         }
 
-//        @Nested
-//        class OrderAvailable{
-//            @BeforeEach
-//            void init(){
-//                cartUnit = CartUnit.builder()
-//                        .item(item)
-//                        .number(1)
-//                        .build();
-//            }
-//            @Test
-//            void 내_장바구니에_담긴_모든_목록을_가져온다(){
-//                //given
-//                given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
-//                authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
-//                //when
-//                CartResponseDto cartResponseDto = cartService.getCartUnitList(authUser.getUsername());
-//                //then
-//                assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
-//                assertThat(cartResponseDto.getCartUnitResponseDtoList().get(0).isAvailable()).isEqualTo(true);
-//            }
-//        }
+        @Nested
+        class OrderAvailable{
+            @BeforeEach
+            void init(){
+                cartUnit = CartUnit.builder()
+                        .item(item)
+                        .number(1)
+                        .build();
+            }
+            @Test
+            void 내_장바구니에_담긴_모든_목록을_가져온다(){
+                //given
+                given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+                authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
+                //when
+                CartResponseDto cartResponseDto = cartService.getCartUnitList(authUser.getUsername());
+                //then
+                assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
+                assertThat(cartResponseDto.getCartUnitResponseDtoList().get(0).getAvailable()).isEqualTo(true);
+            }
+        }
 
 
         @Nested
@@ -142,7 +142,7 @@ class CartServiceTest{
                 CartResponseDto cartResponseDto = cartService.getCartUnitList(authUser.getUsername());
                 //then
                 assertThat(cartResponseDto.getCartUnitResponseDtoList().size()).isEqualTo(1);
-                assertThat(cartResponseDto.getCartUnitResponseDtoList().get(0).isAvailable()).isEqualTo(false);
+                assertThat(cartResponseDto.getCartUnitResponseDtoList().get(0).getAvailable()).isEqualTo(false);
             }
         }
     }

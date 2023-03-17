@@ -11,7 +11,7 @@ public class CartUnitResponseDto {
     private String name;
     private int orderPrice;
     private int number;
-    private boolean available;
+    private Boolean available;
 
     public static CartUnitResponseDto from(CartUnit cartUnit){
         return CartUnitResponseDto.builder()
