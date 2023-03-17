@@ -9,6 +9,7 @@ import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -22,10 +23,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class HomeServiceImpl implements HomeService {
-    Logger logger = LoggerFactory.getLogger(HomeServiceImpl.class);
     private final AuthUserRepository authUserRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewLikeUnitRepository reviewLikeUnitRepository;
@@ -64,16 +65,11 @@ public class HomeServiceImpl implements HomeService {
         return homeReviewList;
     }
 
+    @Cacheable(value = "authUser", key = "#username",  cacheManager = "ehCacheManager")
     public AuthUser getAuthUser(String username){
         AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
         return authUser;
     }
 
-    @Cacheable(value = "authUser", key = "#authUserId",  cacheManager = "ehCacheManager")
-    public AuthUser getAuthUser(Long authUserId){
-        AuthUser authUser = authUserRepository.findById(authUserId)
-                .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
-        return authUser;
-    }
 }

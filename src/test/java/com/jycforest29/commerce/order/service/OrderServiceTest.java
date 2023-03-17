@@ -97,7 +97,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             // 명시적으로 @Transactional을 해주지 않으면 @Test 내부에서는 transactional하게 동작하지 않음
             executorService.submit(() -> {
                 try {
-                    orderService.makeOrder(item.getId(), 99, authUser.getId());
+                    orderService.makeOrder(item.getId(), 99, authUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -107,7 +107,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try {
-                    orderService.makeOrder(item.getId(), 1, otherUser.getId());
+                    orderService.makeOrder(item.getId(), 1, otherUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -159,7 +159,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.makeOrderForCart(authUser.getId(), Arrays.asList(item.getId(), otherItem.getId()));
+                    orderService.makeOrderForCart(authUser.getUsername(), Arrays.asList(item.getId(), otherItem.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -169,7 +169,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.makeOrder(item.getId(), 1, otherUser.getId());
+                    orderService.makeOrder(item.getId(), 1, otherUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -227,7 +227,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(authUserMadeOrderId, authUser.getId(), Arrays.asList(item.getId()));
+                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername(), Arrays.asList(item.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -236,7 +236,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
             });
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getId(), Arrays.asList(item.getId()));
+                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getUsername(),
+                            Arrays.asList(item.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -281,7 +282,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
-                    orderService.deleteOrder(madeOrder.getId(), authUser.getId(), Arrays.asList(item.getId()));
+                    orderService.deleteOrder(madeOrder.getId(), authUser.getUsername(), Arrays.asList(item.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -290,7 +291,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             });
             executorService.submit(() -> {
                 try{
-                    orderService.makeOrder(item.getId(), 1, otherUser.getId());
+                    orderService.makeOrder(item.getId(), 1, otherUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } catch (CustomException e){

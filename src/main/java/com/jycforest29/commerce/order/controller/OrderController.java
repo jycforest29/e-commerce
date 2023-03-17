@@ -24,33 +24,33 @@ public class OrderController {
     @PostMapping(value = "/{itemId}/order")
     public ResponseEntity<MadeOrderResponseDto> makeOrder(@PathVariable("item") Long itemId,
                                                           @RequestParam @Min(1) int number,
-                                                          @LoginAuthUser Long authUserId) throws InterruptedException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrder(itemId, number, authUserId));
+                                                          @LoginAuthUser String username) throws InterruptedException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrder(itemId, number, username));
     }
 
     @PostMapping(value = "/cart/order")
-    public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser Long authUserId,
+    public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser String username,
                                                                  List<Long> itemIdListLock)
             throws InterruptedException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(authUserId, itemIdListLock));
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(username, itemIdListLock));
     }
 
     @GetMapping(value = "/order")
-    public ResponseEntity<List<MadeOrderResponseDto>> getOrderList(@LoginAuthUser Long authUserId){
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderList(authUserId));
+    public ResponseEntity<List<MadeOrderResponseDto>> getOrderList(@LoginAuthUser String username){
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrderList(username));
     }
 
     @GetMapping(value = "/order/{orderId}")
     public ResponseEntity<MadeOrderResponseDto> getOrder(@PathVariable("orderId") Long orderId,
-                                                         @LoginAuthUser Long authUserId){
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrder(orderId, authUserId));
+                                                         @LoginAuthUser String username){
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrder(orderId, username));
     }
 
     @DeleteMapping(value = "/order/{orderId}")
     public ResponseEntity<Object> deleteOrder(@PathVariable("orderId") Long orderId,
-                                              @LoginAuthUser Long authUserId,
+                                              @LoginAuthUser String username,
                                               List<Long> itemIdListLock) throws InterruptedException {
-        orderService.deleteOrder(orderId, authUserId, itemIdListLock);
+        orderService.deleteOrder(orderId, username, itemIdListLock);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

@@ -20,9 +20,9 @@ public class CartController {
     @PostMapping(value = "{itemId}/add")
     public ResponseEntity<CartResponseDto> addCartUnitToCart(@PathVariable("itemId") Long itemId,
                                                              @RequestParam @Min(1) int number,
-                                                             @LoginAuthUser Long authUserId)
+                                                             @LoginAuthUser String username)
             throws InterruptedException {
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.addCartUnitToCart(itemId, number, authUserId));
+        return ResponseEntity.status(HttpStatus.OK).body(cartService.addCartUnitToCart(itemId, number, username));
     }
 
     @GetMapping(value = "/cart")
@@ -31,13 +31,13 @@ public class CartController {
     }
 
     @DeleteMapping(value = "/cart")
-    public ResponseEntity<CartResponseDto> deleteCartAll(@LoginAuthUser Long authUserId){
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.deleteCartAll(authUserId));
+    public ResponseEntity<CartResponseDto> deleteCartAll(@LoginAuthUser String username){
+        return ResponseEntity.status(HttpStatus.OK).body(cartService.deleteCartAll(username));
     }
 
     @DeleteMapping(value = "/cart/{cartUnitId}")
     public ResponseEntity<CartResponseDto> deleteCartUnit(@PathVariable("cartUnitId") Long cartUnitId,
-                                                          @LoginAuthUser Long authUserId) throws InterruptedException {
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.deleteCartUnit(cartUnitId, authUserId));
+                                                          @LoginAuthUser String username) throws InterruptedException {
+        return ResponseEntity.status(HttpStatus.OK).body(cartService.deleteCartUnit(cartUnitId, username));
     }
 }

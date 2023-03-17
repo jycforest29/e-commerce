@@ -1,14 +1,17 @@
 package com.jycforest29.commerce.common.aop;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+@Slf4j
 @RequiredArgsConstructor
 public class LoginAuthUserResolver implements HandlerMethodArgumentResolver {
 
@@ -24,8 +27,9 @@ public class LoginAuthUserResolver implements HandlerMethodArgumentResolver {
                                   NativeWebRequest webRequest,
                                   WebDataBinderFactory binderFactory) throws Exception {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-//        logger.info("현재 SecurityContextHolder에 있는 유저: "+userDetails.getUsername());
-        return authentication.getPrincipal();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
+        log.info("현재 SecurityContextHolder에 있는 유저: "+userDetails.getUsername());
+        return username;
     }
 }

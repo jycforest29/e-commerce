@@ -38,7 +38,6 @@ public class ReviewServiceImpl implements ReviewService{
     @Transactional(readOnly = true)
     @Override
     public List<ReviewResponseDto> getReviewListByItem(Long itemId) {
-        log.info("getReviewListByItem()가 호출됨");
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Item item = getItem(itemId);
 

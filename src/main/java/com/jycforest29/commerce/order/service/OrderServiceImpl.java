@@ -39,7 +39,7 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional
     @Override
-    public MadeOrderResponseDto makeOrder(Long itemId, int number, Long authUserId) throws InterruptedException {
+    public MadeOrderResponseDto makeOrder(Long itemId, int number, String username) throws InterruptedException {
         // 아이템 한 종류에 대해서 주문하므로 itemId를 기준으로 락을 걸어줌
         while(!redisLockRepository.lock(List.of(itemId))){
             Thread.sleep(100);
@@ -48,7 +48,7 @@ public class OrderServiceImpl implements OrderService{
             // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
             Item item = getValidateItemByNumber(itemId, number);
             // 엔티티 가져옴(유효성 검증은 컨트롤러에서 이미 완료함)
-            AuthUser authUser = getAuthUser(authUserId);
+            AuthUser authUser = getAuthUser(username);
             OrderUnit orderUnit = OrderUnit.builder()
                     .item(item)
                     .number(number)
@@ -78,7 +78,7 @@ public class OrderServiceImpl implements OrderService{
     // -> setnx에 exec 사용해 방법2로 구현
     @Transactional
     @Override
-    public MadeOrderResponseDto makeOrderForCart(Long authUserId, List<Long> itemIdListToLock)
+    public MadeOrderResponseDto makeOrderForCart(String username, List<Long> itemIdListToLock)
             throws InterruptedException {
 //        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
 //        AuthUser authUser = getAuthUser(authUserId);
@@ -99,7 +99,7 @@ public class OrderServiceImpl implements OrderService{
             Thread.sleep(100);
         }
         try{
-            AuthUser authUser = getAuthUser(authUserId);
+            AuthUser authUser = getAuthUser(username);
             Cart cart = authUser.getCart();
             List<CartUnit> cartUnitList = cart.getCartUnitList();
             List<OrderUnit> orderUnitList = cartUnitList.stream()
@@ -124,9 +124,9 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional(readOnly = true)
     @Override
-    public List<MadeOrderResponseDto> getOrderList(Long authUserId) {
+    public List<MadeOrderResponseDto> getOrderList(String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        AuthUser authUser = getAuthUser(authUserId);
+        AuthUser authUser = getAuthUser(username);
 
         // findAllBy<Column name>을 사용할 경우 스프링 데이터 jpa에 의해 자동으로 쿼리문 생성됨
         List<MadeOrder> madeOrderList = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser);
@@ -138,7 +138,7 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional(readOnly = true)
     @Override
-    public MadeOrderResponseDto getOrder(Long madeOrderId, Long authUserId) {
+    public MadeOrderResponseDto getOrder(Long madeOrderId, String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         MadeOrder madeOrder = getOrder(madeOrderId);
         return MadeOrderResponseDto.from(madeOrder);
@@ -146,7 +146,7 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional
     @Override
-    public void deleteOrder(Long madeOrderId, Long authUserId, List<Long> itemIdListToLock) throws InterruptedException {
+    public void deleteOrder(Long madeOrderId, String username, List<Long> itemIdListToLock) throws InterruptedException {
 //        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
 //        MadeOrder madeOrder = getOrder(madeOrderId);
 //        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
@@ -162,7 +162,7 @@ public class OrderServiceImpl implements OrderService{
         try{
             MadeOrder madeOrder = getOrder(madeOrderId);
             List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
-            AuthUser authUser = getAuthUser(authUserId);
+            AuthUser authUser = getAuthUser(username);
             for(OrderUnit o : madeOrder.getOrderUnitList()){
                 Item item = getItem(o.getItem().getName());
                 item.increaseItemNumber(o.getNumber());
@@ -207,8 +207,8 @@ public class OrderServiceImpl implements OrderService{
     // 따라서 메인 서버의 DB와 동기화 시차 때문에 주문 취소를
     // 했는데 반영되지 않은 상태로 캐시에 남아있는 경우가 있을 수 있음.
     // 이 경우 프로그램의 신뢰도가 떨어지므로 아예 캐싱을 사용하지 않음.
-    public AuthUser getAuthUser(Long authUserId){
-        AuthUser authUser = authUserRepository.findById(authUserId)
+    public AuthUser getAuthUser(String username){
+        AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
         return authUser;
     }

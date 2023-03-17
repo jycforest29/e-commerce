@@ -37,9 +37,9 @@ public class CartServiceImpl implements CartService{
 //    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public CartResponseDto addCartUnitToCart(Long itemId, int number, Long authUserId) {
+    public CartResponseDto addCartUnitToCart(Long itemId, int number, String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(authUserId).getCart();
+        Cart cart = getAuthUser(username).getCart();
         Item item = getValidateItemByNumber(itemId, number);
 
         // cartUnit 생성
@@ -88,9 +88,9 @@ public class CartServiceImpl implements CartService{
 //    @CacheEvict(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public CartResponseDto deleteCartAll(Long authUserId) {
+    public CartResponseDto deleteCartAll(String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(authUserId).getCart();
+        Cart cart = getAuthUser(username).getCart();
 
         // cart와 다대일 양방향 연관관계 제거
         List<CartUnit> cartUnitList = cart.removeAllCartUnit();
@@ -106,9 +106,9 @@ public class CartServiceImpl implements CartService{
 //    @CachePut(value = "cart", key = "#authUserId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public CartResponseDto deleteCartUnit(Long cartUnitId, Long authUserId){
+    public CartResponseDto deleteCartUnit(Long cartUnitId, String username){
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        Cart cart = getAuthUser(authUserId).getCart();
+        Cart cart = getAuthUser(username).getCart();
         CartUnit cartUnit = cartUnitRepository.findById(cartUnitId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
 
@@ -147,15 +147,9 @@ public class CartServiceImpl implements CartService{
         return item;
     }
 
+    @Cacheable(value = "authUser", key = "#username", cacheManager = "ehCacheManager")
     public AuthUser getAuthUser(String username){
         AuthUser authUser = authUserRepository.findByUsername(username)
-                .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
-        return authUser;
-    }
-
-    @Cacheable(value = "authUser", key = "#authUserId", cacheManager = "ehCacheManager")
-    public AuthUser getAuthUser(Long authUserId){
-        AuthUser authUser = authUserRepository.findById(authUserId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
         return authUser;
     }
