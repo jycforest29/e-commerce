@@ -19,8 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,8 +32,6 @@ public class OrderServiceImpl implements OrderService{
     private final ItemRepository itemRepository;
     private final AuthUserRepository authUserRepository;
     private final RedisLockRepository redisLockRepository;
-    // thread safe
-    private EntityManagerFactory emf = Persistence.createEntityManagerFactory("forItemSync");
 
     @Transactional
     @Override

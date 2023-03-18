@@ -56,9 +56,9 @@ class ReviewServiceTest {
     Long itemId = 1L;
     AuthUser authUser = AuthUser.builder()
             .username("test_username")
-                    .password("test_password")
-                    .nickname("test_nickname")
-                    .build();
+            .password("test_password")
+            .nickname("test_nickname")
+            .build();
     Long authUserId = 1L;
     AuthUser otherUser = AuthUser.builder()
             .username("test_username_other")

@@ -1,6 +1,7 @@
 package com.jycforest29.commerce.user.domain.repository;
 
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -9,7 +10,8 @@ import java.util.Optional;
 
 @Repository
 public interface AuthUserRepository extends JpaRepository<AuthUser, Long> {
-    // 평범한 findBy문. 성능 최적화 할 것 안보임
+
+    @Cacheable(value = "authUser", key = "#username", cacheManager = "ehCacheManager")
     Optional<AuthUser> findByUsername(@Param("username") String username);
 
     // count와 달리 첫번째 결과만 조회하고 바로 return true를 하므로 exists의 성능이 더 좋음

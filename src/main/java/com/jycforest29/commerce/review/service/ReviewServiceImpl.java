@@ -34,7 +34,6 @@ public class ReviewServiceImpl implements ReviewService{
     private final ReviewLikeUnitRepository reviewLikeUnitRepository;
     private final AuthUserRepository authUserRepository;
 
-    @Cacheable(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
     public List<ReviewResponseDto> getReviewListByItem(Long itemId) {
@@ -192,19 +191,16 @@ public class ReviewServiceImpl implements ReviewService{
         return ReviewResponseDto.from(review);
     }
 
-    @Cacheable(value = "item", key = "#itemId", cacheManager = "redisCacheManager")
     private Item getItem(Long itemId){
         return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 
-    @Cacheable(value = "authUser", key = "#username", cacheManager = "ehCacheManager")
     private AuthUser getAuthUser(String username){
         return authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
-    @Cacheable(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
     private Review getReview(Long reviewId){
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));

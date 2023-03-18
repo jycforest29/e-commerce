@@ -58,8 +58,6 @@ public class HomeServiceImpl implements HomeService {
                 .collect(Collectors.toList());
         return homeReviewList;
     }
-
-    @Cacheable(value = "authUser", key = "#username",  cacheManager = "ehCacheManager")
     private AuthUser getAuthUser(String username){
         AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));

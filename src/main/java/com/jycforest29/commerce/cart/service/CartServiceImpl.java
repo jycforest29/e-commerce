@@ -137,14 +137,12 @@ public class CartServiceImpl implements CartService{
     // 즉, getValidateItemByNumber()이 원하는 대로 작동하지 않을 수도 있음.
     // 따라서 getValidateItemByNumber() 내부에서 동작하는 getItem()에 캐싱을 적용하지 않음
         // 전역 캐싱으로 전환 시 수정
-    @Cacheable(value = "item", key = "#itemId", cacheManager = "redisCacheManager")
     private Item getItem(Long itemId){
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
         return item;
     }
 
-    @Cacheable(value = "authUser", key = "#username", cacheManager = "ehCacheManager")
     private AuthUser getAuthUser(String username){
         AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
