@@ -83,10 +83,10 @@ class OrderServiceTest extends DockerComposeTestContainer{
     class MakeOrderConcurrently {
         Item item = itemRepository.save(
                 Item.builder()
-                        .name("test_item")
-                        .price(10000)
-                        .number(100)
-                        .build()
+                    .name("test_item")
+                    .price(10000)
+                    .number(100)
+                    .build()
         );
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);

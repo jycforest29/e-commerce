@@ -9,6 +9,7 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor // 테스트
 @Entity
 public class Item {
     // 기본 키 생성을 DB에 위임하여 auto increment 수행.

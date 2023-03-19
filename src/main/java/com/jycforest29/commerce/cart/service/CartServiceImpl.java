@@ -7,9 +7,9 @@ import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.item.domain.entity.Item;
-import com.jycforest29.commerce.item.domain.repository.ItemRepository;
+import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
-import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -26,8 +26,8 @@ import java.util.List;
 @Service
 public class CartServiceImpl implements CartService{
     private final CartUnitRepository cartUnitRepository;
-    private final AuthUserRepository authUserRepository;
-    private final ItemRepository itemRepository;
+    private final AuthUserCacheProxy authUserCacheProxy;
+    private final ItemCacheProxy itemCacheProxy;
 
     // 장바구니에 아이템을 담을 때, 아이템 품절되었으면 담을 수 없음. -> getValidateItemByNumber() 통해 반영함
     // A 사용자가 아이템을 장바구니에 담는것과 1ms차로 B 사용자가 아이템의 수량만큼 주문해 품절됐다면?
@@ -120,7 +120,6 @@ public class CartServiceImpl implements CartService{
         return CartResponseDto.from(cart);
     }
 
-    @Transactional
     private Item getValidateItemByNumber(Long itemId, int number){
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Item item = getItem(itemId);
@@ -138,14 +137,12 @@ public class CartServiceImpl implements CartService{
     // 따라서 getValidateItemByNumber() 내부에서 동작하는 getItem()에 캐싱을 적용하지 않음
         // 전역 캐싱으로 전환 시 수정
     private Item getItem(Long itemId){
-        Item item = itemRepository.findById(itemId)
+        return itemCacheProxy.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
-        return item;
     }
 
     private AuthUser getAuthUser(String username){
-        AuthUser authUser = authUserRepository.findByUsername(username)
+        return authUserCacheProxy.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
-        return authUser;
     }
 }

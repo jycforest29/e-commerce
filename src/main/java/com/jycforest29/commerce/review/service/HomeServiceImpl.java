@@ -7,10 +7,9 @@ import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepositor
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
 import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
-import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,9 +22,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class HomeServiceImpl implements HomeService {
-    private final AuthUserRepository authUserRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewLikeUnitRepository reviewLikeUnitRepository;
+    private final AuthUserCacheProxy authUserCacheProxy;
     private final Clock clock;
 
     @Transactional(readOnly = true)
@@ -59,8 +58,7 @@ public class HomeServiceImpl implements HomeService {
         return homeReviewList;
     }
     private AuthUser getAuthUser(String username){
-        AuthUser authUser = authUserRepository.findByUsername(username)
+        return authUserCacheProxy.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
-        return authUser;
     }
 }

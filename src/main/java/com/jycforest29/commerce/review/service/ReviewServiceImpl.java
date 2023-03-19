@@ -3,7 +3,7 @@ package com.jycforest29.commerce.review.service;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.item.domain.entity.Item;
-import com.jycforest29.commerce.item.domain.repository.ItemRepository;
+import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.domain.entity.ReviewLikeUnit;
@@ -11,13 +11,13 @@ import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepositor
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
 import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.proxy.ReviewCacheProxy;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
-import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +29,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class ReviewServiceImpl implements ReviewService{
-    private final ItemRepository itemRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewLikeUnitRepository reviewLikeUnitRepository;
-    private final AuthUserRepository authUserRepository;
+    private final ItemCacheProxy itemCacheProxy;
+    private final ReviewCacheProxy reviewCacheProxy;
+    private final AuthUserCacheProxy authUserCacheProxy;
 
     @Transactional(readOnly = true)
     @Override
@@ -41,7 +42,7 @@ public class ReviewServiceImpl implements ReviewService{
         Item item = getItem(itemId);
 
         // 리뷰 좋아요순으로 내림차순 정렬
-        return reviewRepository.findAllByItem(item)
+        return reviewCacheProxy.findAllByItem(item)
                 .stream()
                 .sorted((a, b) -> a.getReviewLikeUnitList().size() > b.getReviewLikeUnitList().size() ? -1 : 1)
                 .map(s -> ReviewResponseDto.from(s))
@@ -192,17 +193,17 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     private Item getItem(Long itemId){
-        return itemRepository.findById(itemId)
+        return itemCacheProxy.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 
     private AuthUser getAuthUser(String username){
-        return authUserRepository.findByUsername(username)
+        return authUserCacheProxy.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
     private Review getReview(Long reviewId){
-        return reviewRepository.findById(reviewId)
+        return reviewCacheProxy.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 }

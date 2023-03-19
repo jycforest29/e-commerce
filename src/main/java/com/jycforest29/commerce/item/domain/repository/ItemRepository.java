@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long> {
-    @Cacheable(value = "item", key = "#itemId", cacheManager = "redisCacheManager")
     @Override
     Optional<Item> findById(@Param("id") Long id);
 
