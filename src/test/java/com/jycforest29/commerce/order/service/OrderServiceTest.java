@@ -7,6 +7,7 @@ import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
+import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
@@ -14,6 +15,7 @@ import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -26,27 +28,32 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest
 class OrderServiceTest extends DockerComposeTestContainer{
     private static final int threadCnt = 2;
     @Autowired
-    private OrderServiceImpl orderService;
-    @Autowired
-    private RedisLockRepository redisLockRepository;
-    @Autowired
     private MadeOrderRepository madeOrderRepository;
     @Autowired
     private OrderUnitRepository orderUnitRepository;
     @Autowired
-    private ItemRepository itemRepository;
+    private RedisLockRepository redisLockRepository;
+    @Autowired
+    private ItemCacheProxy itemCacheProxy;
+    @Autowired
+    private AuthUserCacheProxy authUserCacheProxy;
+
     @Autowired
     private AuthUserRepository authUserRepository;
+    @Autowired
+    private ItemRepository itemRepository;
     @Autowired
     private CartUnitRepository cartUnitRepository;
     @Autowired
     private CartRepository cartRepository;
+    @Autowired
+    private OrderServiceImpl orderService;
     private AuthUser authUser;
     private AuthUser otherUser;
 
@@ -295,7 +302,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } catch (CustomException e){
-                    System.out.println(e.getExceptionCode()+"발생");
+                    System.out.println(e.getExceptionCode());
                 }
                 finally {
                     countDownLatch.countDown();

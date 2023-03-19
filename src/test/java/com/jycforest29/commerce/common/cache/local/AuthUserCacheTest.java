@@ -21,7 +21,6 @@ import static org.mockito.Mockito.verify;
 public class AuthUserCacheTest extends DockerComposeTestContainer {
     @MockBean
     private AuthUserRepository authUserRepository;
-
     @Autowired
     private AuthUserCacheProxy authUserCacheProxy;
     AuthUser authUser = AuthUser.builder()

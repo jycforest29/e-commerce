@@ -11,7 +11,5 @@ import java.util.Optional;
 public interface AuthUserRepository extends JpaRepository<AuthUser, Long> {
     Optional<AuthUser> findByUsername(@Param("username") String username);
 
-    // count와 달리 첫번째 결과만 조회하고 바로 return true를 하므로 exists의 성능이 더 좋음
-    // 메서드 쿼리의 exists는 내부에서 limit으로 최적화 하고 있음 -> querydsl을 사용할 것이 아니면 따로 최적화 할 것 안보임
     Boolean existsByUsername(@Param("username") String username);
 }

@@ -24,8 +24,8 @@ public class Review{
     id(pk) : Long
     title : String
     contents : int
-    createdAt : LocalDateTime
-    updatedAt : LocalDateTime
+    created_at : LocalDateTime
+    updated_at : LocalDateTime
     item_id(fk) : Long
     authUser_id(fk) : Long
     --------------------

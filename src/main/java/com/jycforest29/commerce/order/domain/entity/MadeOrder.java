@@ -9,6 +9,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @EntityListeners(value = {AuditingEntityListener.class})
 @Getter
@@ -20,7 +21,7 @@ public class MadeOrder {
     id(pk) : Long
     authuser_id(fk) : Long
     total_price : int
-    createdAt : LocalDateTime
+    created_at : LocalDateTime
     --------------------
     */
     @Id
@@ -55,23 +56,29 @@ public class MadeOrder {
 
         // MadeOrder과 OrderUnit의 연관관계 설정
         for(OrderUnit o : orderUnitList){
+            o.setMadeOrder(madeOrder);
             madeOrder.orderUnitList.add(o);
             madeOrder.totalPrice += o.getNumber() * o.getItem().getPrice();
-            o.setMadeOrder(madeOrder);
         }
         return madeOrder;
     }
 
-    public void deleteMadeOrder(AuthUser authUser, List<OrderUnit> orderUnitList){
+    public List<Long> deleteMadeOrder(AuthUser authUser, List<OrderUnit> orderUnitList){
         // MadeOrder와 AuthUser의 연관관계 해제
         this.authUser = null;
         authUser.getMadeOrderList().remove(this);
 
-        // MadeOrder와 OrderUnit
+        List<Long> orderUnitIdListToDelete = this.orderUnitList.stream()
+                .map(s -> s.getId())
+                .collect(Collectors.toList());
+
+        // MadeOrder와 OrderUnit의 연관관계 해제
         for(OrderUnit o : orderUnitList){
             o.setMadeOrder(null);
         }
         this.orderUnitList.removeAll(orderUnitList);
         this.totalPrice = 0;
+
+        return orderUnitIdListToDelete;
     }
 }

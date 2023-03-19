@@ -45,11 +45,10 @@ class ReviewControllerTest extends DockerComposeTestContainer {
     @BeforeEach
     void init(){
         authUserRepository.save(AuthUser.builder()
-                        .username("testuser1")
-                        .password("pw1234@")
-                        .nickname("testuser")
-                .build()
-        );
+                .username("testuser1")
+                .password("pw1234@")
+                .nickname("testuser")
+                .build());
     }
 
     @AfterEach
@@ -65,7 +64,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 "contents",
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                1L,
+                "name",
                 "testuser1"
         );
         given(reviewService.getReviewListByItem(1L)).willReturn(Arrays.asList(reviewResponseDto));
@@ -86,7 +85,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 "contents",
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                1L,
+                "name",
                 "testuser1"
         );
         given(reviewService.getReviewDetail(1L, 1L)).willReturn(reviewResponseDto);
@@ -145,7 +144,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 "내용은 10~255 글자여야 합니다.",
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                1L,
+                "name",
                 "testuser1"
         );
         given(reviewService.updateReview(1L, 1L, updateReviewRequestDto, "testuser1"))
@@ -182,7 +181,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 "contents",
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                1L,
+                "name",
                 "testuser1"
         );
         given(reviewService.likeReview(1L, 1L, "testuser1"))
@@ -203,7 +202,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 "contents",
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                1L,
+                "name",
                 "testuser1"
         );
         given(reviewService.removeLikeReview(1L, 1L, "testuser1"))

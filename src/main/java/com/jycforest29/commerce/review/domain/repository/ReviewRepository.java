@@ -2,6 +2,7 @@ package com.jycforest29.commerce.review.domain.repository;
 
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.review.domain.entity.Review;
+import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +20,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findAllByItem(@Param("item") Item item);
 
-    @Query("select r from Review r where r.authUser.id = :authUserId and timestampdiff(hour, r.createdAt, :now) <= 72")
-    List<Review> findAllByAuthUserIdAndCreatedWithin72Hours(Long authUserId, LocalDateTime now);
+    @Query("select r from Review r where r.authUser = :authUser and timestampdiff(hour, r.createdAt, :now) <= 48")
+    List<Review> findAllByAuthUserAndCreatedWithin48Hours(
+            @Param("authUser") AuthUser authUser, @Param("now") LocalDateTime now
+    );
 }

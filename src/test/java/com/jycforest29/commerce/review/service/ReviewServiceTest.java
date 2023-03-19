@@ -59,13 +59,11 @@ class ReviewServiceTest {
             .password("test_password")
             .nickname("test_nickname")
             .build();
-    Long authUserId = 1L;
     AuthUser otherUser = AuthUser.builder()
             .username("test_username_other")
             .password("test_password_other")
             .nickname("test_nickname_other")
             .build();
-    Long otherUserId = 2L;
 
     @Nested
     class ReadReview{

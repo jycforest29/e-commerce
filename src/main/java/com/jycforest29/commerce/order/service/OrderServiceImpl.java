@@ -6,6 +6,7 @@ import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
+import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
@@ -13,6 +14,7 @@ import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
 import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
+import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +32,8 @@ public class OrderServiceImpl implements OrderService{
     private final MadeOrderRepository madeOrderRepository;
     private final OrderUnitRepository orderUnitRepository;
     private final RedisLockRepository redisLockRepository;
-    private final ItemCacheProxy itemCacheProxy;
-    private final AuthUserCacheProxy authUserCacheProxy;
+    private final ItemRepository itemRepository;
+    private final AuthUserRepository authUserRepository;
 
     @Transactional
     @Override
@@ -160,16 +162,13 @@ public class OrderServiceImpl implements OrderService{
             AuthUser authUser = getAuthUser(username);
             for(OrderUnit o : madeOrder.getOrderUnitList()){
                 Item item = getItem(o.getItem().getId());
+                // 실제 item 개수 증가(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
                 item.increaseItemNumber(o.getNumber());
             }
             try{
-                madeOrder.deleteMadeOrder(authUser, orderUnitList);
+                List<Long> orderUnitIdListToDelete = madeOrder.deleteMadeOrder(authUser, orderUnitList);
                 madeOrderRepository.deleteById(madeOrder.getId());
-                orderUnitRepository.deleteAllByOrderUnitIdList(
-                    orderUnitList.stream()
-                            .map(s -> s.getId())
-                            .collect(Collectors.toList())
-                );
+                orderUnitRepository.deleteAllByOrderUnitIdList(orderUnitIdListToDelete);
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -188,12 +187,12 @@ public class OrderServiceImpl implements OrderService{
     }
 
     private AuthUser getAuthUser(String username){
-        return authUserCacheProxy.findByUsername(username)
+        return authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
     private Item getItem(Long itemId){
-        return itemCacheProxy.findById(itemId)
+        return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 

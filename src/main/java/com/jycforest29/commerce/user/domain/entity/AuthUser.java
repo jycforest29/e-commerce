@@ -21,6 +21,18 @@ import java.util.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 public class AuthUser implements UserDetails {
+    /*
+    --------------------
+    id(pk) : Long
+    username : String
+    password : String
+    role : Role
+    nickname : String
+    grade : String
+    reserves : int
+    cart_id : Long
+    --------------------
+    */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -71,7 +71,7 @@ public class ReviewServiceImpl implements ReviewService{
         List<OrderUnit> orderUnitList = authUser.getMadeOrderList().stream()
                         .flatMap(s -> s.getOrderUnitList().stream())
                         .collect(Collectors.toList());
-        // 주문 목록 중 해당 아이템을 주문한 목록이 없을 경우 401 발생
+        // 주문 목록 중 해당 아이템을 주문한 목록이 없을 경우 401 발생 => 추후 수정 필요
         orderUnitList.stream()
                 .filter(s -> s.getItem().equals(item))
                 .findFirst()
@@ -79,9 +79,11 @@ public class ReviewServiceImpl implements ReviewService{
 
         // 리뷰 객체 생성
         Review review = Review.from(addReviewRequestDTO);
+
         // 다대일 양방향 연관관계 매핑
         item.addReview(review);
         authUser.addReview(review);
+
         // DB에 반영
         reviewRepository.save(review);
     }
@@ -93,8 +95,9 @@ public class ReviewServiceImpl implements ReviewService{
     @Transactional
     @Override
     public ReviewResponseDto updateReview(Long itemId,
-                               Long reviewId,
-                               AddReviewRequestDto addReviewRequestDTO, String username) {
+                                          Long reviewId,
+                                          AddReviewRequestDto addReviewRequestDTO,
+                                          String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
         AuthUser authUser = getAuthUser(username);
@@ -102,9 +105,8 @@ public class ReviewServiceImpl implements ReviewService{
             throw new CustomException(ExceptionCode.NOT_DONE_BY_AUTHUSER);
         }
 
-        // 업데이트 및 DB에 반영
+        // dirty checking 통해 DB에 반영
         review.update(addReviewRequestDTO);
-        reviewRepository.save(review);
         return ReviewResponseDto.from(review);
     }
 

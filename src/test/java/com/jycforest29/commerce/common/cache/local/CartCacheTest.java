@@ -1,15 +1,10 @@
 //package com.jycforest29.commerce.common.cache.local;
 //
-//import com.jycforest29.commerce.cart.controller.CartController;
 //import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
-//import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
 //import com.jycforest29.commerce.cart.service.CartServiceImpl;
-//import com.jycforest29.commerce.item.domain.entity.Item;
-//import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 //import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 //import com.jycforest29.commerce.user.domain.entity.AuthUser;
 //import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-//import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.Nested;
 //import org.junit.jupiter.api.Test;
 //import org.springframework.beans.factory.annotation.Autowired;
@@ -26,25 +21,28 @@
 //@SpringBootTest
 //public class CartCacheTest extends DockerComposeTestContainer {
 //    @MockBean
-//    private CartServiceImpl cartService;
+//    private AuthUserRepository authUserRepository;
 //    @Autowired
-//    private CartController cartController;
+//    private CartServiceImpl cartService;
+//
+//    AuthUser authUser = AuthUser.builder()
+//            .username("test_username")
+//            .password("test_password")
+//            .nickname("test_nickname")
+//            .build();
 //
 //    @Nested
 //    class LocalCacheTest{
 //        @Test
-//        void username을_통해_cart을_가져올때_로컬_캐싱을_사용한다(){
+//        void username을_통해_CartResponseDto객체를_가져올때_로컬_캐싱을_사용한다(){
 //            //given
 //            given(authUserRepository.findByUsername(authUser.getUsername()))
 //                    .willReturn(Optional.ofNullable(authUser));
-//            given(itemRepository.findById(itemId)).willReturn(Optional.ofNullable(item));
-//            given(cartService.addCartUnitToCart(itemId, 1, authUser.getUsername()))
-//                    .willReturn(cartResponseDto);
 //            //when
 //            IntStream.range(0, 10)
-//                    .forEach(i -> cartController.getCartUnitList(authUser.getUsername());
+//                    .forEach(i -> cartService.getCartUnitList(authUser.getUsername()));
 //            //then
-//            verify(CartResponseDto, atMostOnce()).findById(itemId);
+//            verify(CartResponseDto, atMostOnce()).from(cart);
 //        }
 //    }
 //}

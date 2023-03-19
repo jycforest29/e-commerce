@@ -51,7 +51,7 @@ public class HomeServiceImpl implements HomeService {
         LocalDateTime now = LocalDateTime.now(clock);
         List<Review> homeReviewList = likedReviewSet.stream()
                 .distinct()
-                .map(s -> reviewRepository.findAllByAuthUserIdAndCreatedWithin72Hours(s.getId(), now))
+                .map(s -> reviewRepository.findAllByAuthUserAndCreatedWithin48Hours(s, now))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
 

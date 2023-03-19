@@ -65,7 +65,7 @@ class HomeControllerTest extends DockerComposeTestContainer {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .username("testuser1")
-                .itemId(1L)
+                .name("name")
                 .build();
 
         // 커스텀 어노테이션의 정상 동작 확인
