@@ -30,7 +30,7 @@ public class HomeServiceImpl implements HomeService {
     @Transactional(readOnly = true)
     @Override
     public List<ReviewResponseDto> getHomeReviewList(String username) {
-        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+        // 엔티티 가져옴
         AuthUser authUser = getAuthUser(username);
         List<AuthUser> likedAuthor = getLikedAuthor(authUser);
 
@@ -49,12 +49,12 @@ public class HomeServiceImpl implements HomeService {
 
     private List<Review> getAllHomeReviewList(List<AuthUser> likedReviewSet){
         LocalDateTime now = LocalDateTime.now(clock);
-
         List<Review> homeReviewList = likedReviewSet.stream()
                 .distinct()
-                .map(s -> reviewRepository.findAllByAuthUserIdAndCreatedWithin72Hours(2L, now))
+                .map(s -> reviewRepository.findAllByAuthUserIdAndCreatedWithin72Hours(s.getId(), now))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
+
         return homeReviewList;
     }
     private AuthUser getAuthUser(String username){

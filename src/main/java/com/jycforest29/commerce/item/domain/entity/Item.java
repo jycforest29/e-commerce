@@ -50,11 +50,12 @@ public class Item {
     }
 
     public void addReview(Review review){
-        this.reviewList.add(review);
         review.setItem(this);
+        this.reviewList.add(review);
     }
 
     public void deleteReview(Review review){
+        review.setItem(null);
         this.reviewList.remove(review);
     }
 }

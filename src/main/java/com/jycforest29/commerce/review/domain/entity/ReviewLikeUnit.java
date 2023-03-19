@@ -9,6 +9,13 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Entity
 public class ReviewLikeUnit {
+    /*
+    --------------------
+    id(pk) : Long
+    review_id : Long
+    authUser_id : Long
+    --------------------
+    */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

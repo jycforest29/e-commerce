@@ -18,8 +18,6 @@ public interface ReviewLikeUnitRepository extends JpaRepository<ReviewLikeUnit, 
     Optional<ReviewLikeUnit> findByReviewAndAuthUser(@Param("review") Review review,
                                                      @Param("authUser") AuthUser authUser);
 
-    // deleteAll() : select 쿼리 한번, 삭제 쿼리 n번
-    // deleteAllInBatch() : 한방 쿼리를 통해서 삭제함(엔티티 이름을 기반으로 해당하는 테이블을 찾아서 한방에 데이터 삭제함)
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from ReviewLikeUnit r where r.review.id = :review_id")
     void deleteAllByReviewId(@Param("review_id") Long review_id);

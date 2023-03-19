@@ -17,7 +17,7 @@ public class ReviewResponseDto {
     private LocalDateTime createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime updatedAt;
-    private Long itemId;
+    private String name;
     private String username;
     public static ReviewResponseDto from(Review review){
         return ReviewResponseDto.builder()
@@ -25,7 +25,7 @@ public class ReviewResponseDto {
                 .contents(review.getContents())
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
-                .itemId(review.getItem().getId())
+                .name(review.getItem().getName())
                 .username(review.getAuthUser().getUsername())
                 .build();
     }

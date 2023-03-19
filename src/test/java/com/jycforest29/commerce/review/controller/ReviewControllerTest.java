@@ -27,7 +27,6 @@ import java.util.Arrays;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -118,6 +117,23 @@ class ReviewControllerTest extends DockerComposeTestContainer {
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
+    void 특정_아이템에_대한_리뷰를_작성했지만_validation을_통과하지_못하고_status_code_400을_발생시킨다() throws Exception {
+        // given
+        AddReviewRequestDto addReviewRequestDto = AddReviewRequestDto.builder()
+                .title("제목은")
+                .contents("내용은")
+                .build();
+        // when, then
+        String dtoAsContent = objectMapper.writeValueAsString(addReviewRequestDto);
+        mockMvc.perform(MockMvcRequestBuilders.post("/review/{itemId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(dtoAsContent)
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
+    @Test
     void 로그인한_유저가_작성한_리뷰를_수정한다() throws Exception {
         // given
         AddReviewRequestDto updateReviewRequestDto = AddReviewRequestDto.builder()
@@ -145,7 +161,6 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                         .value("제목은 10~255 글자여야 합니다."))
                 .andExpect(jsonPath("$.contents", "내용은 10~255 글자여야 합니다.")
                         .value("내용은 10~255 글자여야 합니다."));
-//        verify(reviewService).updateReview(1L, 1L, updateReviewRequestDto, "testuser1");
     }
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
@@ -178,7 +193,6 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title", "title").exists())
                 .andExpect(jsonPath("$.contents", "contents").exists());
-//        verify(reviewService).likeReview(1L, 1L, "testuser1");
     }
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test

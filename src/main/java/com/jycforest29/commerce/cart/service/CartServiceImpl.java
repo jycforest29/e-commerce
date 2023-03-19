@@ -50,8 +50,8 @@ public class CartServiceImpl implements CartService{
         // 다대일 양방향 연관관계 매핑
         cart.addCartUnitToCart(cartUnit, item.getPrice());
 
-        // CartUnit 추가(DB에 반영)
-        cartUnitRepository.save(cartUnit);
+        // CartUnit 생성(DB에 반영)
+        cartUnitRepository.saveAndFlush(cartUnit);
         return CartResponseDto.from(cart);
     }
 

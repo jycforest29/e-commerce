@@ -6,7 +6,6 @@ import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
-import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
@@ -14,7 +13,6 @@ import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
 import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
-import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +29,6 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService{
     private final MadeOrderRepository madeOrderRepository;
     private final OrderUnitRepository orderUnitRepository;
-    private final ItemRepository itemRepository;
-    private final AuthUserRepository authUserRepository;
     private final RedisLockRepository redisLockRepository;
     private final ItemCacheProxy itemCacheProxy;
     private final AuthUserCacheProxy authUserCacheProxy;
@@ -40,14 +36,14 @@ public class OrderServiceImpl implements OrderService{
     @Transactional
     @Override
     public MadeOrderResponseDto makeOrder(Long itemId, int number, String username) throws InterruptedException {
-        // 아이템 한 종류에 대해서 주문하므로 itemId를 기준으로 락을 걸어줌
         while(!redisLockRepository.lock(List.of(itemId))){
             Thread.sleep(100);
         }
         try{
             // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
             Item item = getValidateItemByNumber(itemId, number);
-            // 엔티티 가져옴(유효성 검증은 컨트롤러에서 이미 완료함)
+
+            // 엔티티 가져옴
             AuthUser authUser = getAuthUser(username);
             OrderUnit orderUnit = OrderUnit.builder()
                     .item(item)
@@ -60,10 +56,8 @@ public class OrderServiceImpl implements OrderService{
             madeOrderRepository.save(madeOrder);
             orderUnitRepository.save(orderUnit);
 
-            // Cart와 다르게 단방향 관계인 item의 메서드를 호출하는 이유는 Cart는 item에 영향을 주지않는 반면, OrderUnit은 영향을 줌
+            // 실제 item 개수 감소(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
             item.decreaseItemNumber(number);
-            itemRepository.saveAndFlush(item);
-            // try에서 return 수행할 경우 finally 거쳐서 정상 종료됨.
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
             redisLockRepository.unlock(List.of(itemId));
@@ -73,9 +67,7 @@ public class OrderServiceImpl implements OrderService{
     // 장바구니에 있는 아이템을 전부 주문하기 위해선 어떻게 락을 걸어줘야 할까?
     // 일단 장바구니에 아이템 A, B가 있을때 아이템 A를 주문할 때 B가 품절되면 안됨
     // 즉 모든 아이템에 대해 수행 여부에 동일하게 보장되어야 함
-    // 방법1. 각 아이템에 대해 락을 걸어 주문을 수행하다가 하나라도 실패하면 모두 반영하지 않음 -> 롤백 로직 따로 작성해
-    // 방법2. 각 아이템이 속해있는 모든 테이블에 락을 걸어 한번에 처리함
-    // -> setnx에 exec 사용해 방법2로 구현
+    // -> 각 아이템이 속해있는 모든 테이블에 락을 걸어 한번에 처리해야
     @Transactional
     @Override
     public MadeOrderResponseDto makeOrderForCart(String username, List<Long> itemIdListToLock)
@@ -99,22 +91,26 @@ public class OrderServiceImpl implements OrderService{
             Thread.sleep(100);
         }
         try{
+            // 엔티티 가져옴
             AuthUser authUser = getAuthUser(username);
             Cart cart = authUser.getCart();
             List<CartUnit> cartUnitList = cart.getCartUnitList();
             List<OrderUnit> orderUnitList = cartUnitList.stream()
                 .map(s -> OrderUnit.mapToOrderUnit(s))
                 .collect(Collectors.toList());
+
+            // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
             for(OrderUnit o : orderUnitList){
                 getValidateItemByNumber(o.getItem().getId(), o.getNumber());
             }
+
             MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
             madeOrderRepository.save(madeOrder);
             orderUnitRepository.saveAll(orderUnitList);
             for(OrderUnit o : orderUnitList){
                 Item item = o.getItem();
+                // 실제 item 개수 감소(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
                 item.decreaseItemNumber(o.getNumber());
-                itemRepository.saveAndFlush(item);
             }
             return MadeOrderResponseDto.from(madeOrder);
         }finally {
@@ -125,22 +121,20 @@ public class OrderServiceImpl implements OrderService{
     @Transactional(readOnly = true)
     @Override
     public List<MadeOrderResponseDto> getOrderList(String username) {
-        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+        // 엔티티 가져옴
         AuthUser authUser = getAuthUser(username);
-
-        // findAllBy<Column name>을 사용할 경우 스프링 데이터 jpa에 의해 자동으로 쿼리문 생성됨
         List<MadeOrder> madeOrderList = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser);
-        List<MadeOrderResponseDto> madeOrderResponseDtoList = madeOrderList.stream()
+
+        return madeOrderList.stream()
                 .map(s -> MadeOrderResponseDto.from(s))
                 .collect(Collectors.toList());
-        return madeOrderResponseDtoList;
     }
 
     @Transactional(readOnly = true)
     @Override
     public MadeOrderResponseDto getOrder(Long madeOrderId, String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        MadeOrder madeOrder = getOrder(madeOrderId);
+        MadeOrder madeOrder = getMadeOrder(madeOrderId);
         return MadeOrderResponseDto.from(madeOrder);
     }
 
@@ -160,16 +154,16 @@ public class OrderServiceImpl implements OrderService{
             Thread.sleep(100);
         }
         try{
-            MadeOrder madeOrder = getOrder(madeOrderId);
+            // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+            MadeOrder madeOrder = getMadeOrder(madeOrderId);
             List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
             AuthUser authUser = getAuthUser(username);
             for(OrderUnit o : madeOrder.getOrderUnitList()){
                 Item item = getItem(o.getItem().getId());
                 item.increaseItemNumber(o.getNumber());
-                itemRepository.saveAndFlush(item);
             }
             try{
-                madeOrder.deleteOrder(authUser, orderUnitList);
+                madeOrder.deleteMadeOrder(authUser, orderUnitList);
                 madeOrderRepository.deleteById(madeOrder.getId());
                 orderUnitRepository.deleteAllByOrderUnitIdList(
                     orderUnitList.stream()
@@ -203,7 +197,7 @@ public class OrderServiceImpl implements OrderService{
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 
-    private MadeOrder getOrder(Long madeOrderId){
+    private MadeOrder getMadeOrder(Long madeOrderId){
         return madeOrderRepository.findById(madeOrderId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }

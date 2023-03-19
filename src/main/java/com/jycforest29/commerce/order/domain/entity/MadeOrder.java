@@ -47,13 +47,13 @@ public class MadeOrder {
     }
 
     public static MadeOrder addOrderUnit(AuthUser authUser, List<OrderUnit> orderUnitList) {
-        // MadeOrder의 연관관계 설정 완료
+        // MadeOrder과 AuthUser의 연관관계 설정
         MadeOrder madeOrder = MadeOrder.builder()
                 .authUser(authUser)
                 .build();
         authUser.getMadeOrderList().add(madeOrder);
 
-        // OrderUnit의 연관관계 설정 완료
+        // MadeOrder과 OrderUnit의 연관관계 설정
         for(OrderUnit o : orderUnitList){
             madeOrder.orderUnitList.add(o);
             madeOrder.totalPrice += o.getNumber() * o.getItem().getPrice();
@@ -62,9 +62,11 @@ public class MadeOrder {
         return madeOrder;
     }
 
-    public void deleteOrder(AuthUser authUser, List<OrderUnit> orderUnitList){
-        // AuthUser와 MadeOrder
+    public void deleteMadeOrder(AuthUser authUser, List<OrderUnit> orderUnitList){
+        // MadeOrder와 AuthUser의 연관관계 해제
+        this.authUser = null;
         authUser.getMadeOrderList().remove(this);
+
         // MadeOrder와 OrderUnit
         for(OrderUnit o : orderUnitList){
             o.setMadeOrder(null);

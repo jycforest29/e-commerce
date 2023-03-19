@@ -29,16 +29,15 @@ public class Cart { // 유저 -> 카트로만 접근이 가능한 일대일 단�
 
     public void addCartUnitToCart(CartUnit cartUnit, int price){
         cartUnit.setCart(this);
-        if(!cartUnitList.contains(cartUnit)){
-            this.cartUnitList.add(cartUnit);
-            this.totalPrice += cartUnit.getNumber() * price;
-        }
+        this.cartUnitList.add(cartUnit);
+        this.totalPrice += cartUnit.getNumber() * price;
     }
 
     public List<Long> removeAllCartUnit(){
         List<Long> cartUnitIdListToDelete = this.cartUnitList.stream()
                 .map(s -> s.getId())
                 .collect(Collectors.toList());
+
         for(CartUnit cartUnit : this.cartUnitList){
             cartUnit.setCart(null);
         }
@@ -50,9 +49,7 @@ public class Cart { // 유저 -> 카트로만 접근이 가능한 일대일 단�
 
     public void removeCartUnitFromCart(CartUnit cartUnit, int price){
         cartUnit.setCart(null);
-        if(cartUnitList.contains(cartUnit)){
-            this.cartUnitList.remove(cartUnit);
-            this.totalPrice -= cartUnit.getNumber() * price;
-        }
+        this.cartUnitList.remove(cartUnit);
+        this.totalPrice -= cartUnit.getNumber() * price;
     }
 }
