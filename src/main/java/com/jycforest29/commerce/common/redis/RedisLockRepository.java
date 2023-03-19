@@ -46,15 +46,12 @@ public class RedisLockRepository {
 
     @Transactional
     public Boolean unlock(List<Long> key){
-        // delete 사용시 O(N), unlink 사용시 O(1)(즉 key의 개수에 상관 없음)
-        // unlink : 실제로는 keyspace에서 key를 제거하고 메모리 상의 삭제는 다른 스레드에서 비동기로 이루어짐
         redisTemplate.unlink(key.stream()
                 .map(s -> s.toString())
                 .collect(Collectors.toList())
         );
         return true;
     }
-
 }
 
 

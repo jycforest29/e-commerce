@@ -12,6 +12,12 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @Entity
 public class Cart { // 유저 -> 카트로만 접근이 가능한 일대일 단방향.
+    /*
+    --------------------
+    id(pk) : Long
+    total_price : int
+    --------------------
+    */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,23 +29,30 @@ public class Cart { // 유저 -> 카트로만 접근이 가능한 일대일 단�
 
     public void addCartUnitToCart(CartUnit cartUnit, int price){
         cartUnit.setCart(this);
-        this.cartUnitList.add(cartUnit);
-        this.totalPrice += cartUnit.getNumber() * price;
+        if(!cartUnitList.contains(cartUnit)){
+            this.cartUnitList.add(cartUnit);
+            this.totalPrice += cartUnit.getNumber() * price;
+        }
     }
 
-    public List<CartUnit> removeAllCartUnit(){
+    public List<Long> removeAllCartUnit(){
+        List<Long> cartUnitIdListToDelete = this.cartUnitList.stream()
+                .map(s -> s.getId())
+                .collect(Collectors.toList());
         for(CartUnit cartUnit : this.cartUnitList){
             cartUnit.setCart(null);
         }
         this.cartUnitList.clear();
         this.totalPrice = 0;
 
-        return this.cartUnitList;
+        return cartUnitIdListToDelete;
     }
 
     public void removeCartUnitFromCart(CartUnit cartUnit, int price){
         cartUnit.setCart(null);
-        this.cartUnitList.remove(cartUnit);
-        this.totalPrice -= cartUnit.getNumber() * price;
+        if(cartUnitList.contains(cartUnit)){
+            this.cartUnitList.remove(cartUnit);
+            this.totalPrice -= cartUnit.getNumber() * price;
+        }
     }
 }

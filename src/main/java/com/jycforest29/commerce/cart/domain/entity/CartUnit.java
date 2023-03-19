@@ -9,6 +9,15 @@ import javax.persistence.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 public class CartUnit {
+    /*
+    --------------------
+    id(pk) : Long
+    item_id(fk) : Long
+    cart_id(fk) : Long
+    number : int
+    available : Boolean
+    --------------------
+    */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,6 +32,7 @@ public class CartUnit {
     private Cart cart;
 
     private int number;
+
     @Setter
     private Boolean available = true;
 

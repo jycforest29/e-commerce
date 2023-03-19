@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-// 빌더의 작동 방식은 생성자가 있을 경우 => 별도의 생성자 생성 x, 생성자가 없을 경우 => 모든 멤버 변수를 파라미터로 받는 기본 생성자 생성
 public class MadeOrderResponseDto {
     private String username;
     private List<OrderUnitResponseDto> orderUnitResponseDtoList;

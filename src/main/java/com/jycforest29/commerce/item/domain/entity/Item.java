@@ -12,9 +12,16 @@ import java.util.List;
 @AllArgsConstructor // 테스트
 @Entity
 public class Item {
-    // 기본 키 생성을 DB에 위임하여 auto increment 수행.
+    /*
+    --------------------
+    id(pk) : Long
+    name : String
+    price : int
+    number : int
+    --------------------
+    */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // 기본 키 생성을 DB에 위임하여 auto increment 수행.
     private Long id;
 
     @Column(nullable = false)
@@ -34,14 +41,13 @@ public class Item {
         this.number = number;
     }
 
-    public void increaseItemNumber(Integer increaseNumber){
-        this.number += increaseNumber.intValue();
+    public void increaseItemNumber(int increaseNumber){
+        this.number += increaseNumber;
     }
 
     public void decreaseItemNumber(int decreaseNumber){
         this.number -= decreaseNumber;
     }
-
 
     public void addReview(Review review){
         this.reviewList.add(review);
@@ -51,5 +57,4 @@ public class Item {
     public void deleteReview(Review review){
         this.reviewList.remove(review);
     }
-
 }

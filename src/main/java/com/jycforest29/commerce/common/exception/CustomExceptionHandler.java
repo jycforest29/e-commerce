@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import javax.servlet.http.HttpServletRequest;
 
 @Slf4j
-@RestControllerAdvice // 전역 예외 처리
+@RestControllerAdvice
 public class CustomExceptionHandler {
 
     @ExceptionHandler(CustomException.class)

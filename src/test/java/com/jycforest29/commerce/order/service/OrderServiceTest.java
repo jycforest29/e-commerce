@@ -14,11 +14,12 @@ import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.RepeatedTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -27,7 +28,6 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
 @SpringBootTest
 class OrderServiceTest extends DockerComposeTestContainer{
     private static final int threadCnt = 2;

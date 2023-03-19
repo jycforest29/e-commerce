@@ -15,6 +15,14 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 public class MadeOrder {
+    /*
+    --------------------
+    id(pk) : Long
+    authuser_id(fk) : Long
+    total_price : int
+    createdAt : LocalDateTime
+    --------------------
+    */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

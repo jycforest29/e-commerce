@@ -169,25 +169,16 @@ public class OrderServiceImpl implements OrderService{
                 itemRepository.saveAndFlush(item);
             }
             try{
-                madeOrder.deleteOrder(authUser, orderUnitList); // dirty checking 을 사용해 madeOrder, orderUnit delete
+                madeOrder.deleteOrder(authUser, orderUnitList);
+                madeOrderRepository.deleteById(madeOrder.getId());
+                orderUnitRepository.deleteAllByOrderUnitIdList(
+                    orderUnitList.stream()
+                            .map(s -> s.getId())
+                            .collect(Collectors.toList())
+                );
             }catch (Exception e){
                 e.printStackTrace();
             }
-//        try{
-//            madeOrderRepository.deleteById(madeOrder.getId());
-//        }catch (Exception e){
-//            log.info("madeOrder.deleteById");
-//            e.printStackTrace();
-//        }
-//        try{
-//            orderUnitRepository.deleteAllByOrderUnitIdList(
-//                    orderUnitList.stream()
-//                            .map(s -> s.getId())
-//                            .collect(Collectors.toList()));
-//        }catch (Exception e){
-//            log.info("orderUnitRepository.deleteAllByOrderUnitIdList");
-//            e.printStackTrace();
-//        }
         }
         finally {
             redisLockRepository.unlock(itemIdListToLock);
@@ -202,21 +193,13 @@ public class OrderServiceImpl implements OrderService{
         throw new CustomException(ExceptionCode.ITEM_OVER_LIMIT);
     }
 
-    // 현재 로컬 캐싱인데, AuthUser 객체에서는 madeOrderList에 접근이 가능함.
-    // 따라서 메인 서버의 DB와 동기화 시차 때문에 주문 취소를
-    // 했는데 반영되지 않은 상태로 캐시에 남아있는 경우가 있을 수 있음.
-    // 이 경우 프로그램의 신뢰도가 떨어지므로 아예 캐싱을 사용하지 않음.
     private AuthUser getAuthUser(String username){
-//        return authUserCacheProxy.findByUsername(username)
-//                .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
-        return authUserRepository.findByUsername(username)
+        return authUserCacheProxy.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
     private Item getItem(Long itemId){
-//        return itemCacheProxy.findById(itemId)
-//                .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
-        return itemRepository.findById(itemId)
+        return itemCacheProxy.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 

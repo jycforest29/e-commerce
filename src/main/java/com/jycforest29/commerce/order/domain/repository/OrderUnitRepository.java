@@ -11,8 +11,6 @@ import java.util.List;
 
 @Repository
 public interface OrderUnitRepository extends JpaRepository<OrderUnit, Long> {
-    // 다른 엔티티와의 연관 관계를 고려할 필요 없음
-    // 쿼리의 성능을 높이려 jpql을 사용해 벌크 연산으로 작성함
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from OrderUnit o where o.id in :orderUnitIdList")
     void deleteAllByOrderUnitIdList(@Param("orderUnitIdList") List<Long> orderUnitIdList);

@@ -13,6 +13,14 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Entity
 public class OrderUnit {
+    /*
+    --------------------
+    id(pk) : Long
+    item_id(fk) : Long
+    madeOrder_id(fk) : Long
+    number : int
+    --------------------
+    */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

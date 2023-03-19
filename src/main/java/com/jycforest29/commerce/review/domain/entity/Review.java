@@ -19,6 +19,17 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 public class Review{
+    /*
+    --------------------
+    id(pk) : Long
+    title : String
+    contents : int
+    createdAt : LocalDateTime
+    updatedAt : LocalDateTime
+    item_id(fk) : Long
+    authUser_id(fk) : Long
+    --------------------
+    */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
