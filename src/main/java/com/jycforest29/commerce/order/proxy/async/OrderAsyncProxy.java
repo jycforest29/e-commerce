@@ -67,6 +67,7 @@ public class OrderAsyncProxy {
         }
         throw new CustomException(ExceptionCode.ITEM_OVER_LIMIT);
     }
+
     private Item getItem(Long itemId){
         return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));

@@ -59,32 +59,21 @@ public class OrderServiceImpl implements OrderService{
     // -> 각 아이템이 속해있는 모든 테이블에 락을 걸어 한번에 처리해야
     @Transactional
     @Override
-    public MadeOrderResponseDto makeOrderForCart(String username, List<Long> itemIdListToLock)
-            throws InterruptedException, ExecutionException {
-//        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-//        AuthUser authUser = getAuthUser(authUserId);
-//        Cart cart = authUser.getCart();
-//        List<CartUnit> cartUnitList = cart.getCartUnitList();
-//
-//        // List<CartUnit>를 List<OrderUnit>으로 변환
-//        List<OrderUnit> orderUnitList = cartUnitList.stream()
-//                .map(s -> OrderUnit.mapToOrderUnit(s))
-//                .collect(Collectors.toList());
-//
-//        // 락을 걸어야 하는 아이템리스트 추출
-//        List<Long> itemIdListToLock = orderUnitList.stream()
-//                .map(s -> s.getItem().getId())
-//                .collect(Collectors.toList());
+    public MadeOrderResponseDto makeOrderForCart(String username) throws InterruptedException, ExecutionException {
+        // 엔티티 가져옴
+        AuthUser authUser = getAuthUser(username);
+        Cart cart = authUser.getCart();
+        List<CartUnit> cartUnitList = cart.getCartUnitList();
 
+        // 락을 걸어야 하는 아이템의 id 리스트 추출
+        List<Long> itemIdListToLock = cartUnitList.stream()
+                .map(s -> s.getItem().getId())
+                .collect(Collectors.toList());
         while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }
         try{
-            AuthUser authUser = getAuthUser(username);
-            Cart cart = authUser.getCart();
-            List<CartUnit> cartUnitList = cart.getCartUnitList();
             List<OrderUnit> orderUnitList = new ArrayList<>();
-
             for(CartUnit cartUnit: cartUnitList){
                 orderUnitList.add(makeOrderUnitAsync(cartUnit.getItem().getId(), cartUnit.getNumber()));
             }

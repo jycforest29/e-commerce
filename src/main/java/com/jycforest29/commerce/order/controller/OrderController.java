@@ -30,10 +30,9 @@ public class OrderController {
     }
 
     @PostMapping(value = "/cart/order")
-    public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser String username,
-                                                                 List<Long> itemIdListLock)
+    public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser String username)
             throws InterruptedException, ExecutionException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(username, itemIdListLock));
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(username));
     }
 
     @GetMapping(value = "/order")

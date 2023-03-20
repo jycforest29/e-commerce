@@ -167,11 +167,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.makeOrderForCart(
-                            authUser.getUsername(),
-                            Arrays.asList(item.getId(),
-                            otherItem.getId())
-                    );
+                    orderService.makeOrderForCart(authUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } catch (ExecutionException e) {
