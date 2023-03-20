@@ -15,7 +15,7 @@ public class AsyncConfig {
     private int QUEUE_COMPACITY = 100;
 
     @Bean(name = "makeOrderUnitExecutor")
-    public Executor threadPoolTaskExecutor(){
+    public Executor makeOrderUnitExecutor(){
         ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
         threadPoolTaskExecutor.setCorePoolSize(CORE_POOL_SIZE);
         threadPoolTaskExecutor.setMaxPoolSize(MAX_POOL_SIZE);
@@ -24,4 +24,15 @@ public class AsyncConfig {
 
         return threadPoolTaskExecutor;
     }
+
+//    @Bean(name = "deleteOrderUnitExecutor")
+//    public Executor deleteOrderUnitExecutor(){
+//        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+//        threadPoolTaskExecutor.setCorePoolSize(CORE_POOL_SIZE);
+//        threadPoolTaskExecutor.setMaxPoolSize(MAX_POOL_SIZE);
+//        threadPoolTaskExecutor.setQueueCapacity(QUEUE_COMPACITY);
+//        threadPoolTaskExecutor.initialize();
+//
+//        return threadPoolTaskExecutor;
+//    }
 }

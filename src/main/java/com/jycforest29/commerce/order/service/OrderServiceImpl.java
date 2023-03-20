@@ -44,7 +44,7 @@ public class OrderServiceImpl implements OrderService{
             Thread.sleep(100);
         }
         try{
-            OrderUnit orderUnit = madeOrderUnitAsync(itemId, number);
+            OrderUnit orderUnit = makeOrderUnitAsync(itemId, number);
             return orderAsyncProxy.madeOrderWithCommit(username, Arrays.asList(orderUnit));
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
@@ -86,7 +86,7 @@ public class OrderServiceImpl implements OrderService{
             List<OrderUnit> orderUnitList = new ArrayList<>();
 
             for(CartUnit cartUnit: cartUnitList){
-                orderUnitList.add(madeOrderUnitAsync(cartUnit.getItem().getId(), cartUnit.getNumber()));
+                orderUnitList.add(makeOrderUnitAsync(cartUnit.getItem().getId(), cartUnit.getNumber()));
             }
             return orderAsyncProxy.madeOrderWithCommit(username, orderUnitList);
         }finally {
@@ -134,7 +134,7 @@ public class OrderServiceImpl implements OrderService{
             MadeOrder madeOrder = getMadeOrder(madeOrderId);
             List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
             AuthUser authUser = getAuthUser(username);
-            for(OrderUnit o : madeOrder.getOrderUnitList()){
+            for(OrderUnit o : orderUnitList){
                 Item item = getItem(o.getItem().getId());
                 // 실제 item 개수 증가(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
                 item.increaseItemNumber(o.getNumber());
@@ -152,17 +152,9 @@ public class OrderServiceImpl implements OrderService{
         }
     }
 
-    private OrderUnit madeOrderUnitAsync(Long itemId, int number)
+    private OrderUnit makeOrderUnitAsync(Long itemId, int number)
             throws ExecutionException, InterruptedException {
-        return orderAsyncProxy.madeOrderUnitAsync(itemId, number).get();
-    }
-    
-    private Item getValidateItemByNumber(Long itemId, int number){
-        Item item = getItem(itemId);
-        if(item.getNumber() >= number){
-            return item;
-        }
-        throw new CustomException(ExceptionCode.ITEM_OVER_LIMIT);
+        return orderAsyncProxy.makeOrderUnitAsync(itemId, number).get();
     }
 
     private AuthUser getAuthUser(String username){

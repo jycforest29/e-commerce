@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -29,21 +28,29 @@ public class OrderAsyncProxy {
     private final OrderUnitRepository orderUnitRepository;
     private final AuthUserRepository authUserRepository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NESTED)
     @Async("makeOrderUnitExecutor")
-    public CompletableFuture<OrderUnit> madeOrderUnitAsync(Long itemId, int number){
+    public CompletableFuture<OrderUnit> makeOrderUnitAsync(Long itemId, int number){
         Item item = getValidateItemByNumber(itemId, number);
 
         OrderUnit orderUnit = OrderUnit.builder()
                 .item(item)
                 .number(number)
                 .build();
-        item.decreaseItemNumber(number);
+        item.decreaseItemNumber(number); // dirty checking -> Transactional propagation 고려해야
 
         return CompletableFuture.completedFuture(orderUnit);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+//    @Transactional(propagation = Propagation.NESTED)
+//    @Async("deleteOrderUnitExecutor")
+//    public void deleteOrderUnitAsync(Long itemId, int number){
+//        Item item = getItem(itemId);
+//        item.decreaseItemNumber(number);
+//    }
+
+
+    @Transactional(propagation = Propagation.NESTED)
     public MadeOrderResponseDto madeOrderWithCommit(String username, List<OrderUnit> orderUnitList){
         AuthUser authUser = getAuthUser(username);
         MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
