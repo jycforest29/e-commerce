@@ -1,11 +1,12 @@
 package com.jycforest29.commerce.user.dto.register;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
-
 @Getter
+@AllArgsConstructor // 테스트
 public class RegisterRequestDto {
     @NotBlank
     @Pattern(regexp = "^(?=.+[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]{5,10}$",

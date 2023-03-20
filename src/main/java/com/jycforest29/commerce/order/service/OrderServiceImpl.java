@@ -7,24 +7,23 @@ import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
-import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
 import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
+import com.jycforest29.commerce.order.proxy.async.OrderAsyncProxy;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.concurrent.ListenableFuture;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,6 +35,7 @@ public class OrderServiceImpl implements OrderService{
     private final RedisLockRepository redisLockRepository;
     private final ItemRepository itemRepository;
     private final AuthUserRepository authUserRepository;
+    private final OrderAsyncProxy orderAsyncProxy;
 
     @Transactional
     @Override
@@ -44,26 +44,11 @@ public class OrderServiceImpl implements OrderService{
             Thread.sleep(100);
         }
         try{
-            // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
-            Item item = getValidateItemByNumber(itemId, number);
-
-            // 엔티티 가져옴
-            AuthUser authUser = getAuthUser(username);
-            OrderUnit orderUnit = OrderUnit.builder()
-                    .item(item)
-                    .number(number)
-                    .build();
-
-            // Cart와 다르게 연관 관계 편의 메서드를 static 으로 선언한 이유는 Cart는 AuthUser와 일대일 단방향 관계로,
-            // AuthUser가 존재할 경우 항상 존재하게 짰기 때문에 Cart 객체를 생성해 줄 필요가 없는 반면 MakeOrder 객체는 새로 생성 필요
-            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, Arrays.asList(orderUnit));
-            madeOrderRepository.save(madeOrder);
-            orderUnitRepository.save(orderUnit);
-
-            // 실제 item 개수 감소(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
-            item.decreaseItemNumber(number);
-            return MadeOrderResponseDto.from(madeOrder);
-        }finally {
+            OrderUnit orderUnit = madeOrderUnitAsync(itemId, number);
+            return orderAsyncProxy.madeOrderWithCommit(username, Arrays.asList(orderUnit));
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } finally {
             redisLockRepository.unlock(List.of(itemId));
         }
     }
@@ -75,7 +60,7 @@ public class OrderServiceImpl implements OrderService{
     @Transactional
     @Override
     public MadeOrderResponseDto makeOrderForCart(String username, List<Long> itemIdListToLock)
-            throws InterruptedException {
+            throws InterruptedException, ExecutionException {
 //        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
 //        AuthUser authUser = getAuthUser(authUserId);
 //        Cart cart = authUser.getCart();
@@ -95,28 +80,15 @@ public class OrderServiceImpl implements OrderService{
             Thread.sleep(100);
         }
         try{
-            // 엔티티 가져옴
             AuthUser authUser = getAuthUser(username);
             Cart cart = authUser.getCart();
             List<CartUnit> cartUnitList = cart.getCartUnitList();
-            List<OrderUnit> orderUnitList = cartUnitList.stream()
-                .map(s -> OrderUnit.mapToOrderUnit(s))
-                .collect(Collectors.toList());
+            List<OrderUnit> orderUnitList = new ArrayList<>();
 
-            // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
-            for(OrderUnit o : orderUnitList){
-                getValidateItemByNumber(o.getItem().getId(), o.getNumber());
+            for(CartUnit cartUnit: cartUnitList){
+                orderUnitList.add(madeOrderUnitAsync(cartUnit.getItem().getId(), cartUnit.getNumber()));
             }
-
-            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
-            madeOrderRepository.save(madeOrder);
-            orderUnitRepository.saveAll(orderUnitList);
-            for(OrderUnit o : orderUnitList){
-                Item item = o.getItem();
-                // 실제 item 개수 감소(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
-                item.decreaseItemNumber(o.getNumber());
-            }
-            return MadeOrderResponseDto.from(madeOrder);
+            return orderAsyncProxy.madeOrderWithCommit(username, orderUnitList);
         }finally {
             redisLockRepository.unlock(itemIdListToLock);
         }
@@ -144,7 +116,7 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional
     @Override
-    public void deleteOrder(Long madeOrderId, String username, List<Long> itemIdListToLock) throws InterruptedException {
+    public void deleteOrder(Long madeOrderId, String username, List<Long> itemIdListToLock) throws InterruptedException{
 //        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
 //        MadeOrder madeOrder = getOrder(madeOrderId);
 //        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
@@ -178,6 +150,11 @@ public class OrderServiceImpl implements OrderService{
         finally {
             redisLockRepository.unlock(itemIdListToLock);
         }
+    }
+
+    private OrderUnit madeOrderUnitAsync(Long itemId, int number)
+            throws ExecutionException, InterruptedException {
+        return orderAsyncProxy.madeOrderUnitAsync(itemId, number).get();
     }
     
     private Item getValidateItemByNumber(Long itemId, int number){

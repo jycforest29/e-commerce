@@ -25,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -166,8 +167,14 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.makeOrderForCart(authUser.getUsername(), Arrays.asList(item.getId(), otherItem.getId()));
+                    orderService.makeOrderForCart(
+                            authUser.getUsername(),
+                            Arrays.asList(item.getId(),
+                            otherItem.getId())
+                    );
                 } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (ExecutionException e) {
                     throw new RuntimeException(e);
                 } finally {
                     countDownLatch.countDown();
