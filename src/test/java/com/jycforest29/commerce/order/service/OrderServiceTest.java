@@ -237,7 +237,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername(), Arrays.asList(item.getId()));
+                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername(),
+                            Arrays.asList(item.getId()));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {

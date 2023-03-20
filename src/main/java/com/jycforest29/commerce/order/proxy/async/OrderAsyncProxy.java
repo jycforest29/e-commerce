@@ -42,14 +42,6 @@ public class OrderAsyncProxy {
         return CompletableFuture.completedFuture(orderUnit);
     }
 
-//    @Transactional(propagation = Propagation.NESTED)
-//    @Async("deleteOrderUnitExecutor")
-//    public void deleteOrderUnitAsync(Long itemId, int number){
-//        Item item = getItem(itemId);
-//        item.decreaseItemNumber(number);
-//    }
-
-
     @Transactional(propagation = Propagation.NESTED)
     public MadeOrderResponseDto madeOrderWithCommit(String username, List<OrderUnit> orderUnitList){
         AuthUser authUser = getAuthUser(username);
@@ -58,6 +50,21 @@ public class OrderAsyncProxy {
         orderUnitRepository.saveAll(orderUnitList);
 
         return MadeOrderResponseDto.from(madeOrder);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Async("deleteOrderUnitExecutor")
+    public void deleteOrderUnitAsync(Long itemId, int number){
+        Item item = getItem(itemId);
+        item.increaseItemNumber(number);
+    }
+
+    @Transactional(propagation = Propagation.NESTED)
+    public void deleteOrderWithCommit(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList){
+        AuthUser authUser = getAuthUser(username);
+        List<Long> orderUnitIdListToDelete = madeOrder.deleteMadeOrder(authUser, orderUnitList);
+        madeOrderRepository.deleteById(madeOrder.getId());
+        orderUnitRepository.deleteAllByOrderUnitIdList(orderUnitIdListToDelete);
     }
 
     private Item getValidateItemByNumber(Long itemId, int number){
