@@ -22,7 +22,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping(value = "/{itemId}/order")
-    public ResponseEntity<MadeOrderResponseDto> makeOrder(@PathVariable("item") Long itemId,
+    public ResponseEntity<MadeOrderResponseDto> makeOrder(@PathVariable("itemId") Long itemId,
                                                           @RequestParam @Min(1) int number,
                                                           @LoginAuthUser String username) throws InterruptedException {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrder(itemId, number, username));
