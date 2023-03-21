@@ -138,24 +138,25 @@ public class OrderServiceImpl implements OrderService{
                     })
             );
         }
-        CompletableFuture<List<CompletableFuture<OrderUnit>>> result = CompletableFuture
+        return CompletableFuture
                 .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
                 .thenApply(s -> completableFutureList.stream()
                         .map(CompletableFuture::join)
-                        .collect(Collectors.toList()));
-
-        // 블로킹
-        List<OrderUnit> orderUnitList = result.get().stream().map(s -> {
-            try {
-                return s.get();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toList());
-
-        return orderAsyncProxy.madeOrderWithCommit(username, orderUnitList);
+                        .collect(Collectors.toList()))
+                .thenApply(s -> s.stream()
+                        .map(s_ -> {
+                            try {
+                                return s_.get();
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            } catch (ExecutionException e) {
+                                throw new RuntimeException(e);
+                            }})
+                        .collect(Collectors.toList()))
+                .thenApply(s -> {
+                    return orderAsyncProxy.madeOrderWithCommit(username, s);
+                })
+                .get();
     }
 
     private void deleteOrderUnitAsync(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList) {
@@ -166,10 +167,16 @@ public class OrderServiceImpl implements OrderService{
             }));
         }
 
-        CompletableFuture.allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
-                .join();
-
-        orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
+        CompletableFuture
+                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
+                .thenApply(s -> completableFutureList.stream()
+                        .map(CompletableFuture::join)
+                        .collect(Collectors.toList()))
+                .thenAccept(s -> {
+                    if(!s.contains("false")){
+                        orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
+                    }
+                });
     }
 
     private AuthUser getAuthUser(String username){
