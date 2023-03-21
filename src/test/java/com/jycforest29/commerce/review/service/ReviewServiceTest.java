@@ -2,7 +2,7 @@ package com.jycforest29.commerce.review.service;
 
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.item.domain.entity.Item;
-import com.jycforest29.commerce.item.domain.repository.ItemRepository;
+import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.review.domain.entity.Review;
@@ -11,8 +11,9 @@ import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepositor
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
 import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.proxy.ReviewCacheProxy;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
-import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -34,13 +35,15 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
     @Mock
-    private ItemRepository itemRepository;
-    @Mock
     private ReviewRepository reviewRepository;
     @Mock
     private ReviewLikeUnitRepository reviewLikeUnitRepository;
     @Mock
-    private AuthUserRepository authUserRepository;
+    private ItemCacheProxy itemCacheProxy;
+    @Mock
+    private ReviewCacheProxy reviewCacheProxy;
+    @Mock
+    private AuthUserCacheProxy authUserCacheProxy;
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
@@ -101,8 +104,8 @@ class ReviewServiceTest {
         void 클릭한_아이템의_모든_리뷰가_리뷰의_좋아요개수_기준으로_내림차순_정렬되어_리턴된다(){
             log.info("클릭한_아이템의_모든_리뷰가_리뷰의_좋아요개수_기준으로_내림차순_정렬되어_리턴된다 로그");
             // given
-            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
-            given(reviewRepository.findAllByItem(item)).willReturn(Arrays.asList(review, moreLikedReview));
+            given(itemCacheProxy.findById(itemId)).willReturn(Optional.of(item));
+            given(reviewCacheProxy.findAllByItem(item)).willReturn(Arrays.asList(review, moreLikedReview));
             //when
             List<ReviewResponseDto> result = reviewService.getReviewListByItem(itemId);
             //then
@@ -126,8 +129,8 @@ class ReviewServiceTest {
         @Test
         void 내가_구매한_아이템에_대해_리뷰를_작성한다(){
             // given
-            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
-            given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+            given(itemCacheProxy.findById(itemId)).willReturn(Optional.of(item));
+            given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
             // when
             reviewService.addReview(itemId, addReviewRequestDto, authUser.getUsername());
             //then
@@ -138,8 +141,8 @@ class ReviewServiceTest {
         @Test
         void 내가_구매하지_않은_아이템에_대해_리뷰를_작성하려하면_커스텀예외를_발생시킨다(){
             // given
-            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
-            given(authUserRepository.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
+            given(itemCacheProxy.findById(itemId)).willReturn(Optional.of(item));
+            given(authUserCacheProxy.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
             // when, then
             assertThatThrownBy(() -> {
                 reviewService.addReview(itemId, addReviewRequestDto, otherUser.getUsername());
@@ -172,8 +175,8 @@ class ReviewServiceTest {
         @Test
         void 내가_작성한_리뷰를_수정한다(){
             // given
-            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.ofNullable(authUser));
+            given(reviewCacheProxy.findById(reviewId)).willReturn(Optional.of(review));
+            given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.ofNullable(authUser));
             // when
             ReviewResponseDto updatedReview = reviewService
                     .updateReview(itemId, reviewId, updateRequestDto, authUser.getUsername());
@@ -185,8 +188,8 @@ class ReviewServiceTest {
         @Test
         void 내가_작성하지않은_리뷰를_수정하려고_요청을_보내면_커스텀예외를_발생시킨다(){
             //given
-            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(authUserRepository.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
+            given(reviewCacheProxy.findById(reviewId)).willReturn(Optional.of(review));
+            given(authUserCacheProxy.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
             //when, then
             assertThatThrownBy(() -> {
                 reviewService.updateReview(itemId, reviewId, updateRequestDto, otherUser.getUsername());
@@ -220,8 +223,8 @@ class ReviewServiceTest {
         @Test
         void 내가_작성한_리뷰를_삭제한다(){
             //given
-            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+            given(reviewCacheProxy.findById(reviewId)).willReturn(Optional.of(review));
+            given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
             given(reviewLikeUnitRepository.findAllByReview(review)).willReturn(Arrays.asList(reviewLikeUnit));
             //when
             reviewService.deleteReview(itemId, reviewId, authUser.getUsername());
@@ -237,8 +240,8 @@ class ReviewServiceTest {
         @Test
         void 다른유저가_작성한_리뷰_삭제는_커스텀예외를_발생시킨다(){
             //given
-            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(authUserRepository.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
+            given(reviewCacheProxy.findById(reviewId)).willReturn(Optional.of(review));
+            given(authUserCacheProxy.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
             //when, then
             assertThatThrownBy(() -> {
                 reviewService.deleteReview(itemId, reviewId, otherUser.getUsername());
@@ -268,8 +271,8 @@ class ReviewServiceTest {
         @Test
         void 내가_작성하지_않고_좋아요를_누르지_않은_리뷰에_좋아요를_누른다(){
             //given
-            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(authUserRepository.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
+            given(reviewCacheProxy.findById(reviewId)).willReturn(Optional.of(review));
+            given(authUserCacheProxy.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
             given(reviewLikeUnitRepository.findByReviewAndAuthUser(review, otherUser))
                     .willReturn(Optional.ofNullable(null));
             //when
@@ -282,8 +285,8 @@ class ReviewServiceTest {
         @Test
         void 내가_작성한_리뷰에_좋아요를_누르면_커스텀예외가_발생한다(){
             //given
-            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+            given(reviewCacheProxy.findById(reviewId)).willReturn(Optional.of(review));
+            given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
             given(reviewLikeUnitRepository.findByReviewAndAuthUser(review, authUser))
                     .willReturn(Optional.ofNullable(null));
             //when, then
@@ -298,8 +301,8 @@ class ReviewServiceTest {
             //otherUser가 review에 좋아요 누름
             review.addReviewLikeUnit(reviewLikeUnit);
             otherUser.addReviewLikeUnit(reviewLikeUnit);
-            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(authUserRepository.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
+            given(reviewCacheProxy.findById(reviewId)).willReturn(Optional.of(review));
+            given(authUserCacheProxy.findByUsername(otherUser.getUsername())).willReturn(Optional.of(otherUser));
             given(reviewLikeUnitRepository.findByReviewAndAuthUser(review, otherUser))
                     .willReturn(Optional.ofNullable(reviewLikeUnit));
             //when
