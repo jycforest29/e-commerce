@@ -5,6 +5,7 @@ import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
+import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
@@ -105,25 +106,41 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional
     @Override
-    public void deleteOrder(Long madeOrderId, String username) throws InterruptedException{
-        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-        MadeOrder madeOrder = getMadeOrder(madeOrderId);
-        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
-        List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
-        // 락을 걸어야 하는 아이템리스트 추출
-        List<Long> itemIdSetToLock = orderUnitList.stream()
-                .map(s -> s.getItem().getId())
-                .collect(Collectors.toList());
+    public void deleteOrder(Long madeOrderId, String username, List<Long> itemIdListToLock) throws InterruptedException{
+//        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+//        MadeOrder madeOrder = getMadeOrder(madeOrderId);
+//        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
+//        List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
+//        // 락을 걸어야 하는 아이템리스트 추출
+//        List<Long> itemIdSetToLock = orderUnitList.stream()
+//                .map(s -> s.getItem().getId())
+//                .collect(Collectors.toList());
 
-        while(!redisLockRepository.lock(itemIdSetToLock)){
+        while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }
         try{
             // 실제 item 개수 증가
-            deleteOrderUnitAsync(username, madeOrder, orderUnitList);
+//            deleteOrderUnitAsync(username, madeOrder, orderUnitList);
+
+            MadeOrder madeOrder = getMadeOrder(madeOrderId);
+            List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
+            AuthUser authUser = getAuthUser(username);
+            for(OrderUnit o : madeOrder.getOrderUnitList()){
+                Item item = getItem(o.getItem().getId());
+                // 실제 item 개수 증가(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
+                item.increaseItemNumber(o.getNumber());
+            }
+            try{
+                List<Long> orderUnitIdListToDelete = madeOrder.deleteMadeOrder(authUser, orderUnitList);
+                madeOrderRepository.deleteById(madeOrder.getId());
+                orderUnitRepository.deleteAllByOrderUnitIdList(orderUnitIdListToDelete);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
         finally {
-            redisLockRepository.unlock(itemIdSetToLock);
+            redisLockRepository.unlock(itemIdListToLock);
         }
     }
 
@@ -186,6 +203,10 @@ public class OrderServiceImpl implements OrderService{
 
     private MadeOrder getMadeOrder(Long madeOrderId){
         return madeOrderRepository.findById(madeOrderId)
+                .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
+    }
+    private Item getItem(Long itemId){
+        return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 }

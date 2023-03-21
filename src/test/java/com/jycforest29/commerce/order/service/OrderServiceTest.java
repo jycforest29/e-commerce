@@ -237,7 +237,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername());
+                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername(), Arrays.asList(1L));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -246,7 +246,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             });
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getUsername());
+                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getUsername(), Arrays.asList(1L));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -291,7 +291,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
-                    orderService.deleteOrder(madeOrder.getId(), authUser.getUsername());
+                    orderService.deleteOrder(madeOrder.getId(), authUser.getUsername(), Arrays.asList(1L));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {

@@ -33,6 +33,7 @@ public class OrderAsyncProxy {
     @Transactional(propagation = Propagation.NESTED)
     @Async("makeOrderUnitExecutor")
     public CompletableFuture<OrderUnit> makeOrderUnitAsync(Long itemId, int number){
+        log.info("makeOrderUnitAsync() 호출됨 ");
         Item item = getValidateItemByNumber(itemId, number);
 
         OrderUnit orderUnit = OrderUnit.builder()
@@ -41,6 +42,7 @@ public class OrderAsyncProxy {
                 .build();
         item.decreaseItemNumber(number); // dirty checking -> Transactional propagation 고려해야
 
+        log.info("makeOrderUnitAsync() 종료됨 ");
         return CompletableFuture.completedFuture(orderUnit);
     }
 
