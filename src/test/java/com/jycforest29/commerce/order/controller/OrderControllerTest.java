@@ -3,7 +3,9 @@
 //import com.fasterxml.jackson.databind.ObjectMapper;
 //import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
 //import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
+//import com.jycforest29.commerce.order.domain.dto.OrderUnitResponseDto;
 //import com.jycforest29.commerce.order.service.OrderService;
+//import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 //import com.jycforest29.commerce.user.domain.entity.AuthUser;
 //import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 //import org.junit.jupiter.api.AfterEach;
@@ -19,17 +21,19 @@
 //import org.springframework.test.web.servlet.MockMvc;
 //import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 //
+//import java.time.LocalDateTime;
 //import java.util.Arrays;
 //
 //import static org.mockito.BDDMockito.given;
 //import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+//import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 //import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 //import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 //
 //@SpringBootTest
 //@AutoConfigureMockMvc
 //@Import(LoginAuthUserResolver.class)
-//class OrderControllerTest {
+//class OrderControllerTest extends DockerComposeTestContainer {
 //    @Autowired
 //    private MockMvc mockMvc;
 //    @MockBean
@@ -38,6 +42,17 @@
 //    private AuthUserRepository authUserRepository;
 //    @Autowired
 //    private ObjectMapper objectMapper;
+//    OrderUnitResponseDto orderUnitResponseDto = new OrderUnitResponseDto(
+//            "name",
+//            1000,
+//            1
+//    );
+//    MadeOrderResponseDto madeOrderResponseDto = new MadeOrderResponseDto(
+//            "testuser1",
+//            Arrays.asList(orderUnitResponseDto),
+//            1000,
+//            LocalDateTime.now()
+//    );
 //    @BeforeEach
 //    void init(){
 //        authUserRepository.save(AuthUser.builder()
@@ -51,7 +66,6 @@
 //    void after(){
 //        authUserRepository.deleteAll();
 //    }
-//    MadeOrderResponseDto madeOrderResponseDto = new MadeOrderResponseDto();
 //    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
 //    @Test
 //    void 한_아이템에_대한_주문을_수행한다() throws Exception {
@@ -59,22 +73,23 @@
 //        given(orderService.makeOrder(1L, 1, "testuser1")).willReturn(madeOrderResponseDto);
 //        // when, then
 //        mockMvc.perform(MockMvcRequestBuilders.post("/{itemId}/order", 1L)
+//                        .param("number", "1")
 //                        .with(csrf()))
 //                .andExpect(status().isCreated())
-//                .andExpect(jsonPath("$[0].title").value("title"))
-//                .andExpect(jsonPath("$[0].contents").value("contents"));
+//                .andExpect(jsonPath("$.username").value("testuser1"))
+//                .andExpect(jsonPath("$.orderUnitResponseDtoList.orderPrice").value(1000));
 //    }
 //    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
 //    @Test
 //    void 로그인한_유저의_장바구니_전체에_대한_주문을_수행한다() throws Exception {
 //        // given
-//        given(orderService.makeOrderForCart("testuser1", Arrays.asList(1L))).willReturn(madeOrderResponseDto);
+//        given(orderService.makeOrderForCart("testuser1")).willReturn(madeOrderResponseDto);
 //        // when, then
 //        mockMvc.perform(MockMvcRequestBuilders.post("/cart/order")
 //                        .with(csrf()))
 //                .andExpect(status().isCreated())
-//                .andExpect(jsonPath("$[0].title").value("title"))
-//                .andExpect(jsonPath("$[0].contents").value("contents"));
+//                .andExpect(jsonPath("$.username").value("testuser1"))
+//                .andExpect(jsonPath("$.orderUnitResponseDtoList.orderPrice").value(1000));
 //    }
 //    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
 //    @Test
@@ -85,8 +100,8 @@
 //        mockMvc.perform(MockMvcRequestBuilders.get("/order")
 //                        .with(csrf()))
 //                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$[0].title").value("title"))
-//                .andExpect(jsonPath("$[0].contents").value("contents"));
+//                .andExpect(jsonPath("$.username").value("testuser1"))
+//                .andExpect(jsonPath("$.orderUnitResponseDtoList.orderPrice").value(1000));
 //    }
 //
 //    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
@@ -98,8 +113,8 @@
 //        mockMvc.perform(MockMvcRequestBuilders.get("/order/{madeOrderId}", 1L)
 //                        .with(csrf()))
 //                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$[0].title").value("title"))
-//                .andExpect(jsonPath("$[0].contents").value("contents"));
+//                .andExpect(jsonPath("$[0].username").value("testuser1"))
+//                .andExpect(jsonPath("$[0].orderUnitResponseDtoList.orderPrice").value(1000));
 //    }
 //
 //    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
@@ -109,8 +124,6 @@
 //        // when, then
 //        mockMvc.perform(MockMvcRequestBuilders.delete("/order/{madeOrderId}", 1L)
 //                        .with(csrf()))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$[0].title").value("title"))
-//                .andExpect(jsonPath("$[0].contents").value("contents"));
+//                .andExpect(status().isOk());
 //    }
 //}

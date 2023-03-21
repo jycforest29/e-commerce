@@ -7,24 +7,22 @@ import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
-import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
 import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
+import com.jycforest29.commerce.order.proxy.async.OrderAsyncProxy;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.concurrent.ListenableFuture;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,6 +34,7 @@ public class OrderServiceImpl implements OrderService{
     private final RedisLockRepository redisLockRepository;
     private final ItemRepository itemRepository;
     private final AuthUserRepository authUserRepository;
+    private final OrderAsyncProxy orderAsyncProxy;
 
     @Transactional
     @Override
@@ -44,26 +43,12 @@ public class OrderServiceImpl implements OrderService{
             Thread.sleep(100);
         }
         try{
-            // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
-            Item item = getValidateItemByNumber(itemId, number);
-
-            // 엔티티 가져옴
-            AuthUser authUser = getAuthUser(username);
-            OrderUnit orderUnit = OrderUnit.builder()
-                    .item(item)
-                    .number(number)
-                    .build();
-
-            // Cart와 다르게 연관 관계 편의 메서드를 static 으로 선언한 이유는 Cart는 AuthUser와 일대일 단방향 관계로,
-            // AuthUser가 존재할 경우 항상 존재하게 짰기 때문에 Cart 객체를 생성해 줄 필요가 없는 반면 MakeOrder 객체는 새로 생성 필요
-            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, Arrays.asList(orderUnit));
-            madeOrderRepository.save(madeOrder);
-            orderUnitRepository.save(orderUnit);
-
-            // 실제 item 개수 감소(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
-            item.decreaseItemNumber(number);
-            return MadeOrderResponseDto.from(madeOrder);
-        }finally {
+            Map<Long, Integer> map = new HashMap<>();
+            map.put(itemId, number);
+            return makeOrderUnitAsync(map, username);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } finally {
             redisLockRepository.unlock(List.of(itemId));
         }
     }
@@ -74,49 +59,26 @@ public class OrderServiceImpl implements OrderService{
     // -> 각 아이템이 속해있는 모든 테이블에 락을 걸어 한번에 처리해야
     @Transactional
     @Override
-    public MadeOrderResponseDto makeOrderForCart(String username, List<Long> itemIdListToLock)
-            throws InterruptedException {
-//        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-//        AuthUser authUser = getAuthUser(authUserId);
-//        Cart cart = authUser.getCart();
-//        List<CartUnit> cartUnitList = cart.getCartUnitList();
-//
-//        // List<CartUnit>를 List<OrderUnit>으로 변환
-//        List<OrderUnit> orderUnitList = cartUnitList.stream()
-//                .map(s -> OrderUnit.mapToOrderUnit(s))
-//                .collect(Collectors.toList());
-//
-//        // 락을 걸어야 하는 아이템리스트 추출
-//        List<Long> itemIdListToLock = orderUnitList.stream()
-//                .map(s -> s.getItem().getId())
-//                .collect(Collectors.toList());
+    public MadeOrderResponseDto makeOrderForCart(String username) throws InterruptedException, ExecutionException {
+        // 엔티티 가져옴
+        AuthUser authUser = getAuthUser(username);
+        Cart cart = authUser.getCart();
+        List<CartUnit> cartUnitList = cart.getCartUnitList();
+
+        // 락을 걸어야 하는 아이템의 id 리스트 추출
+        List<Long> itemIdListToLock = cartUnitList.stream()
+                .map(s -> s.getItem().getId())
+                .collect(Collectors.toList());
 
         while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }
         try{
-            // 엔티티 가져옴
-            AuthUser authUser = getAuthUser(username);
-            Cart cart = authUser.getCart();
-            List<CartUnit> cartUnitList = cart.getCartUnitList();
-            List<OrderUnit> orderUnitList = cartUnitList.stream()
-                .map(s -> OrderUnit.mapToOrderUnit(s))
-                .collect(Collectors.toList());
-
-            // Item 엔티티는 락이 걸려있는 상황에서 유효성 검증이 필요함
-            for(OrderUnit o : orderUnitList){
-                getValidateItemByNumber(o.getItem().getId(), o.getNumber());
+            Map<Long, Integer> map = new HashMap<>();
+            for(CartUnit cartUnit: cartUnitList){
+                map.put(cartUnit.getItem().getId(), cartUnit.getNumber());
             }
-
-            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
-            madeOrderRepository.save(madeOrder);
-            orderUnitRepository.saveAll(orderUnitList);
-            for(OrderUnit o : orderUnitList){
-                Item item = o.getItem();
-                // 실제 item 개수 감소(item은 영속성 컨텍스트에 존재하므로 dirty checking 수행됨)
-                item.decreaseItemNumber(o.getNumber());
-            }
-            return MadeOrderResponseDto.from(madeOrder);
+            return makeOrderUnitAsync(map, username);
         }finally {
             redisLockRepository.unlock(itemIdListToLock);
         }
@@ -144,21 +106,23 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional
     @Override
-    public void deleteOrder(Long madeOrderId, String username, List<Long> itemIdListToLock) throws InterruptedException {
+    public void deleteOrder(Long madeOrderId, String username, List<Long> itemIdListToLock) throws InterruptedException{
 //        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
-//        MadeOrder madeOrder = getOrder(madeOrderId);
+//        MadeOrder madeOrder = getMadeOrder(madeOrderId);
 //        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
 //        List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
-//        AuthUser authUser = getAuthUser(authUserId);
 //        // 락을 걸어야 하는 아이템리스트 추출
 //        List<Long> itemIdSetToLock = orderUnitList.stream()
 //                .map(s -> s.getItem().getId())
 //                .collect(Collectors.toList());
+
         while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }
         try{
-            // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+            // 실제 item 개수 증가
+//            deleteOrderUnitAsync(username, madeOrder, orderUnitList);
+
             MadeOrder madeOrder = getMadeOrder(madeOrderId);
             List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
             AuthUser authUser = getAuthUser(username);
@@ -179,13 +143,57 @@ public class OrderServiceImpl implements OrderService{
             redisLockRepository.unlock(itemIdListToLock);
         }
     }
-    
-    private Item getValidateItemByNumber(Long itemId, int number){
-        Item item = getItem(itemId);
-        if(item.getNumber() >= number){
-            return item;
+
+    private MadeOrderResponseDto makeOrderUnitAsync(Map<Long, Integer> map, String username)
+            throws ExecutionException, InterruptedException {
+
+        List<CompletableFuture<CompletableFuture<OrderUnit>>> completableFutureList = new ArrayList<>();
+        for(Map.Entry<Long, Integer> elem : map.entrySet()){
+            completableFutureList.add(
+                    CompletableFuture.supplyAsync(() -> {
+                        return orderAsyncProxy.makeOrderUnitAsync(elem.getKey(), elem.getValue());
+                    })
+            );
         }
-        throw new CustomException(ExceptionCode.ITEM_OVER_LIMIT);
+        return CompletableFuture
+                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
+                .thenApply(s -> completableFutureList.stream()
+                        .map(CompletableFuture::join)
+                        .collect(Collectors.toList()))
+                .thenApply(s -> s.stream()
+                        .map(s_ -> {
+                            try {
+                                return s_.get();
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            } catch (ExecutionException e) {
+                                throw new RuntimeException(e);
+                            }})
+                        .collect(Collectors.toList()))
+                .thenApply(s -> {
+                    return orderAsyncProxy.madeOrderWithCommit(username, s);
+                })
+                .get();
+    }
+
+    private void deleteOrderUnitAsync(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList) {
+        List<CompletableFuture<Boolean>> completableFutureList = new ArrayList<>();
+        for(OrderUnit orderUnit : orderUnitList){
+            completableFutureList.add(CompletableFuture.supplyAsync(() -> {
+               return orderAsyncProxy.deleteOrderUnitAsync(orderUnit.getItem().getId(), orderUnit.getNumber());
+            }));
+        }
+
+        CompletableFuture
+                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
+                .thenApply(s -> completableFutureList.stream()
+                        .map(CompletableFuture::join)
+                        .collect(Collectors.toList()))
+                .thenAccept(s -> {
+                    if(!s.contains("false")){
+                        orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
+                    }
+                });
     }
 
     private AuthUser getAuthUser(String username){
@@ -193,13 +201,12 @@ public class OrderServiceImpl implements OrderService{
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 
-    private Item getItem(Long itemId){
-        return itemRepository.findById(itemId)
-                .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
-    }
-
     private MadeOrder getMadeOrder(Long madeOrderId){
         return madeOrderRepository.findById(madeOrderId)
+                .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
+    }
+    private Item getItem(Long itemId){
+        return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 }

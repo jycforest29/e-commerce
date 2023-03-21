@@ -48,14 +48,14 @@ class ReviewServiceTest {
     private ReviewServiceImpl reviewService;
 
     AddReviewRequestDto addReviewRequestDto = AddReviewRequestDto.builder()
-                .title("제목:제목은 10~255 글자여야 합니다.")
-                .contents("내용:내용은 10~255 글자여야 합니다.")
-                .build();
+            .title("제목:제목은 10~255 글자여야 합니다.")
+            .contents("내용:내용은 10~255 글자여야 합니다.")
+            .build();
     Item item = Item.builder()
             .name("test_item")
-                    .price(10000)
-                    .number(10)
-                    .build();
+            .price(10000)
+            .number(10)
+            .build();
     Long itemId = 1L;
     AuthUser authUser = AuthUser.builder()
             .username("test_username")
@@ -86,9 +86,9 @@ class ReviewServiceTest {
                     .build();
             reviewId = 1L;
             moreLikedReview = Review.builder()
-                .title(addReviewRequestDto.getTitle())
-                .contents(addReviewRequestDto.getContents())
-                .build();
+                    .title(addReviewRequestDto.getTitle())
+                    .contents(addReviewRequestDto.getContents())
+                    .build();
             moreLikedReviewId = 2L;
             reviewLikeUnit = new ReviewLikeUnit();
 
@@ -121,9 +121,9 @@ class ReviewServiceTest {
         @BeforeEach
         void init(){
             orderUnit = OrderUnit.builder()
-                .item(item)
-                .number(1)
-                .build();
+                    .item(item)
+                    .number(1)
+                    .build();
             madeOrder = MadeOrder.addOrderUnit(authUser, List.of(orderUnit));
         }
         @Test
@@ -153,9 +153,9 @@ class ReviewServiceTest {
     @Nested
     class UpdateReview{
         AddReviewRequestDto updateRequestDto = AddReviewRequestDto.builder()
-            .title("제목 수정됨:제목은 10~255 글자여야 합니다.")
-            .contents("내용 수정됨:내용은 10~255 글자여야 합니다.")
-            .build();
+                .title("제목 수정됨:제목은 10~255 글자여야 합니다.")
+                .contents("내용 수정됨:내용은 10~255 글자여야 합니다.")
+                .build();
         Review review;
         Long reviewId;
 

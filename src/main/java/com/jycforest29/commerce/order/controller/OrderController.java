@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.Min;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /*
 HttpStatus.OK 와 HttpStatus.ACCEPTED의 차이? OK는 처리가 완료되었음을 의미하고 ACCEPTED는 요청이 처리를 위해 수락되었지만 완료되지는
@@ -29,10 +30,9 @@ public class OrderController {
     }
 
     @PostMapping(value = "/cart/order")
-    public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser String username,
-                                                                 List<Long> itemIdListLock)
-            throws InterruptedException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(username, itemIdListLock));
+    public ResponseEntity<MadeOrderResponseDto> makeOrderForCart(@LoginAuthUser String username)
+            throws InterruptedException, ExecutionException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.makeOrderForCart(username));
     }
 
     @GetMapping(value = "/order")
@@ -49,8 +49,8 @@ public class OrderController {
     @DeleteMapping(value = "/order/{madeOrderId}")
     public ResponseEntity<Object> deleteOrder(@PathVariable("madeOrderId") Long madeOrderId,
                                               @LoginAuthUser String username,
-                                              List<Long> itemIdListLock) throws InterruptedException {
-        orderService.deleteOrder(madeOrderId, username, itemIdListLock);
+                                              List<Long> itemIdListToLock) throws InterruptedException {
+        orderService.deleteOrder(madeOrderId, username, itemIdListToLock);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

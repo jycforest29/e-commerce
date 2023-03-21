@@ -25,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -166,8 +167,10 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.makeOrderForCart(authUser.getUsername(), Arrays.asList(item.getId(), otherItem.getId()));
+                    orderService.makeOrderForCart(authUser.getUsername());
                 } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (ExecutionException e) {
                     throw new RuntimeException(e);
                 } finally {
                     countDownLatch.countDown();
@@ -234,7 +237,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername(), Arrays.asList(item.getId()));
+                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername(), Arrays.asList(1L));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -243,8 +246,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             });
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getUsername(),
-                            Arrays.asList(item.getId()));
+                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getUsername(), Arrays.asList(1L));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -282,14 +284,14 @@ class OrderServiceTest extends DockerComposeTestContainer{
                 throws InterruptedException {
             authUser가_item_1개_주문한다();
 
-            // 고정된 스레드 풀이기에 순서가 보장되지 않음. 순서 보장을 위해선 newSingleThreadExecutor를 사용해 하나의 스레드만 생성해야 함.
+            // 고정된 스레드 풀이기에 순서가 보장되지 않음.
             ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
             CountDownLatch countDownLatch = new CountDownLatch(threadCnt);
 
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
-                    orderService.deleteOrder(madeOrder.getId(), authUser.getUsername(), Arrays.asList(item.getId()));
+                    orderService.deleteOrder(madeOrder.getId(), authUser.getUsername(), Arrays.asList(1L));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
