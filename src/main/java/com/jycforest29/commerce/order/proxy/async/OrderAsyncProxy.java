@@ -12,15 +12,17 @@ import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-@Component
+@Slf4j
+@Service
 @RequiredArgsConstructor
 public class OrderAsyncProxy {
     private final ItemRepository itemRepository;
@@ -44,27 +46,38 @@ public class OrderAsyncProxy {
 
     @Transactional(propagation = Propagation.NESTED)
     public MadeOrderResponseDto madeOrderWithCommit(String username, List<OrderUnit> orderUnitList){
+        log.info("madeOrderWithCommit() 호출됨 ");
         AuthUser authUser = getAuthUser(username);
         MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
         madeOrderRepository.save(madeOrder);
         orderUnitRepository.saveAll(orderUnitList);
 
+        log.info("madeOrderWithCommit() 종료됨 ");
         return MadeOrderResponseDto.from(madeOrder);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NESTED)
     @Async("deleteOrderUnitExecutor")
-    public void deleteOrderUnitAsync(Long itemId, int number){
-        Item item = getItem(itemId);
-        item.increaseItemNumber(number);
+    public Boolean deleteOrderUnitAsync(Long itemId, int number){
+        try{
+            log.info("deleteOrderUnitAsync() 호출됨 ");
+            Item item = getItem(itemId);
+            item.increaseItemNumber(number);
+            log.info("deleteOrderUnitAsync() 종료됨 "+item.getNumber());
+            return true;
+        }catch (Exception e){
+            return false;
+        }
     }
 
     @Transactional(propagation = Propagation.NESTED)
     public void deleteOrderWithCommit(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList){
+        log.info("deleteOrderWithCommit() 호출됨 ");
         AuthUser authUser = getAuthUser(username);
         List<Long> orderUnitIdListToDelete = madeOrder.deleteMadeOrder(authUser, orderUnitList);
         madeOrderRepository.deleteById(madeOrder.getId());
         orderUnitRepository.deleteAllByOrderUnitIdList(orderUnitIdListToDelete);
+        log.info("deleteOrderWithCommit() 종료됨 ");
     }
 
     private Item getValidateItemByNumber(Long itemId, int number){

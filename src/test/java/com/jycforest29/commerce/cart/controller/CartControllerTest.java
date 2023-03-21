@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,7 +64,7 @@ class CartControllerTest extends DockerComposeTestContainer {
     );
     CartResponseDto cartResponseDto = new CartResponseDto(
             Arrays.asList(cartUnitResponseDto),
-            cartUnitResponseDto.getOrderPrice()
+            1000
     );
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
@@ -76,6 +77,7 @@ class CartControllerTest extends DockerComposeTestContainer {
                         .param("number", "1")
                         .with(csrf()))
                 .andExpect(status().isOk())
+                .andDo(print())
                 .andExpect(jsonPath("$..name").value("name"))
                 .andExpect(jsonPath("$.totalPrice").value(1000));
     }

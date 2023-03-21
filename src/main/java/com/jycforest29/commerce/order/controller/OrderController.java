@@ -48,9 +48,8 @@ public class OrderController {
 
     @DeleteMapping(value = "/order/{madeOrderId}")
     public ResponseEntity<Object> deleteOrder(@PathVariable("madeOrderId") Long madeOrderId,
-                                              @LoginAuthUser String username,
-                                              List<Long> itemIdListLock) throws InterruptedException {
-        orderService.deleteOrder(madeOrderId, username, itemIdListLock);
+                                              @LoginAuthUser String username) throws InterruptedException {
+        orderService.deleteOrder(madeOrderId, username);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

@@ -10,5 +10,5 @@ public interface OrderService {
     MadeOrderResponseDto makeOrderForCart(String username) throws InterruptedException, ExecutionException;
     List<MadeOrderResponseDto> getOrderList(String username);
     MadeOrderResponseDto getOrder(Long itemId, String username);
-    void deleteOrder(Long itemId, String username, List<Long> itemIdListLock) throws InterruptedException;
+    void deleteOrder(Long itemId, String username) throws InterruptedException;
 }
