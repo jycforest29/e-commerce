@@ -1,10 +1,9 @@
 package com.jycforest29.commerce.user.dto.authenticate;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class LoginResponseDto {

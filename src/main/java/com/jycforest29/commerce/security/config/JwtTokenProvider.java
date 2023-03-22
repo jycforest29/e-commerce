@@ -1,19 +1,13 @@
 package com.jycforest29.commerce.security.config;
 
 import io.jsonwebtoken.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 @Component
 // creation이나 validation에 대한 Jwt 연산 수행함
@@ -48,7 +42,7 @@ public class JwtTokenProvider {
     }
 
     public String generateRefreshToken(Authentication authentication) {
-        return null; // 일단 구현 못함
+        return "refreshToken"; // 일단 구현 못함
     }
 
     public Boolean validateToken(String token) {
