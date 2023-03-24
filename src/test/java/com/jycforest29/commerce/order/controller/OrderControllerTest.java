@@ -26,7 +26,6 @@ import java.util.Arrays;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,17 +41,18 @@ class OrderControllerTest extends DockerComposeTestContainer {
     private AuthUserRepository authUserRepository;
     @Autowired
     private ObjectMapper objectMapper;
-    OrderUnitResponseDto orderUnitResponseDto = new OrderUnitResponseDto(
-            "name",
-            1000,
-            1
-    );
-    MadeOrderResponseDto madeOrderResponseDto = new MadeOrderResponseDto(
-            "testuser1",
-            Arrays.asList(orderUnitResponseDto),
-            1000,
-            LocalDateTime.now()
-    );
+    OrderUnitResponseDto orderUnitResponseDto = OrderUnitResponseDto.builder()
+            .name("name")
+            .orderPrice(1000)
+            .number(1)
+            .build();
+    MadeOrderResponseDto madeOrderResponseDto = MadeOrderResponseDto.builder()
+            .username("testuser1")
+            .orderUnitResponseDtoList(Arrays.asList(orderUnitResponseDto))
+            .totalPrice(1000)
+            .createdAt(LocalDateTime.now())
+            .build();
+
     @BeforeEach
     void init(){
         authUserRepository.save(AuthUser.builder()

@@ -108,6 +108,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
                     orderService.makeOrder(item.getId(), 99, authUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
                 } finally {
                     countDownLatch.countDown();
                 }
@@ -118,6 +120,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
                     orderService.makeOrder(item.getId(), 1, otherUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
                 } finally {
                     countDownLatch.countDown();
                 }
@@ -125,6 +129,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
             countDownLatch.await();
             //then
             assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
+            assertThat(madeOrderRepository.findAll().size()).isEqualTo(2);
+            assertThat(orderUnitRepository.findAll().size()).isEqualTo(2);
         }
     }
     @Nested
@@ -182,6 +188,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
                     orderService.makeOrder(item.getId(), 1, otherUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
                 } finally {
                     countDownLatch.countDown();
                 }
@@ -190,6 +198,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
             //then
             assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(0);
             assertThat(itemRepository.findById(otherItem.getId()).get().getNumber()).isEqualTo(0);
+            assertThat(madeOrderRepository.findAll().size()).isEqualTo(2);
+            assertThat(orderUnitRepository.findAll().size()).isEqualTo(3);
         }
 
     }
@@ -305,8 +315,9 @@ class OrderServiceTest extends DockerComposeTestContainer{
                     throw new RuntimeException(e);
                 } catch (CustomException e){
                     System.out.println(e.getExceptionCode());
-                }
-                finally {
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                } finally {
                     countDownLatch.countDown();
                 }
             });

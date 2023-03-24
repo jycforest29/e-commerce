@@ -27,6 +27,7 @@ import java.util.Arrays;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -189,6 +190,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
         // when, then
         mockMvc.perform(MockMvcRequestBuilders.post("/review/{itemId}/{reviewId}/like", 1L, 1L)
                         .with(csrf()))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title", "title").exists())
                 .andExpect(jsonPath("$.contents", "contents").exists());

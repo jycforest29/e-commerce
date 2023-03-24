@@ -48,6 +48,23 @@ class AuthUserControllerTest extends DockerComposeTestContainer{
     }
 
     @Test
+    void 회원가입시_비밀번호_validation에_실패한다() throws Exception {
+        // given
+        RegisterRequestDto registerRequestDto = new RegisterRequestDto(
+                "testuser1",
+                "1234", // 숫자로만 입력
+                "testuser"
+        );
+        // when, then
+        String dtoAsContent = objectMapper.writeValueAsString(registerRequestDto);
+        mockMvc.perform(MockMvcRequestBuilders.post("/authenticate/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(dtoAsContent)
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void 로그인을_수행한다() throws Exception {
         // given
         LoginRequestDto loginRequestDto = new LoginRequestDto(
@@ -69,5 +86,21 @@ class AuthUserControllerTest extends DockerComposeTestContainer{
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("accessToken"))
                 .andExpect(jsonPath("$.refreshToken").value("refreshToken"));
+    }
+
+    @Test
+    void 로그인시_비밀번호_validation에_실패한다() throws Exception {
+        // given
+        LoginRequestDto loginRequestDto = new LoginRequestDto(
+                "testuser1",
+                ""
+        );
+        // when, then
+        String dtoAsContent = objectMapper.writeValueAsString(loginRequestDto);
+        mockMvc.perform(MockMvcRequestBuilders.post("/authenticate/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(dtoAsContent)
+                        .with(csrf()))
+                .andExpect(status().isOk());
     }
 }

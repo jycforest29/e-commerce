@@ -30,29 +30,36 @@ public class OrderAsyncProxy {
     private final OrderUnitRepository orderUnitRepository;
     private final AuthUserRepository authUserRepository;
 
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Async("makeOrderUnitExecutor")
-    public CompletableFuture<OrderUnit> makeOrderUnitAsync(Long itemId, int number){
+    public OrderUnit makeOrderUnitAsync(Long itemId, int number){
         log.info("makeOrderUnitAsync() 호출됨 ");
         Item item = getValidateItemByNumber(itemId, number);
+        log.info("item 생성됨");
 
         OrderUnit orderUnit = OrderUnit.builder()
                 .item(item)
                 .number(number)
                 .build();
+        log.info("orderUnit 생성됨");
         item.decreaseItemNumber(number); // dirty checking -> Transactional propagation 고려해야
 
         log.info("makeOrderUnitAsync() 종료됨 ");
-        return CompletableFuture.completedFuture(orderUnit);
+        return orderUnit;
     }
 
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public MadeOrderResponseDto madeOrderWithCommit(String username, List<OrderUnit> orderUnitList){
         log.info("madeOrderWithCommit() 호출됨 ");
+        log.info("개수"+String.valueOf(orderUnitList.size())+ "객체"+orderUnitList);
         AuthUser authUser = getAuthUser(username);
+        log.info("authUser 생성됨");
         MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
+        log.info("madeOrder 생성됨");
         madeOrderRepository.save(madeOrder);
+        log.info("madeOrderRepository에 반영됨");
         orderUnitRepository.saveAll(orderUnitList);
+        log.info("orderUnitRepository에 반영됨");
 
         log.info("madeOrderWithCommit() 종료됨 ");
         return MadeOrderResponseDto.from(madeOrder);

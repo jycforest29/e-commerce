@@ -20,7 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -38,16 +41,16 @@ public class OrderServiceImpl implements OrderService{
 
     @Transactional
     @Override
-    public MadeOrderResponseDto makeOrder(Long itemId, int number, String username) throws InterruptedException {
+    public MadeOrderResponseDto makeOrder(Long itemId, int number, String username)
+            throws InterruptedException, ExecutionException {
         while(!redisLockRepository.lock(List.of(itemId))){
             Thread.sleep(100);
         }
         try{
             Map<Long, Integer> map = new HashMap<>();
             map.put(itemId, number);
-            return makeOrderUnitAsync(map, username);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+            MadeOrderResponseDto madeOrderResponseDto = makeOrderUnitAsync(map, username);
+            return madeOrderResponseDto;
         } finally {
             redisLockRepository.unlock(List.of(itemId));
         }
@@ -75,13 +78,37 @@ public class OrderServiceImpl implements OrderService{
         }
         try{
             Map<Long, Integer> map = new HashMap<>();
-            for(CartUnit cartUnit: cartUnitList){
+            for(CartUnit cartUnit : cartUnitList){
                 map.put(cartUnit.getItem().getId(), cartUnit.getNumber());
             }
-            return makeOrderUnitAsync(map, username);
+            MadeOrderResponseDto madeOrderResponseDto = makeOrderUnitAsync(map, username);
+            return madeOrderResponseDto;
         }finally {
             redisLockRepository.unlock(itemIdListToLock);
         }
+    }
+
+    private MadeOrderResponseDto makeOrderUnitAsync(Map<Long, Integer> map, String username)
+            throws ExecutionException, InterruptedException {
+        List<CompletableFuture<OrderUnit>> completableFutureList = new ArrayList<>();
+        for(Map.Entry<Long, Integer> elem : map.entrySet()){
+            completableFutureList.add(
+                    CompletableFuture.supplyAsync(() -> {
+                        return orderAsyncProxy.makeOrderUnitAsync(elem.getKey(), elem.getValue());
+                    })
+            );
+        }
+        CompletableFuture<List<OrderUnit>> orderUnitList = CompletableFuture
+                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
+                // allOf는 void를 반환하므로 stream()으로 리턴하도록 함
+                .thenApply(s -> completableFutureList.stream()
+                        .map(CompletableFuture::join)
+                        .collect(Collectors.toList()));
+
+        return orderUnitList
+                // thenApply는 future를 반환하여 그 값을 get()으로 반환받을 수 있음
+                .thenApply(o -> orderAsyncProxy.madeOrderWithCommit(username, o))
+                .get();
     }
 
     @Transactional(readOnly = true)
@@ -144,37 +171,6 @@ public class OrderServiceImpl implements OrderService{
         }
     }
 
-    private MadeOrderResponseDto makeOrderUnitAsync(Map<Long, Integer> map, String username)
-            throws ExecutionException, InterruptedException {
-
-        List<CompletableFuture<CompletableFuture<OrderUnit>>> completableFutureList = new ArrayList<>();
-        for(Map.Entry<Long, Integer> elem : map.entrySet()){
-            completableFutureList.add(
-                    CompletableFuture.supplyAsync(() -> {
-                        return orderAsyncProxy.makeOrderUnitAsync(elem.getKey(), elem.getValue());
-                    })
-            );
-        }
-        return CompletableFuture
-                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
-                .thenApply(s -> completableFutureList.stream()
-                        .map(CompletableFuture::join)
-                        .collect(Collectors.toList()))
-                .thenApply(s -> s.stream()
-                        .map(s_ -> {
-                            try {
-                                return s_.get();
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            } catch (ExecutionException e) {
-                                throw new RuntimeException(e);
-                            }})
-                        .collect(Collectors.toList()))
-                .thenApply(s -> {
-                    return orderAsyncProxy.madeOrderWithCommit(username, s);
-                })
-                .get();
-    }
 
     private void deleteOrderUnitAsync(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList) {
         List<CompletableFuture<Boolean>> completableFutureList = new ArrayList<>();
