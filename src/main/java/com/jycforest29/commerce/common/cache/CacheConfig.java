@@ -31,11 +31,9 @@ public class CacheConfig {
     @Bean("ehCacheManager")
     @Primary
     public CacheManager ehCacheManager(){
-        // authUser 캐시의 key : AuthUser.username
         // cart 캐시의 key : AuthUser.username
         // reviewListByItem 캐시의 key : Item.id
-        // review 캐시의 key : Review.id
-        List<String> cacheNames = List.of("authUser", "cart", "reviewListByItem", "review");
+        List<String> cacheNames = List.of("cart", "reviewListByItem");
 
         for(String cacheName: cacheNames){
             CacheConfiguration conf = new CacheConfiguration()
@@ -55,6 +53,7 @@ public class CacheConfig {
 
     @Bean("redisCacheManager")
     public CacheManager redisCacheManager(RedisConnectionFactory redisConnectionFactory){
+        // ActiveUser 캐시의 key : AuthUser.username
         RedisCacheConfiguration conf = RedisCacheConfiguration
                 .defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair

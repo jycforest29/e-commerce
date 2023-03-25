@@ -15,10 +15,10 @@ import java.util.Optional;
 public class ReviewCacheProxy {
     private final ReviewRepository reviewRepository;
 
-    @Cacheable(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
-    public Optional<Review> findById(Long reviewId){
-        return reviewRepository.findById(reviewId);
-    }
+//    @Cacheable(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
+//    public Optional<Review> findById(Long reviewId){
+//        return reviewRepository.findById(reviewId);
+//    }
 
     @Cacheable(value = "reviewListByItem", key = "#item.id", cacheManager = "ehCacheManager")
     public List<Review> findAllByItem(Item item){

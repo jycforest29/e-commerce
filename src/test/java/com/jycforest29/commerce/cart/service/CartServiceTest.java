@@ -5,9 +5,9 @@ import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.item.domain.entity.Item;
-import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
+import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
-import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
+import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,9 +27,9 @@ class CartServiceTest{
     @Mock
     private CartUnitRepository cartUnitRepository;
     @Mock
-    private AuthUserCacheProxy authUserCacheProxy;
+    private AuthUserRepository authUserRepository;
     @Mock
-    private ItemCacheProxy itemCacheProxy;
+    private ItemRepository itemRepository;
     @InjectMocks
     private CartServiceImpl cartService;
     private AuthUser authUser;
@@ -60,8 +60,8 @@ class CartServiceTest{
         @Test
         void 내가_특정_아이템_1개를_장바구니에_담는다() {
             //given
-            given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
-            given(itemCacheProxy.findById(itemId)).willReturn(Optional.of(item));
+            given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
             //when
             CartResponseDto cartResponseDto = cartService.addCartUnitToCart(itemId, 1, authUser.getUsername());
             //then
@@ -72,8 +72,8 @@ class CartServiceTest{
         @Test
         void 내가_장바구니에_담으려는_아이템의_재고가_부족해_커스텀예외가_발생한다(){
             //given
-            given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
-            given(itemCacheProxy.findById(itemId)).willReturn(Optional.of(item));
+            given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
             //when, then
             assertThatThrownBy(() -> {
                 cartService.addCartUnitToCart(itemId, 1000, authUser.getUsername());
@@ -111,7 +111,7 @@ class CartServiceTest{
             @Test
             void 내_장바구니에_담긴_모든_목록을_가져온다(){
                 //given
-                given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+                given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
                 authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
                 //when
                 CartResponseDto cartResponseDto = cartService.getCartUnitList(authUser.getUsername());
@@ -135,7 +135,7 @@ class CartServiceTest{
             @Test
             void 내_장바구니에_담긴_모든_목록을_가져온다(){
                 //given
-                given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+                given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
                 authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
                 //when
                 CartResponseDto cartResponseDto = cartService.getCartUnitList(authUser.getUsername());
@@ -171,7 +171,7 @@ class CartServiceTest{
         @Test
         void 내_장바구니에_담긴_모든_목록을_삭제한다(){
             //given
-            given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+            given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
             authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
             //when
             CartResponseDto cartResponseDto = cartService.deleteCartAll(authUser.getUsername());
@@ -183,7 +183,7 @@ class CartServiceTest{
         @Test
         void 내_장바구니에_담긴_특정_아이템을_모두_삭제한다(){
             //given
-            given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+            given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
             authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
             given(cartUnitRepository.findById(cartUnitId)).willReturn(Optional.of(cartUnit));
             //when

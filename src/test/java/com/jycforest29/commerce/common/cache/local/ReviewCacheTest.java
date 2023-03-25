@@ -45,19 +45,19 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
 
     @Nested
     class LocalCacheTest{
-        @Nested
-        class ReviewCache{
-            @Test
-            void reviewId를_통해_review를_가져올때_로컬_캐싱을_사용한다(){
-                //given
-                given(reviewRepository.findById(reviewId)).willReturn(Optional.ofNullable(review));
-                //when
-                IntStream.range(0, 10)
-                        .forEach(i -> reviewCacheProxy.findById(reviewId));
-                //then
-                verify(reviewRepository, atMostOnce()).findById(reviewId);
-            }
-        }
+//        @Nested
+//        class ReviewCache{
+//            @Test
+//            void reviewId를_통해_review를_가져올때_로컬_캐싱을_사용한다(){
+//                //given
+//                given(reviewRepository.findById(reviewId)).willReturn(Optional.ofNullable(review));
+//                //when
+//                IntStream.range(0, 10)
+//                        .forEach(i -> reviewCacheProxy.findById(reviewId));
+//                //then
+//                verify(reviewRepository, atMostOnce()).findById(reviewId);
+//            }
+//        }
 
         @Nested
         class ReviewListByItemCache{

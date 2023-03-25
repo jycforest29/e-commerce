@@ -7,7 +7,6 @@ import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.redis.RedisLockRepository;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
-import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
@@ -15,7 +14,6 @@ import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -40,11 +38,6 @@ class OrderServiceTest extends DockerComposeTestContainer{
     private OrderUnitRepository orderUnitRepository;
     @Autowired
     private RedisLockRepository redisLockRepository;
-    @Autowired
-    private ItemCacheProxy itemCacheProxy;
-    @Autowired
-    private AuthUserCacheProxy authUserCacheProxy;
-
     @Autowired
     private AuthUserRepository authUserRepository;
     @Autowired
@@ -247,7 +240,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername(), Arrays.asList(1L));
+                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -256,7 +249,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             });
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getUsername(), Arrays.asList(1L));
+                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -266,6 +259,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
             countDownLatch.await();
             //then
             assertThat(itemRepository.findById(item.getId()).get().getNumber()).isEqualTo(100);
+            assertThat(madeOrderRepository.findAll().size()).isEqualTo(0);
+            assertThat(orderUnitRepository.findAll().size()).isEqualTo(0);
         }
     }
 
@@ -301,7 +296,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             executorService.submit(() -> {
                 try{
                     MadeOrder madeOrder = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser).get(0);
-                    orderService.deleteOrder(madeOrder.getId(), authUser.getUsername(), Arrays.asList(1L));
+                    orderService.deleteOrder(madeOrder.getId(), authUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {

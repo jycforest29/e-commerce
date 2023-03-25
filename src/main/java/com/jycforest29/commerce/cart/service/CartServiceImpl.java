@@ -7,9 +7,9 @@ import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.item.domain.entity.Item;
-import com.jycforest29.commerce.item.proxy.ItemCacheProxy;
+import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
-import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
+import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -25,8 +25,8 @@ import java.util.List;
 @Service
 public class CartServiceImpl implements CartService{
     private final CartUnitRepository cartUnitRepository;
-    private final AuthUserCacheProxy authUserCacheProxy;
-    private final ItemCacheProxy itemCacheProxy;
+    private final AuthUserRepository authUserRepository;
+    private final ItemRepository itemRepository;
 
     // 장바구니에 아이템을 담을 때, 아이템 품절되었으면 담을 수 없음. -> getValidateItemByNumber() 통해 반영함
     // 하지만 만약 A 사용자가 아이템을 장바구니에 담는것과 1ms차로 B 사용자가 아이템의 수량만큼 주문해 품절됐다면?
@@ -124,12 +124,12 @@ public class CartServiceImpl implements CartService{
     }
 
     private Item getItem(Long itemId){
-        return itemCacheProxy.findById(itemId)
+        return itemRepository.findById(itemId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 
     private AuthUser getAuthUser(String username){
-        return authUserCacheProxy.findByUsername(username)
+        return authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(ExceptionCode.UNAUTHORIZED));
     }
 

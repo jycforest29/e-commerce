@@ -13,13 +13,11 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -30,63 +28,44 @@ public class OrderAsyncProxy {
     private final OrderUnitRepository orderUnitRepository;
     private final AuthUserRepository authUserRepository;
 
+    // 왜 장바구니 로직의 비동기 처리가 어려운지?
+    // @Transactional(propagation = Propagation.REQUIRES_NEW) 까지 같이 수행되어야 하는데,
+    // 함수 호출 시간과 스레드 수행 시간의 차이 때문인지 자꾸 블로킹이 안됨.
+    // 그렇다면 모든 OrderUnit에 대해 makeOrderUnitAsync()은 병렬적으로 실행되고 그 결과가 나올때까지 블로킹 되어야 함.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Async("makeOrderUnitExecutor")
+//    @Async("makeOrderUnitExecutor")
     public OrderUnit makeOrderUnitAsync(Long itemId, int number){
-        log.info("makeOrderUnitAsync() 호출됨 ");
         Item item = getValidateItemByNumber(itemId, number);
-        log.info("item 생성됨");
-
         OrderUnit orderUnit = OrderUnit.builder()
                 .item(item)
                 .number(number)
                 .build();
-        log.info("orderUnit 생성됨");
         item.decreaseItemNumber(number); // dirty checking -> Transactional propagation 고려해야
-
-        log.info("makeOrderUnitAsync() 종료됨 ");
         return orderUnit;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public MadeOrderResponseDto madeOrderWithCommit(String username, List<OrderUnit> orderUnitList){
-        log.info("madeOrderWithCommit() 호출됨 ");
-        log.info("개수"+String.valueOf(orderUnitList.size())+ "객체"+orderUnitList);
         AuthUser authUser = getAuthUser(username);
-        log.info("authUser 생성됨");
         MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
-        log.info("madeOrder 생성됨");
         madeOrderRepository.save(madeOrder);
-        log.info("madeOrderRepository에 반영됨");
         orderUnitRepository.saveAll(orderUnitList);
-        log.info("orderUnitRepository에 반영됨");
-
-        log.info("madeOrderWithCommit() 종료됨 ");
         return MadeOrderResponseDto.from(madeOrder);
     }
 
-    @Transactional(propagation = Propagation.NESTED)
-    @Async("deleteOrderUnitExecutor")
-    public Boolean deleteOrderUnitAsync(Long itemId, int number){
-        try{
-            log.info("deleteOrderUnitAsync() 호출됨 ");
-            Item item = getItem(itemId);
-            item.increaseItemNumber(number);
-            log.info("deleteOrderUnitAsync() 종료됨 "+item.getNumber());
-            return true;
-        }catch (Exception e){
-            return false;
-        }
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+//    @Async("deleteOrderUnitExecutor")
+    public void deleteOrderUnitAsync(Long itemId, int number){
+        Item item = getItem(itemId);
+        item.increaseItemNumber(number);
     }
 
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteOrderWithCommit(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList){
-        log.info("deleteOrderWithCommit() 호출됨 ");
         AuthUser authUser = getAuthUser(username);
         List<Long> orderUnitIdListToDelete = madeOrder.deleteMadeOrder(authUser, orderUnitList);
-        madeOrderRepository.deleteById(madeOrder.getId());
         orderUnitRepository.deleteAllByOrderUnitIdList(orderUnitIdListToDelete);
-        log.info("deleteOrderWithCommit() 종료됨 ");
+        madeOrderRepository.deleteById(madeOrder.getId());
     }
 
     private Item getValidateItemByNumber(Long itemId, int number){

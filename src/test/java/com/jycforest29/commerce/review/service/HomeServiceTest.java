@@ -8,7 +8,7 @@ import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
 import com.jycforest29.commerce.review.dto.ReviewResponseDto;
 import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
-import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
+import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +34,7 @@ class HomeServiceTest extends DockerComposeTestContainer{
     @MockBean
     private ReviewLikeUnitRepository reviewLikeUnitRepository;
     @MockBean
-    private AuthUserCacheProxy authUserCacheProxy;
+    private AuthUserRepository authUserRepository;
     @SpyBean
     private Clock clock; // now() 는 static 이므로 @SpyBean 사용해야 함. 따라서 통합테스트로 변경.
     @Autowired
@@ -95,7 +95,7 @@ class HomeServiceTest extends DockerComposeTestContainer{
     @Test
     void 로그인한_유저가_좋아요를_눌렀던_리뷰의_작성자들이_72시간동안_작성한_리뷰를_가져온다(){
         //given
-        given(authUserCacheProxy.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
+        given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
         given(reviewLikeUnitRepository.findAllByAuthUser(authUser))
                 .willReturn(Arrays.asList(reviewLikeUnit));
         LocalDateTime now = LocalDateTime.ofInstant(Instant.parse("2022-08-22T10:00:00Z"), ZoneId.systemDefault());
