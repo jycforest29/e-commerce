@@ -1,5 +1,7 @@
 package com.jycforest29.commerce.user.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.jycforest29.commerce.cart.domain.entity.Cart;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.review.domain.entity.Review;
@@ -17,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.persistence.*;
 import java.util.*;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -49,6 +52,7 @@ public class AuthUser implements UserDetails {
     @Column(nullable = false)
     private Role role = Role.USER;
 
+    @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<GrantedAuthority> roles = new HashSet<>();

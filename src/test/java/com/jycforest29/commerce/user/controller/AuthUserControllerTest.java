@@ -101,6 +101,6 @@ class AuthUserControllerTest extends DockerComposeTestContainer{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(dtoAsContent)
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
     }
 }

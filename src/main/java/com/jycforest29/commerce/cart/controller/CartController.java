@@ -6,10 +6,12 @@ import com.jycforest29.commerce.common.aop.LoginAuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.Min;
 
+@Validated
 @RequiredArgsConstructor
 @RestController
 public class CartController {

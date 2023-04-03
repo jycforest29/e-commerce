@@ -33,7 +33,7 @@ public class CacheConfig {
     public CacheManager ehCacheManager(){
         // cart 캐시의 key : AuthUser.username
         // reviewListByItem 캐시의 key : Item.id
-        List<String> cacheNames = List.of("cart", "reviewListByItem");
+        List<String> cacheNames = List.of("cart", "review");
 
         for(String cacheName: cacheNames){
             CacheConfiguration conf = new CacheConfiguration()
@@ -60,7 +60,7 @@ public class CacheConfig {
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer()))
-                .disableCachingNullValues()
+//                .disableCachingNullValues()
                 .entryTtl(Duration.ofSeconds(60));
 
         return RedisCacheManager.RedisCacheManagerBuilder
