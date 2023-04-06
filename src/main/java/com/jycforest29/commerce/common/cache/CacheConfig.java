@@ -60,7 +60,6 @@ public class CacheConfig {
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer()))
-//                .disableCachingNullValues()
                 .entryTtl(Duration.ofSeconds(60));
 
         return RedisCacheManager.RedisCacheManagerBuilder
