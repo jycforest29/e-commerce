@@ -1,9 +1,9 @@
 version: "3"
+
 services:
-  databases:
+  database:
     image: mysql
-    container_name: mysql-container
-    restart: on-failure
+    restart: always
     environment: # 해당 이미지가 사용할 환경 변수 설정
       MYSQL_DATABASE: commercedb
       MYSQL_ROOT_PASSWORD: 1234
@@ -16,45 +16,40 @@ services:
       - "--collation-server=utf8mb4_unicode_ci"
     networks:
       - test_network
-#    healthcheck: # db 생성 후 app_for_test 컨테이너 생성하도록
-#      test: ["CMD", "mysqladmin ping -h 127.0.0.1 -u root"]
+#    healthcheck:
+#      test: ["CMD", "mysqladmin ping -h 127.0.0.1 -u root -- password=$$MYSQL_ROOT_PASSWORD"]
 #      interval: 10s
-#      timeout: 2s
-#      retries: 100
+#      timeout: 1s
+#      retries: 10
 
   redis:
     image: redis
-    container_name: redis-container
-    restart: on-failure
-    hostname: localhost
+    restart: always
     ports:
       - "6379:6379"
     networks:
       - test_network
-#    healthcheck: # db 생성 후 app_for_test 컨테이너 생성하도록
+#    healthcheck:
 #      test: ["CMD", "redis-cli ping"]
 #      interval: 10s
-#      timeout: 2s
-#      retries: 100
+#      timeout: 1s
+#      retries: 10
 
   application:
-    container_name: app_for_test
-    restart: on-failure
+    restart: always
     build:
       context: ./
       dockerfile: Dockerfile
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://databases:3306/commercedb?createDatabaseIfNotExist=true&autoReconnect=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/commercedb?createDatabaseIfNotExist=true&autoReconnect=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 1234
-    expose:
-      - "8080"
     ports:
       - "8080:8080"
     depends_on:
-      - databases
+      - database
       - redis
-#      databases:
+#      database:
 #        condition: service_healthy
 #      redis:
 #        condition: service_healthy
@@ -65,7 +60,6 @@ services:
 # 해당 네트워크에 컨테이너를 생성해야 함
 networks:
   test_network:
-
 
 volumes:
   mysql-data:

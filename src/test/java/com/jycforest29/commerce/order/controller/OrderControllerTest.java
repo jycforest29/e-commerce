@@ -41,17 +41,16 @@ class OrderControllerTest extends DockerComposeTestContainer {
     private AuthUserRepository authUserRepository;
     @Autowired
     private ObjectMapper objectMapper;
-    OrderUnitResponseDto orderUnitResponseDto = OrderUnitResponseDto.builder()
-            .name("name")
-            .orderPrice(1000)
-            .number(1)
-            .build();
-    MadeOrderResponseDto madeOrderResponseDto = MadeOrderResponseDto.builder()
-            .username("testuser1")
-            .orderUnitResponseDtoList(Arrays.asList(orderUnitResponseDto))
-            .totalPrice(1000)
-            .createdAt(LocalDateTime.now())
-            .build();
+
+    OrderUnitResponseDto orderUnitResponseDto = new OrderUnitResponseDto(
+            "name",
+            1000,
+            1);
+    MadeOrderResponseDto madeOrderResponseDto = new MadeOrderResponseDto(
+            "testuser1",
+            Arrays.asList(orderUnitResponseDto),
+            1000,
+            LocalDateTime.now());
 
     @BeforeEach
     void init(){
@@ -66,6 +65,7 @@ class OrderControllerTest extends DockerComposeTestContainer {
     void after(){
         authUserRepository.deleteAll();
     }
+
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     void 한_아이템에_대한_주문을_수행한다() throws Exception {
@@ -77,7 +77,7 @@ class OrderControllerTest extends DockerComposeTestContainer {
                         .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("testuser1"))
-                .andExpect(jsonPath("$.orderUnitResponseDtoList.orderPrice").value(1000));
+                .andExpect(jsonPath("$.orderUnitResponseDtoList..orderPrice").value(1000));
     }
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
@@ -89,7 +89,7 @@ class OrderControllerTest extends DockerComposeTestContainer {
                         .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("testuser1"))
-                .andExpect(jsonPath("$.orderUnitResponseDtoList.orderPrice").value(1000));
+                .andExpect(jsonPath("$.orderUnitResponseDtoList..orderPrice").value(1000));
     }
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
@@ -100,8 +100,8 @@ class OrderControllerTest extends DockerComposeTestContainer {
         mockMvc.perform(MockMvcRequestBuilders.get("/order")
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("testuser1"))
-                .andExpect(jsonPath("$.orderUnitResponseDtoList.orderPrice").value(1000));
+                .andExpect(jsonPath("$[0].username").value("testuser1"))
+                .andExpect(jsonPath("$[0].orderUnitResponseDtoList..orderPrice").value(1000));
     }
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
@@ -113,8 +113,8 @@ class OrderControllerTest extends DockerComposeTestContainer {
         mockMvc.perform(MockMvcRequestBuilders.get("/order/{madeOrderId}", 1L)
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].username").value("testuser1"))
-                .andExpect(jsonPath("$[0].orderUnitResponseDtoList.orderPrice").value(1000));
+                .andExpect(jsonPath("$.username").value("testuser1"))
+                .andExpect(jsonPath("$.orderUnitResponseDtoList..orderPrice").value(1000));
     }
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)

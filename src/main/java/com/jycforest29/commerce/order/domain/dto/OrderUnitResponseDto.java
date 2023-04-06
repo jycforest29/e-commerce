@@ -1,11 +1,9 @@
 package com.jycforest29.commerce.order.domain.dto;
 
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder

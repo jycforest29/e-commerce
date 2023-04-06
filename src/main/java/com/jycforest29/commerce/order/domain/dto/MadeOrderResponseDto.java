@@ -2,15 +2,13 @@ package com.jycforest29.commerce.order.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
