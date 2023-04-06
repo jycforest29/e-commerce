@@ -48,9 +48,9 @@ dependencies {
 	// json
 	implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.7.0'
 	// kafka
-//	implementation group: 'org.apache.kafka', name: 'kafka_2.13', version: '3.4.0'
-//	implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '3.4.0'
-//	implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.8'
+	implementation group: 'org.apache.kafka', name: 'kafka_2.13', version: '3.4.0'
+	implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '3.4.0'
+	implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.8'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -72,7 +72,7 @@ dependencies {
 	testImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: '1.17.6'
 	testImplementation group: 'org.testcontainers', name: 'mysql', version: '1.17.6'
 	// kafka
-//	testImplementation group: 'org.springframework.kafka', name: 'spring-kafka-test', version: '2.7.8'
+	testImplementation group: 'org.springframework.kafka', name: 'spring-kafka-test', version: '2.7.8'
 }
 
 'test' {
