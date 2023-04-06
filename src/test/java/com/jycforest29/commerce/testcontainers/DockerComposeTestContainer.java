@@ -17,7 +17,6 @@ import java.io.File;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 public class DockerComposeTestContainer {
-
     @Container
     private static GenericContainer<?> REDIS_CONTAINER;
     @Container

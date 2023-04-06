@@ -1,4 +1,5 @@
 spring:
+  profile: test
   datasource:
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
     url: jdbc:tc:mysql:///commercedb
