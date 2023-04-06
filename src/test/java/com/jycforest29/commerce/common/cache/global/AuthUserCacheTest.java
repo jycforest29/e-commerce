@@ -30,7 +30,7 @@ public class AuthUserCacheTest extends DockerComposeTestContainer {
             .build();
 
     @Nested
-    class LocalCacheTest {
+    class GlobalCacheTest {
         @Nested
         class AuthUserCache {
             @Test

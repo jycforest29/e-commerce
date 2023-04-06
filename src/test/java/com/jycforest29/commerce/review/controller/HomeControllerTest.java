@@ -21,7 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -69,7 +70,8 @@ class HomeControllerTest extends DockerComposeTestContainer {
                 .build();
 
         // 커스텀 어노테이션의 정상 동작 확인
-        given(homeService.getHomeReviewList("testuser1")).willReturn(Arrays.asList(reviewResponseDto));
+        given(homeService.getHomeReviewList("testuser1")).willReturn(List.of(reviewResponseDto));
+
         mockMvc.perform(MockMvcRequestBuilders.get("/home"))
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$[0].title").value("title"))

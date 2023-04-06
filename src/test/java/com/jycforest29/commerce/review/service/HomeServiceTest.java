@@ -49,7 +49,6 @@ class HomeServiceTest extends DockerComposeTestContainer{
 
     @BeforeEach
     void init(){
-        dockerComposeContainer.start();
         item = Item.builder()
                 .name("test_item")
                 .price(10000)
