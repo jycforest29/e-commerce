@@ -1,9 +1,0 @@
-spring:
-  profiles:
-    active: test
-  datasource:
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
-    url: jdbc:tc:mysql:///commercedb
-  redis:
-    host: localhost
-    port: 6379
