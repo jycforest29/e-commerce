@@ -18,6 +18,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.TestExecutionEvent;
 import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -30,7 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@ActiveProfiles(profiles = "test")
+@SpringBootTest(properties = "spring.profiles.active:test")
 @AutoConfigureMockMvc
 @Import(LoginAuthUserResolver.class)
 class CartControllerTest extends DockerComposeTestContainer {
@@ -77,7 +79,6 @@ class CartControllerTest extends DockerComposeTestContainer {
                         .param("number", "1")
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andDo(print())
                 .andExpect(jsonPath("$..name").value("name"))
                 .andExpect(jsonPath("$.totalPrice").value(1000));
     }

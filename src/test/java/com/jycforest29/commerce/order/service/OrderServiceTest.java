@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.RepeatedTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -29,7 +30,8 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@SpringBootTest
+@ActiveProfiles(profiles = "test")
+@SpringBootTest(properties = "spring.profiles.active:test")
 class OrderServiceTest extends DockerComposeTestContainer{
     private static final int threadCnt = 2;
     @Autowired

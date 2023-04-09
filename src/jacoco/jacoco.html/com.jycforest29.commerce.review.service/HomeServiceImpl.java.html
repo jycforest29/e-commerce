@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HomeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">commerce</a> &gt; <a href="index.source.html" class="el_package">com.jycforest29.commerce.review.service</a> &gt; <span class="el_source">HomeServiceImpl.java</span></div><h1>HomeServiceImpl.java</h1><pre class="source lang-java linenums">package com.jycforest29.commerce.review.service;
+
+import com.jycforest29.commerce.common.exception.CustomException;
+import com.jycforest29.commerce.common.exception.ExceptionCode;
+import com.jycforest29.commerce.review.domain.entity.Review;
+import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepository;
+import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
+import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.user.domain.entity.AuthUser;
+import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+<span class="fc" id="L21">@Slf4j</span>
+@RequiredArgsConstructor
+@Service
+public class HomeServiceImpl implements HomeService {
+    private final ReviewRepository reviewRepository;
+    private final ReviewLikeUnitRepository reviewLikeUnitRepository;
+    private final AuthUserRepository authUserRepository;
+    private final Clock clock;
+
+    @Transactional(readOnly = true)
+    @Override
+    public List&lt;ReviewResponseDto&gt; getHomeReviewList(String username) {
+        // 엔티티 가져옴
+<span class="fc" id="L34">        AuthUser authUser = getAuthUser(username);</span>
+<span class="fc" id="L35">        List&lt;AuthUser&gt; likedAuthor = getLikedAuthor(authUser);</span>
+
+<span class="fc" id="L37">        return getAllHomeReviewList(likedAuthor)</span>
+<span class="fc" id="L38">                .stream()</span>
+<span class="fc" id="L39">                .map(s -&gt; ReviewResponseDto.from(s))</span>
+<span class="fc" id="L40">                .collect(Collectors.toList());</span>
+    }
+
+    private List&lt;AuthUser&gt; getLikedAuthor(AuthUser authUser){
+<span class="fc" id="L44">        return reviewLikeUnitRepository.findAllByAuthUser(authUser)</span>
+<span class="fc" id="L45">                .stream()</span>
+<span class="fc" id="L46">                .map(s -&gt; s.getReview().getAuthUser())</span>
+<span class="fc" id="L47">                .collect(Collectors.toList());</span>
+    }
+
+    private List&lt;Review&gt; getAllHomeReviewList(List&lt;AuthUser&gt; likedReviewSet){
+<span class="fc" id="L51">        LocalDateTime now = LocalDateTime.now(clock);</span>
+<span class="fc" id="L52">        List&lt;Review&gt; homeReviewList = likedReviewSet.stream()</span>
+<span class="fc" id="L53">                .distinct()</span>
+<span class="fc" id="L54">                .map(s -&gt; reviewRepository.findAllByAuthUserAndCreatedWithin48Hours(s, now))</span>
+<span class="fc" id="L55">                .flatMap(List::stream)</span>
+<span class="fc" id="L56">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L58">        return homeReviewList;</span>
+    }
+
+    private AuthUser getAuthUser(String username){
+<span class="fc" id="L62">        return authUserRepository.findByUsername(username)</span>
+<span class="pc" id="L63">                .orElseThrow(() -&gt; new CustomException(ExceptionCode.UNAUTHORIZED));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

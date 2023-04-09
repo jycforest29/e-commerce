@@ -7,8 +7,8 @@ services:
     environment: # 해당 이미지가 사용할 환경 변수 설정
       MYSQL_DATABASE: commercedb
       MYSQL_ROOT_PASSWORD: 1234
-    ports: # 호스트에서 접속할 외부 포트 : 도커 내부의 실제 포트(도커 이미지들간의 통신에 사용)
-      - "3307:3306"
+    ports:
+      - "3306"
     volumes:
       - mysql-data:/var/lib/mysql
     command:
@@ -16,24 +16,14 @@ services:
       - "--collation-server=utf8mb4_unicode_ci"
     networks:
       - test_network
-#    healthcheck:
-#      test: ["CMD", "mysqladmin ping -h 127.0.0.1 -u root -- password=$$MYSQL_ROOT_PASSWORD"]
-#      interval: 10s
-#      timeout: 1s
-#      retries: 10
 
   redis:
     image: redis
     restart: always
     ports:
-      - "6379:6379"
+      - "6379"
     networks:
       - test_network
-#    healthcheck:
-#      test: ["CMD", "redis-cli ping"]
-#      interval: 10s
-#      timeout: 1s
-#      retries: 10
 
   application:
     restart: always
@@ -49,10 +39,6 @@ services:
     depends_on:
       - database
       - redis
-#      database:
-#        condition: service_healthy
-#      redis:
-#        condition: service_healthy
     networks:
       - test_network
 

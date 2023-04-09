@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReviewController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">commerce</a> &gt; <a href="index.source.html" class="el_package">com.jycforest29.commerce.review.controller</a> &gt; <span class="el_source">ReviewController.java</span></div><h1>ReviewController.java</h1><pre class="source lang-java linenums">package com.jycforest29.commerce.review.controller;
+
+import com.jycforest29.commerce.common.aop.LoginAuthUser;
+import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.service.ReviewService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.List;
+
+@RequestMapping(value = &quot;/review&quot;)
+@RequiredArgsConstructor
+@RestController
+public class ReviewController { // Long과 long의 차이 : Long은 클래스, long은 8bytes의 한계를 가진 primitive 자료형.
+    private final ReviewService reviewService;
+
+    @GetMapping(&quot;/{itemId}&quot;)
+    public ResponseEntity&lt;List&lt;ReviewResponseDto&gt;&gt; getReviewListByItem(@PathVariable(&quot;itemId&quot;) Long itemId){
+<span class="fc" id="L23">        return ResponseEntity.status(HttpStatus.OK).body(reviewService.getReviewListByItem(itemId));</span>
+    }
+
+    @GetMapping(&quot;/{itemId}/{reviewId}&quot;)
+    public ResponseEntity&lt;ReviewResponseDto&gt; getReviewDetail(@PathVariable(&quot;itemId&quot;) Long itemId,
+                                                             @PathVariable(&quot;reviewId&quot;) Long reviewId){
+<span class="fc" id="L29">        return ResponseEntity.status(HttpStatus.OK).body(reviewService.getReviewDetail(itemId, reviewId));</span>
+    }
+
+
+    @PostMapping(&quot;/{itemId}&quot;)
+    public ResponseEntity&lt;Object&gt; addReview(@PathVariable(&quot;itemId&quot;) Long itemId,
+                                            @Valid @RequestBody AddReviewRequestDto addReviewRequestDTO,
+                                            @LoginAuthUser String username){
+<span class="fc" id="L37">        reviewService.addReview(itemId, addReviewRequestDTO, username);</span>
+<span class="fc" id="L38">        return ResponseEntity.status(HttpStatus.CREATED).build();</span>
+    }
+
+    @PutMapping(&quot;/{itemId}/{reviewId}&quot;)
+    public ResponseEntity&lt;ReviewResponseDto&gt; updateReview(@PathVariable(&quot;itemId&quot;) Long itemId,
+                                               @PathVariable(&quot;reviewId&quot;) Long reviewId,
+                                               @Valid @RequestBody AddReviewRequestDto addReviewRequestDTO,
+                                               @LoginAuthUser String username){
+<span class="fc" id="L46">        return ResponseEntity.status(HttpStatus.OK)</span>
+<span class="fc" id="L47">                .body(reviewService.updateReview(itemId, reviewId, addReviewRequestDTO, username));</span>
+    }
+
+    @DeleteMapping(&quot;/{itemId}/{reviewId}&quot;)
+    public ResponseEntity&lt;Object&gt; deleteReview(@PathVariable(&quot;itemId&quot;) Long itemId,
+                                               @PathVariable(&quot;reviewId&quot;) Long reviewId,
+                                               @LoginAuthUser String username){
+<span class="fc" id="L54">        reviewService.deleteReview(itemId, reviewId, username);</span>
+<span class="fc" id="L55">        return ResponseEntity.status(HttpStatus.OK).build();</span>
+    }
+
+    @PostMapping(value = &quot;/{itemId}/{reviewId}/like&quot;)
+    public ResponseEntity&lt;ReviewResponseDto&gt; likeReview(@PathVariable(&quot;itemId&quot;) Long itemId,
+                                             @PathVariable(&quot;reviewId&quot;) Long reviewId,
+                                             @LoginAuthUser String username){
+<span class="fc" id="L62">        return ResponseEntity.status(HttpStatus.OK).body(reviewService.likeReview(itemId, reviewId, username));</span>
+    }
+
+    @DeleteMapping(value = &quot;/{itemId}/{reviewId}/like&quot;)
+    public ResponseEntity&lt;ReviewResponseDto&gt; removeLikeReview(@PathVariable(&quot;itemId&quot;) Long itemId,
+                                                   @PathVariable(&quot;reviewId&quot;) Long reviewId,
+                                                   @LoginAuthUser String username){
+<span class="fc" id="L69">        return ResponseEntity.status(HttpStatus.OK).body(reviewService.removeLikeReview(itemId, reviewId, username));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

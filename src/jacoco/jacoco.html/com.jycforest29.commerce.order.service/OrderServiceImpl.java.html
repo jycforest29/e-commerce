@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">commerce</a> &gt; <a href="index.source.html" class="el_package">com.jycforest29.commerce.order.service</a> &gt; <span class="el_source">OrderServiceImpl.java</span></div><h1>OrderServiceImpl.java</h1><pre class="source lang-java linenums">package com.jycforest29.commerce.order.service;
+
+import com.jycforest29.commerce.cart.domain.entity.Cart;
+import com.jycforest29.commerce.cart.domain.entity.CartUnit;
+import com.jycforest29.commerce.common.exception.CustomException;
+import com.jycforest29.commerce.common.exception.ExceptionCode;
+import com.jycforest29.commerce.common.redis.RedisLockRepository;
+import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
+import com.jycforest29.commerce.order.domain.entity.MadeOrder;
+import com.jycforest29.commerce.order.domain.entity.OrderUnit;
+import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
+import com.jycforest29.commerce.order.proxy.async.OrderAsyncProxy;
+import com.jycforest29.commerce.user.domain.entity.AuthUser;
+import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
+<span class="fc" id="L28">@Slf4j</span>
+@RequiredArgsConstructor
+@Service
+public class OrderServiceImpl implements OrderService{
+    private final MadeOrderRepository madeOrderRepository;
+    private final RedisLockRepository redisLockRepository;
+    private final AuthUserRepository authUserRepository;
+    private final OrderAsyncProxy orderAsyncProxy;
+
+    @Transactional
+    @Override
+    public MadeOrderResponseDto makeOrder(Long itemId, int number, String username)
+            throws InterruptedException, ExecutionException {
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        while(!redisLockRepository.lock(List.of(itemId))){</span>
+<span class="fc" id="L42">            Thread.sleep(100);</span>
+        }
+        try{
+<span class="fc" id="L45">            OrderUnit orderUnit = orderAsyncProxy.makeOrderUnitAsync(itemId, number);</span>
+<span class="fc" id="L46">            return orderAsyncProxy.madeOrderWithCommit(username, Arrays.asList(orderUnit));</span>
+        }finally {
+<span class="fc" id="L48">            redisLockRepository.unlock(List.of(itemId));</span>
+        }
+    }
+
+    // 장바구니에 있는 아이템을 전부 주문하기 위해선 어떻게 락을 걸어줘야 할까?
+    // 일단 장바구니에 아이템 A, B가 있을때 아이템 A를 주문할 때 B가 품절되면 안됨
+    // 즉 모든 아이템에 대해 수행 여부에 동일하게 보장되어야 함
+    // -&gt; 각 아이템이 속해있는 모든 테이블에 락을 걸어 한번에 처리해야
+    @Transactional
+    @Override
+    public MadeOrderResponseDto makeOrderForCart(String username) throws InterruptedException, ExecutionException {
+        // 엔티티 가져옴
+<span class="fc" id="L60">        AuthUser authUser = getAuthUser(username);</span>
+<span class="fc" id="L61">        Cart cart = authUser.getCart();</span>
+<span class="fc" id="L62">        List&lt;CartUnit&gt; cartUnitList = cart.getCartUnitList();</span>
+
+        // 락을 걸어야 하는 아이템의 id 리스트 추출
+<span class="fc" id="L65">        List&lt;Long&gt; itemIdListToLock = cartUnitList.stream()</span>
+<span class="fc" id="L66">                .map(s -&gt; s.getItem().getId())</span>
+<span class="fc" id="L67">                .collect(Collectors.toList());</span>
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        while(!redisLockRepository.lock(itemIdListToLock)){</span>
+<span class="fc" id="L70">            Thread.sleep(100);</span>
+        }
+        try{
+<span class="fc" id="L73">            List&lt;OrderUnit&gt; orderUnitList = cartUnitList.stream()</span>
+<span class="fc" id="L74">                    .map(s -&gt; orderAsyncProxy.makeOrderUnitAsync(s.getItem().getId(), s.getNumber()))</span>
+<span class="fc" id="L75">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L76">            return orderAsyncProxy.madeOrderWithCommit(username, orderUnitList);</span>
+        }finally {
+<span class="fc" id="L78">            redisLockRepository.unlock(itemIdListToLock);</span>
+        }
+    }
+
+    private MadeOrderResponseDto makeOrderUnitAsync(Map&lt;Long, Integer&gt; map, String username)
+            throws ExecutionException, InterruptedException {
+<span class="nc" id="L84">        List&lt;CompletableFuture&lt;OrderUnit&gt;&gt; completableFutureList = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        for(Map.Entry&lt;Long, Integer&gt; elem : map.entrySet()){</span>
+<span class="nc" id="L86">            completableFutureList.add(</span>
+<span class="nc" id="L87">                    CompletableFuture.supplyAsync(() -&gt; {</span>
+<span class="nc" id="L88">                        return orderAsyncProxy.makeOrderUnitAsync(elem.getKey(), elem.getValue());</span>
+                    })
+            );
+<span class="nc" id="L91">        }</span>
+<span class="nc" id="L92">        CompletableFuture&lt;List&lt;OrderUnit&gt;&gt; orderUnitList = CompletableFuture</span>
+<span class="nc" id="L93">                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))</span>
+                // allOf는 void를 반환하므로 stream()으로 리턴하도록 함
+<span class="nc" id="L95">                .thenApply(s -&gt; completableFutureList.stream()</span>
+<span class="nc" id="L96">                        .map(CompletableFuture::join)</span>
+<span class="nc" id="L97">                        .collect(Collectors.toList()));</span>
+
+<span class="nc" id="L99">        return orderUnitList</span>
+                // thenApply는 future를 반환하여 그 값을 get()으로 반환받을 수 있음
+<span class="nc" id="L101">                .thenApply(o -&gt; orderAsyncProxy.madeOrderWithCommit(username, o))</span>
+<span class="nc" id="L102">                .get();</span>
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List&lt;MadeOrderResponseDto&gt; getOrderList(String username) {
+        // 엔티티 가져옴
+<span class="nc" id="L109">        AuthUser authUser = getAuthUser(username);</span>
+<span class="nc" id="L110">        List&lt;MadeOrder&gt; madeOrderList = madeOrderRepository.findAllByAuthUserOrderByCreatedAtDesc(authUser);</span>
+
+<span class="nc" id="L112">        return madeOrderList.stream()</span>
+<span class="nc" id="L113">                .map(s -&gt; MadeOrderResponseDto.from(s))</span>
+<span class="nc" id="L114">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public MadeOrderResponseDto getOrder(Long madeOrderId, String username) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="nc" id="L121">        MadeOrder madeOrder = getMadeOrder(madeOrderId);</span>
+<span class="nc" id="L122">        return MadeOrderResponseDto.from(madeOrder);</span>
+    }
+
+    @Transactional
+    @Override
+    public void deleteOrder(Long madeOrderId, String username) throws InterruptedException{
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="fc" id="L129">        MadeOrder madeOrder = getMadeOrder(madeOrderId);</span>
+        // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
+<span class="fc" id="L131">        List&lt;OrderUnit&gt; orderUnitList = madeOrder.getOrderUnitList();</span>
+        // 락을 걸어야 하는 아이템리스트 추출
+<span class="fc" id="L133">        List&lt;Long&gt; itemIdListToLock = orderUnitList.stream()</span>
+<span class="fc" id="L134">                .map(s -&gt; s.getItem().getId())</span>
+<span class="fc" id="L135">                .collect(Collectors.toList());</span>
+
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        while(!redisLockRepository.lock(itemIdListToLock)){</span>
+<span class="fc" id="L138">            Thread.sleep(100);</span>
+        }
+        try{
+<span class="fc bfc" id="L141" title="All 2 branches covered.">            for(OrderUnit orderUnit : orderUnitList){</span>
+<span class="fc" id="L142">                orderAsyncProxy.deleteOrderUnitAsync(orderUnit.getItem().getId(), orderUnit.getNumber());</span>
+<span class="fc" id="L143">            }</span>
+<span class="fc" id="L144">            orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);</span>
+        }
+        finally {
+<span class="fc" id="L147">            redisLockRepository.unlock(itemIdListToLock);</span>
+        }
+<span class="fc" id="L149">    }</span>
+
+//    private void deleteOrderUnitAsync(String username, MadeOrder madeOrder, List&lt;OrderUnit&gt; orderUnitList) {
+//        List&lt;CompletableFuture&lt;Boolean&gt;&gt; completableFutureList = new ArrayList&lt;&gt;();
+//        for(OrderUnit orderUnit : orderUnitList){
+//            completableFutureList.add(CompletableFuture.supplyAsync(() -&gt; {
+//               return orderAsyncProxy.deleteOrderUnitAsync(orderUnit.getItem().getId(), orderUnit.getNumber());
+//            }));
+//        }
+//
+//        CompletableFuture
+//                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
+//                .thenApply(s -&gt; completableFutureList.stream()
+//                        .map(CompletableFuture::join)
+//                        .collect(Collectors.toList()))
+//                .thenAccept(s -&gt; {
+//                    if(!s.contains(&quot;false&quot;)){
+//                        orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
+//                    }
+//                });
+//    }
+
+    private AuthUser getAuthUser(String username){
+<span class="fc" id="L172">        return authUserRepository.findByUsername(username)</span>
+<span class="pc" id="L173">                .orElseThrow(() -&gt; new CustomException(ExceptionCode.UNAUTHORIZED));</span>
+    }
+
+    private MadeOrder getMadeOrder(Long madeOrderId){
+<span class="fc" id="L177">        return madeOrderRepository.findById(madeOrderId)</span>
+<span class="pc" id="L178">                .orElseThrow(() -&gt; new CustomException(ExceptionCode.ENTITY_NOT_FOUND));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

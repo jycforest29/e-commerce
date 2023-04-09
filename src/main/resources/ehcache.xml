@@ -1,0 +1,15 @@
+<ehcache>
+    <cache name = "cart"
+           eternal = "false"
+           timeToIdleSeconds = "0"
+           timeToLiveSeconds = "21600"
+           maxEntriesLocalHeap = "10000"
+           memoryStoreEvictionPolicy = "LRU" />
+    <cache name = "review"
+           eternal = "false"
+           timeToIdleSeconds = "0"
+           timeToLiveSeconds = "21600"
+           maxEntriesLocalHeap = "10000"
+           memoryStoreEvictionPolicy = "LRU" />
+
+</ehcache>

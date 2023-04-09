@@ -4,11 +4,14 @@ import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import com.jycforest29.commerce.user.proxy.AuthUserCacheProxy;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -17,12 +20,17 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest
+@Slf4j
+@ActiveProfiles(profiles = "test")
+@SpringBootTest(properties = "spring.profiles.active:test")
 public class AuthUserCacheTest extends DockerComposeTestContainer {
     @MockBean
     private AuthUserRepository authUserRepository;
     @Autowired
     private AuthUserCacheProxy authUserCacheProxy;
+    @Autowired
+    private ConfigurableEnvironment configurableEnvironment;
+
     AuthUser authUser = AuthUser.builder()
             .username("test_username")
             .password("test_password")

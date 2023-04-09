@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebSecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">commerce</a> &gt; <a href="index.source.html" class="el_package">com.jycforest29.commerce.security.config</a> &gt; <span class="el_source">WebSecurityConfig.java</span></div><h1>WebSecurityConfig.java</h1><pre class="source lang-java linenums">package com.jycforest29.commerce.security.config;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import static org.springframework.http.HttpMethod.GET;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor
+// WebSecurity와 HttpSecurity 모두에 커스텀 필터 적용할 수 있도록 config 설정
+public class WebSecurityConfig implements WebMvcConfigurer {
+    private final JwtTokenProvider jwtTokenProvider;
+
+//    // 정적 자원에 대해서는 security를 적용하지 않음
+//    @Bean
+//    public WebSecurityCustomizer webSecurityCustomizer(){
+//        return web -&gt; web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+//    }
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
+<span class="fc" id="L37">        return authenticationConfiguration.getAuthenticationManager();</span>
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+<span class="fc" id="L42">        return new BCryptPasswordEncoder();</span>
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+<span class="fc" id="L47">        httpSecurity</span>
+<span class="fc" id="L48">                .csrf().disable()</span>
+                // 세션 사용하지 않음
+<span class="fc" id="L50">                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)</span>
+<span class="fc" id="L51">                .and()</span>
+<span class="fc" id="L52">                .formLogin().disable() // form Login 안함</span>
+<span class="fc" id="L53">                .httpBasic().disable() // jwt는 httpBearer 방식이므로 httpBasic 방식은 사용 안함</span>
+                // h2 콘솔 허용(나중에 인메모리 db 쓸 때를 위해)
+<span class="fc" id="L55">                .headers()</span>
+<span class="fc" id="L56">                .frameOptions()</span>
+<span class="fc" id="L57">                .sameOrigin()</span>
+<span class="fc" id="L58">                .and()</span>
+<span class="fc" id="L59">                .authorizeRequests()</span>
+<span class="fc" id="L60">                .antMatchers(GET, &quot;/review/**&quot;).permitAll() // 리뷰 조회 허용</span>
+<span class="fc" id="L61">                .antMatchers(&quot;/authenticate/**&quot;).permitAll()// 회원가입, 로그인 허용</span>
+<span class="fc" id="L62">                .and()</span>
+<span class="fc" id="L63">                .authorizeRequests()</span>
+<span class="fc" id="L64">                    .anyRequest().authenticated()</span>
+<span class="fc" id="L65">                .and()</span>
+<span class="fc" id="L66">                .addFilterBefore(new JwtRequestFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);</span>
+
+<span class="fc" id="L68">        return httpSecurity.build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -1,15 +1,16 @@
 spring:
   profiles:
+    active: local
     group:
-      "local": "local-config, common"
-      "test": "test-config, common"
+      local: "local-config, common"
+      test: "test-config, common"
 ---
 spring:
   config:
-    active:
-      on-profile: "local-config"
+    activate:
+      on-profile: local-config
   redis:
-    host: localhost
+    host: 127.0.0.1
     port: 6379
   jpa:
     hibernate:
@@ -18,13 +19,13 @@ spring:
 ---
 spring:
   config:
-    active:
-      on-profile: "test-config"
+    activate:
+      on-profile: test-config
   datasource:
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
     url: jdbc:tc:mysql:///commercedb
   redis:
-    host: localhost
+    host: 127.0.0.1
     port: 6379
   jpa:
     hibernate:
@@ -33,12 +34,12 @@ spring:
 ---
 spring:
   config:
-    active:
-      on-profile: "common"
+    activate:
+      on-profile: common
   jpa:
     hibernate:
       ddl-auto: update
-      database-platform: org.hibernate.dialect.MySQL8Dialect
+      dialect: org.hibernate.dialect.MySQL8Dialect
       show-sql: true
 
 server:
@@ -46,7 +47,3 @@ server:
 jwt:
   secret: rkGU45258GGhiolLO2465TFY5345kGU45258GGhiolLO2465TFY5345rkGU45258GGhiolLO2465TFY5345kGU45258GGhiolLO2465TFY5345rkGU45258GGhiolLO2465TFY5345kGU45258GGhiolLO2465TFY5345
 
-#spring.datasource.url=jdbc:mysql://localhost:3307/commercedb?createDatabaseIfNotExist=true&autoReconnect=true
-#spring.datasource.username=root
-#spring.datasource.password=1234
-#spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver

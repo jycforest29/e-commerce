@@ -9,6 +9,7 @@ import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -25,7 +26,10 @@ import java.util.Objects;
 public class CacheConfig {
     @Bean
     public EhCacheManagerFactoryBean cacheManagerFactoryBean(){
-        return new EhCacheManagerFactoryBean();
+        EhCacheManagerFactoryBean ehCacheManagerFactoryBean = new EhCacheManagerFactoryBean();
+        ehCacheManagerFactoryBean.setConfigLocation(new ClassPathResource("ehcache.xml"));
+        ehCacheManagerFactoryBean.setShared(true);
+        return ehCacheManagerFactoryBean;
     }
 
     @Bean("ehCacheManager")
@@ -33,27 +37,28 @@ public class CacheConfig {
     public CacheManager ehCacheManager(){
         // cart 캐시의 key : AuthUser.username
         // reviewListByItem 캐시의 key : Item.id
-        List<String> cacheNames = List.of("cart", "review");
 
-        for(String cacheName: cacheNames){
-            CacheConfiguration conf = new CacheConfiguration()
-                    .eternal(false)
-                    .timeToIdleSeconds(0)
-                    .timeToLiveSeconds(21600)
-                    .maxEntriesLocalHeap(10000)
-                    .memoryStoreEvictionPolicy("LRU")
-                    .name(cacheName);
-
-            // 캐시 팩토리에 생성한 eh 캐시를 추가
-            Objects.requireNonNull(cacheManagerFactoryBean().getObject()).addCache(new Cache(conf));
-        }
-
-        return new EhCacheCacheManager(Objects.requireNonNull(cacheManagerFactoryBean().getObject()));
+//        List<String> cacheNames = List.of("cart", "review");
+//
+//        for(String cacheName: cacheNames){
+//            CacheConfiguration conf = new CacheConfiguration()
+//                    .eternal(false)
+//                    .timeToIdleSeconds(0)
+//                    .timeToLiveSeconds(21600)
+//                    .maxEntriesLocalHeap(10000)
+//                    .memoryStoreEvictionPolicy("LRU")
+//                    .name(cacheName);
+//
+//            // 캐시 팩토리에 생성한 eh 캐시를 추가
+//            Objects.requireNonNull(cacheManagerFactoryBean().getObject()).addCache(new Cache(conf));
+//        }
+//        return new EhCacheCacheManager(Objects.requireNonNull(cacheManagerFactoryBean().getObject()));
+        return new EhCacheCacheManager(cacheManagerFactoryBean().getObject());
     }
 
     @Bean("redisCacheManager")
     public CacheManager redisCacheManager(RedisConnectionFactory redisConnectionFactory){
-        // ActiveUser 캐시의 key : AuthUser.username
+        // AuthUser 캐시의 key : AuthUser.username
         RedisCacheConfiguration conf = RedisCacheConfiguration
                 .defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair

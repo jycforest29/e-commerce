@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @ComponentScan(basePackages = "com.jycforest29.commerce")
 @EnableCaching
@@ -14,5 +15,4 @@ public class CommerceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(CommerceApplication.class, args);
 	}
-
 }

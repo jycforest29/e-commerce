@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReviewServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">commerce</a> &gt; <a href="index.source.html" class="el_package">com.jycforest29.commerce.review.service</a> &gt; <span class="el_source">ReviewServiceImpl.java</span></div><h1>ReviewServiceImpl.java</h1><pre class="source lang-java linenums">package com.jycforest29.commerce.review.service;
+
+import com.jycforest29.commerce.common.exception.CustomException;
+import com.jycforest29.commerce.common.exception.ExceptionCode;
+import com.jycforest29.commerce.item.domain.entity.Item;
+import com.jycforest29.commerce.item.domain.repository.ItemRepository;
+import com.jycforest29.commerce.order.domain.entity.OrderUnit;
+import com.jycforest29.commerce.review.domain.entity.Review;
+import com.jycforest29.commerce.review.domain.entity.ReviewLikeUnit;
+import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepository;
+import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
+import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.proxy.ReviewCacheProxy;
+import com.jycforest29.commerce.user.domain.entity.AuthUser;
+import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+<span class="fc" id="L28">@Slf4j</span>
+@RequiredArgsConstructor
+@Service
+public class ReviewServiceImpl implements ReviewService{
+    private final ReviewRepository reviewRepository;
+    private final ReviewLikeUnitRepository reviewLikeUnitRepository;
+    private final ItemRepository itemRepository;
+    private final AuthUserRepository authUserRepository;
+    private final ReviewCacheProxy reviewCacheProxy;
+
+    @Transactional(readOnly = true)
+    @Override
+    public List&lt;ReviewResponseDto&gt; getReviewListByItem(Long itemId) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="fc" id="L42">        Item item = getItem(itemId);</span>
+
+        // 리뷰 좋아요순으로 내림차순 정렬
+<span class="fc" id="L45">        return reviewRepository.findAllByItem(item)</span>
+<span class="fc" id="L46">                .stream()</span>
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">                .sorted((a, b) -&gt; a.getReviewLikeUnitList().size() &gt; b.getReviewLikeUnitList().size() ? -1 : 1)</span>
+<span class="fc" id="L48">                .map(s -&gt; ReviewResponseDto.from(s))</span>
+<span class="fc" id="L49">                .collect(Collectors.toList());</span>
+    }
+
+    @Cacheable(value = &quot;review&quot;, key = &quot;#reviewId&quot;, cacheManager = &quot;ehCacheManager&quot;)
+    @Override
+    public ReviewResponseDto getReviewDetail(Long itemId, Long reviewId) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="nc" id="L56">        Item item = getItem(itemId);</span>
+<span class="nc" id="L57">        Review review = getReview(reviewId);</span>
+<span class="nc" id="L58">        return ReviewResponseDto.from(review);</span>
+    }
+
+    @Transactional
+    @Override
+    public void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, String username) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="fc" id="L65">        Item item = getItem(itemId);</span>
+<span class="fc" id="L66">        AuthUser authUser = getAuthUser(username);</span>
+
+        // 로그인한 유저가 해당 아이템을 구매했어야만 리뷰를 작성할 수 있음.
+        // 유저의 주문 목록 가져오기
+<span class="fc" id="L70">        List&lt;OrderUnit&gt; orderUnitList = authUser.getMadeOrderList().stream()</span>
+<span class="fc" id="L71">                        .flatMap(s -&gt; s.getOrderUnitList().stream())</span>
+<span class="fc" id="L72">                        .collect(Collectors.toList());</span>
+        // 주문 목록 중 해당 아이템을 주문한 목록이 없을 경우 401 발생 =&gt; 추후 수정 필요
+<span class="fc" id="L74">        orderUnitList.stream()</span>
+<span class="fc" id="L75">                .filter(s -&gt; s.getItem().equals(item))</span>
+<span class="fc" id="L76">                .findFirst()</span>
+<span class="fc" id="L77">                .orElseThrow(() -&gt; {throw new CustomException(ExceptionCode.UNAUTHORIZED);});</span>
+
+        // 리뷰 객체 생성
+<span class="fc" id="L80">        Review review = Review.from(addReviewRequestDTO);</span>
+
+        // 다대일 양방향 연관관계 매핑
+<span class="fc" id="L83">        item.addReview(review);</span>
+<span class="fc" id="L84">        authUser.addReview(review);</span>
+
+        // DB에 반영
+<span class="fc" id="L87">        reviewRepository.save(review);</span>
+<span class="fc" id="L88">    }</span>
+
+    @CachePut(value = &quot;review&quot;, key = &quot;#reviewId&quot;, cacheManager = &quot;ehCacheManager&quot;)
+    @Transactional
+    @Override
+    public ReviewResponseDto updateReview(Long itemId,
+                                          Long reviewId,
+                                          AddReviewRequestDto addReviewRequestDTO,
+                                          String username) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="fc" id="L98">        Review review = getReview(reviewId);</span>
+<span class="fc" id="L99">        AuthUser authUser = getAuthUser(username);</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if(!review.getAuthUser().equals(authUser)){</span>
+<span class="fc" id="L101">            throw new CustomException(ExceptionCode.NOT_DONE_BY_AUTHUSER);</span>
+        }
+
+        // dirty checking 통해 DB에 반영
+<span class="fc" id="L105">        review.update(addReviewRequestDTO);</span>
+<span class="fc" id="L106">        return ReviewResponseDto.from(review);</span>
+    }
+
+    @CacheEvict(value = &quot;review&quot;, key = &quot;#reviewId&quot;, cacheManager = &quot;ehCacheManager&quot;)
+    @Transactional
+    @Override
+    public void deleteReview(Long itemId, Long reviewId, String username) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="fc" id="L114">        Review review = getReview(reviewId);</span>
+<span class="fc" id="L115">        AuthUser authUser = getAuthUser(username);</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        if(!review.getAuthUser().equals(authUser)){</span>
+<span class="fc" id="L117">            throw new CustomException(ExceptionCode.NOT_DONE_BY_AUTHUSER);</span>
+        }
+
+        // 기존의 array 변환함
+<span class="fc" id="L121">        reviewLikeUnitRepository.findAllByReview(review).stream()</span>
+<span class="fc" id="L122">                .forEach(s -&gt; s.getAuthUser().deleteReviewLikeUnit(s));</span>
+
+        // 해당 리뷰에 속하는 모든 reviewLikeUnit도 연관관계 제거
+<span class="fc" id="L125">        review.deleteAllReviewLikeUnit();</span>
+
+        // 다대일 양방향 연관관계 제거
+<span class="fc" id="L128">        Item item = review.getItem();</span>
+<span class="fc" id="L129">        item.deleteReview(review);</span>
+<span class="fc" id="L130">        authUser.deleteReview(review);</span>
+
+        // DB에 반영
+<span class="fc" id="L133">        reviewLikeUnitRepository.deleteAllByReviewId(review.getId());</span>
+<span class="fc" id="L134">        reviewRepository.deleteById(review.getId());</span>
+<span class="fc" id="L135">    }</span>
+
+    @CachePut(value = &quot;review&quot;, key = &quot;#reviewId&quot;, cacheManager = &quot;ehCacheManager&quot;)
+    @Transactional
+    @Override
+    public ReviewResponseDto likeReview(Long itemId, Long reviewId, String username){
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="fc" id="L142">        Review review = getReview(reviewId);</span>
+<span class="fc" id="L143">        AuthUser authUser = getAuthUser(username);</span>
+<span class="fc" id="L144">        reviewLikeUnitRepository.findByReviewAndAuthUser(review, authUser)</span>
+<span class="pc" id="L145">                .ifPresent(s -&gt; {throw new CustomException(ExceptionCode.REVIEW_LIKE_DUPLICATED);});</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        if(review.getAuthUser().equals(authUser)){</span>
+<span class="fc" id="L147">            throw new CustomException(ExceptionCode.CANNOT_LIKE_DONE_BY_AUTHUSER);</span>
+        }
+
+        // reviewLikeUnit 생성
+<span class="fc" id="L151">        ReviewLikeUnit reviewLikeUnit = new ReviewLikeUnit();</span>
+
+        // 다대일 양방향 연관관계 매핑
+<span class="fc" id="L154">        review.addReviewLikeUnit(reviewLikeUnit);</span>
+<span class="fc" id="L155">        authUser.addReviewLikeUnit(reviewLikeUnit);</span>
+
+        // DB에 반영
+<span class="fc" id="L158">        reviewLikeUnitRepository.save(reviewLikeUnit);</span>
+<span class="fc" id="L159">        return ReviewResponseDto.from(review);</span>
+    }
+
+    @CachePut(value = &quot;review&quot;, key = &quot;#reviewId&quot;, cacheManager = &quot;ehCacheManager&quot;)
+    @Transactional
+    @Override
+    public ReviewResponseDto removeLikeReview(Long itemId, Long reviewId, String username) {
+        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
+<span class="fc" id="L167">        Review review = getReview(reviewId);</span>
+<span class="fc" id="L168">        AuthUser authUser = getAuthUser(username);</span>
+        // likeReview과 달리 reviewLikeUnit 가져옴
+        // 하나의 리뷰에 대해 한명의 유저는 딱 한번만 좋아요를 할 수 있음
+<span class="fc" id="L171">        ReviewLikeUnit reviewLikeUnit = reviewLikeUnitRepository.findByReviewAndAuthUser(review, authUser)</span>
+<span class="pc" id="L172">                .orElseThrow(() -&gt; {throw new CustomException(ExceptionCode.REVIEW_LIKE_NOT_EXISTS);});</span>
+
+        // 다대일 양방향 연관관계 제거
+<span class="fc" id="L175">        authUser.deleteReviewLikeUnit(reviewLikeUnit);</span>
+<span class="fc" id="L176">        review.deleteReviewLikeUnit(reviewLikeUnit);</span>
+
+        // DB에 반영
+        // delete와 deleteById를 비교했을때, 성능 차이는 없어보임
+            // deleteById는 findById + delete
+            // deleteById는 findById 조회 시 데이터가 없을 경우 고정으로 발생하는 예외가 존재해 이 부분 커스텀 불가
+<span class="fc" id="L182">        reviewLikeUnitRepository.deleteById(reviewLikeUnit.getId());</span>
+<span class="fc" id="L183">        return ReviewResponseDto.from(review);</span>
+    }
+
+    private Item getItem(Long itemId){
+<span class="fc" id="L187">        return itemRepository.findById(itemId)</span>
+<span class="pc" id="L188">                .orElseThrow(() -&gt; new CustomException(ExceptionCode.ENTITY_NOT_FOUND));</span>
+    }
+
+    private AuthUser getAuthUser(String username){
+<span class="fc" id="L192">        return authUserRepository.findByUsername(username)</span>
+<span class="pc" id="L193">                .orElseThrow(() -&gt; new CustomException(ExceptionCode.UNAUTHORIZED));</span>
+    }
+
+    private Review getReview(Long reviewId){
+<span class="fc" id="L197">        return reviewCacheProxy.findById(reviewId)</span>
+<span class="pc" id="L198">                .orElseThrow(() -&gt; new CustomException(ExceptionCode.ENTITY_NOT_FOUND));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
