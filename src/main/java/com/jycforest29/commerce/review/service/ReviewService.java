@@ -1,7 +1,8 @@
 package com.jycforest29.commerce.review.service;
 
-import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
-import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.controller.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.domain.entity.Review;
 
 import java.util.List;
 
@@ -11,16 +12,16 @@ public interface ReviewService {
 
     ReviewResponseDto getReviewDetail(Long itemId, Long reviewId);
 
-    void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, String username);
+    List<ReviewResponseDto> addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, String username);
 
-    ReviewResponseDto updateReview(Long itemId,
+    List<ReviewResponseDto> updateReview(Long itemId,
                                    Long reviewId,
                                    AddReviewRequestDto addReviewRequestDTO,
                                    String username);
 
-    void deleteReview(Long itemId, Long reviewId, String username);
+    List<ReviewResponseDto> deleteReview(Long itemId, Long reviewId, String username);
 
-    ReviewResponseDto likeReview(Long itemId, Long reviewId, String username);
+    List<ReviewResponseDto> likeReview(Long itemId, Long reviewId, String username);
 
-    ReviewResponseDto removeLikeReview(Long itemId, Long reviewId, String username);
+    List<ReviewResponseDto> removeLikeReview(Long itemId, Long reviewId, String username);
 }

@@ -2,12 +2,12 @@ package com.jycforest29.commerce.user.service;
 
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
-import com.jycforest29.commerce.security.config.JwtTokenProvider;
+import com.jycforest29.commerce.common.security.utils.JwtTokenProvider;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-import com.jycforest29.commerce.user.dto.authenticate.LoginRequestDto;
-import com.jycforest29.commerce.user.dto.authenticate.LoginResponseDto;
-import com.jycforest29.commerce.user.dto.register.RegisterRequestDto;
+import com.jycforest29.commerce.user.controller.dto.authenticate.LoginRequestDto;
+import com.jycforest29.commerce.user.controller.dto.authenticate.LoginResponseDto;
+import com.jycforest29.commerce.user.controller.dto.register.RegisterRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;

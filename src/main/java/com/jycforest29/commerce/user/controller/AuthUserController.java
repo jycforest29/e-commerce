@@ -1,8 +1,8 @@
 package com.jycforest29.commerce.user.controller;
 
-import com.jycforest29.commerce.user.dto.authenticate.LoginRequestDto;
-import com.jycforest29.commerce.user.dto.authenticate.LoginResponseDto;
-import com.jycforest29.commerce.user.dto.register.RegisterRequestDto;
+import com.jycforest29.commerce.user.controller.dto.authenticate.LoginRequestDto;
+import com.jycforest29.commerce.user.controller.dto.authenticate.LoginResponseDto;
+import com.jycforest29.commerce.user.controller.dto.register.RegisterRequestDto;
 import com.jycforest29.commerce.user.service.AuthUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

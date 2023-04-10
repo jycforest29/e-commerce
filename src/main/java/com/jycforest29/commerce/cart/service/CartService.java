@@ -1,6 +1,6 @@
 package com.jycforest29.commerce.cart.service;
 
-import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
+import com.jycforest29.commerce.cart.controller.dto.CartResponseDto;
 
 public interface CartService {
 

@@ -5,18 +5,17 @@ import com.jycforest29.commerce.common.exception.ExceptionCode;
 import com.jycforest29.commerce.item.domain.entity.Item;
 import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
+import com.jycforest29.commerce.review.controller.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
 import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.domain.entity.ReviewLikeUnit;
 import com.jycforest29.commerce.review.domain.repository.ReviewLikeUnitRepository;
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
-import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
-import com.jycforest29.commerce.review.dto.ReviewResponseDto;
-import com.jycforest29.commerce.review.proxy.ReviewCacheProxy;
+import com.jycforest29.commerce.review.service.proxy.ReviewCacheProxy;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -35,6 +34,7 @@ public class ReviewServiceImpl implements ReviewService{
     private final AuthUserRepository authUserRepository;
     private final ReviewCacheProxy reviewCacheProxy;
 
+    @Cacheable(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
     public List<ReviewResponseDto> getReviewListByItem(Long itemId) {
@@ -42,14 +42,13 @@ public class ReviewServiceImpl implements ReviewService{
         Item item = getItem(itemId);
 
         // 리뷰 좋아요순으로 내림차순 정렬
-        return reviewRepository.findAllByItem(item)
+        return reviewCacheProxy.findAllByItem(item)
                 .stream()
                 .sorted((a, b) -> a.getReviewLikeUnitList().size() > b.getReviewLikeUnitList().size() ? -1 : 1)
                 .map(s -> ReviewResponseDto.from(s))
                 .collect(Collectors.toList());
     }
 
-    @Cacheable(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
     @Override
     public ReviewResponseDto getReviewDetail(Long itemId, Long reviewId) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
@@ -58,9 +57,10 @@ public class ReviewServiceImpl implements ReviewService{
         return ReviewResponseDto.from(review);
     }
 
+    @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public void addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, String username) {
+    public List<ReviewResponseDto> addReview(Long itemId, AddReviewRequestDto addReviewRequestDTO, String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Item item = getItem(itemId);
         AuthUser authUser = getAuthUser(username);
@@ -85,12 +85,14 @@ public class ReviewServiceImpl implements ReviewService{
 
         // DB에 반영
         reviewRepository.save(review);
+
+        return getReviewListByItem(itemId);
     }
 
-    @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
+    @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public ReviewResponseDto updateReview(Long itemId,
+    public List<ReviewResponseDto> updateReview(Long itemId,
                                           Long reviewId,
                                           AddReviewRequestDto addReviewRequestDTO,
                                           String username) {
@@ -103,13 +105,14 @@ public class ReviewServiceImpl implements ReviewService{
 
         // dirty checking 통해 DB에 반영
         review.update(addReviewRequestDTO);
-        return ReviewResponseDto.from(review);
+//        return ReviewResponseDto.from(review);
+        return getReviewListByItem(itemId);
     }
 
-    @CacheEvict(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
+    @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public void deleteReview(Long itemId, Long reviewId, String username) {
+    public List<ReviewResponseDto> deleteReview(Long itemId, Long reviewId, String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
         AuthUser authUser = getAuthUser(username);
@@ -132,12 +135,14 @@ public class ReviewServiceImpl implements ReviewService{
         // DB에 반영
         reviewLikeUnitRepository.deleteAllByReviewId(review.getId());
         reviewRepository.deleteById(review.getId());
+
+        return getReviewListByItem(itemId);
     }
 
-    @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
+    @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public ReviewResponseDto likeReview(Long itemId, Long reviewId, String username){
+    public List<ReviewResponseDto> likeReview(Long itemId, Long reviewId, String username){
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
         AuthUser authUser = getAuthUser(username);
@@ -156,13 +161,14 @@ public class ReviewServiceImpl implements ReviewService{
 
         // DB에 반영
         reviewLikeUnitRepository.save(reviewLikeUnit);
-        return ReviewResponseDto.from(review);
+//        return ReviewResponseDto.from(review);
+        return getReviewListByItem(itemId);
     }
 
-    @CachePut(value = "review", key = "#reviewId", cacheManager = "ehCacheManager")
+    @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional
     @Override
-    public ReviewResponseDto removeLikeReview(Long itemId, Long reviewId, String username) {
+    public List<ReviewResponseDto> removeLikeReview(Long itemId, Long reviewId, String username) {
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Review review = getReview(reviewId);
         AuthUser authUser = getAuthUser(username);
@@ -180,7 +186,8 @@ public class ReviewServiceImpl implements ReviewService{
             // deleteById는 findById + delete
             // deleteById는 findById 조회 시 데이터가 없을 경우 고정으로 발생하는 예외가 존재해 이 부분 커스텀 불가
         reviewLikeUnitRepository.deleteById(reviewLikeUnit.getId());
-        return ReviewResponseDto.from(review);
+//        return ReviewResponseDto.from(review);
+        return getReviewListByItem(itemId);
     }
 
     private Item getItem(Long itemId){
@@ -194,7 +201,7 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     private Review getReview(Long reviewId){
-        return reviewCacheProxy.findById(reviewId)
+        return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
 }

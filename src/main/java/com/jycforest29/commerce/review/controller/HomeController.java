@@ -1,7 +1,7 @@
 package com.jycforest29.commerce.review.controller;
 
 import com.jycforest29.commerce.common.aop.LoginAuthUser;
-import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
 import com.jycforest29.commerce.review.service.HomeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

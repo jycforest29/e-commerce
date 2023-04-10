@@ -1,10 +1,10 @@
 package com.jycforest29.commerce.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
-import com.jycforest29.commerce.user.dto.authenticate.LoginRequestDto;
-import com.jycforest29.commerce.user.dto.authenticate.LoginResponseDto;
-import com.jycforest29.commerce.user.dto.register.RegisterRequestDto;
+import com.jycforest29.commerce.utils.DockerComposeTestContainer;
+import com.jycforest29.commerce.user.controller.dto.authenticate.LoginRequestDto;
+import com.jycforest29.commerce.user.controller.dto.authenticate.LoginResponseDto;
+import com.jycforest29.commerce.user.controller.dto.register.RegisterRequestDto;
 import com.jycforest29.commerce.user.service.AuthUserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

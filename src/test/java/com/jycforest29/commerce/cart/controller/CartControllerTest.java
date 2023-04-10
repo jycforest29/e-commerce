@@ -1,11 +1,11 @@
 package com.jycforest29.commerce.cart.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
-import com.jycforest29.commerce.cart.domain.dto.CartUnitResponseDto;
+import com.jycforest29.commerce.cart.controller.dto.CartResponseDto;
+import com.jycforest29.commerce.cart.controller.dto.CartUnitResponseDto;
 import com.jycforest29.commerce.cart.service.CartService;
 import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
-import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
+import com.jycforest29.commerce.utils.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -27,7 +27,6 @@ import java.util.Arrays;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 

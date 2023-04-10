@@ -4,25 +4,25 @@ import com.jycforest29.commerce.cart.domain.entity.Cart;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.common.exception.CustomException;
 import com.jycforest29.commerce.common.exception.ExceptionCode;
-import com.jycforest29.commerce.common.redis.RedisLockRepository;
-import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
+import com.jycforest29.commerce.order.service.proxy.OrderCommitProxy;
+import com.jycforest29.commerce.order.utils.RedisLockRepository;
+import com.jycforest29.commerce.order.controller.dto.MadeOrderResponseDto;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.order.domain.repository.MadeOrderRepository;
-import com.jycforest29.commerce.order.proxy.async.OrderAsyncProxy;
+import com.jycforest29.commerce.order.service.proxy.OrderAsyncProxy;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.weaver.ast.Or;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.concurrent.ListenableFuture;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,6 +33,7 @@ public class OrderServiceImpl implements OrderService{
     private final RedisLockRepository redisLockRepository;
     private final AuthUserRepository authUserRepository;
     private final OrderAsyncProxy orderAsyncProxy;
+    private final OrderCommitProxy orderCommitProxy;
 
     @Transactional
     @Override
@@ -46,7 +47,7 @@ public class OrderServiceImpl implements OrderService{
         }
         try{
             OrderUnit orderUnit = orderAll(map).get(0);
-            return orderAsyncProxy.madeOrderWithCommit(username, Arrays.asList(orderUnit));
+            return orderCommitProxy.madeOrderWithCommit(username, Arrays.asList(orderUnit));
         }finally {
             redisLockRepository.unlock(List.of(itemId));
         }
@@ -79,7 +80,7 @@ public class OrderServiceImpl implements OrderService{
         }
         try{
             List<OrderUnit> orderUnitList = orderAll(map);
-            return orderAsyncProxy.madeOrderWithCommit(username, orderUnitList);
+            return orderCommitProxy.madeOrderWithCommit(username, orderUnitList);
         }finally {
             redisLockRepository.unlock(itemIdListToLock);
         }
@@ -136,6 +137,11 @@ public class OrderServiceImpl implements OrderService{
     public void deleteOrder(Long madeOrderId, String username) throws InterruptedException{
         // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         MadeOrder madeOrder = getMadeOrder(madeOrderId);
+
+        if (!madeOrder.getCancelAvaiable()){
+            throw new CustomException(ExceptionCode.OVER_DUE_DATE);
+        }
+
         // 하나의 madeOrder는 아이템 페이지에서 바로 주문했느냐, 혹은 장바구니를 통해 주문했느냐에 따라 주문이 수행된 아이템의 개수가 다름
         List<OrderUnit> orderUnitList = madeOrder.getOrderUnitList();
         // 락을 걸어야 하는 아이템리스트 추출
@@ -148,7 +154,7 @@ public class OrderServiceImpl implements OrderService{
         }
         try{
             if (deleteAll(orderUnitList)){
-                orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
+                orderCommitProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
             }
         }
         finally {

@@ -1,6 +1,6 @@
 package com.jycforest29.commerce.cart.controller;
 
-import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
+import com.jycforest29.commerce.cart.controller.dto.CartResponseDto;
 import com.jycforest29.commerce.cart.service.CartService;
 import com.jycforest29.commerce.common.aop.LoginAuthUser;
 import lombok.RequiredArgsConstructor;

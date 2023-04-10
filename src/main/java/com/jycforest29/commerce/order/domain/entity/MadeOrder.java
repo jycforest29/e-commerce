@@ -42,6 +42,9 @@ public class MadeOrder {
     @CreatedDate
     private LocalDateTime createdAt;
 
+    @Setter
+    private Boolean cancelAvaiable = true;
+
     @Builder
     public MadeOrder(AuthUser authUser){
         this.authUser = authUser;

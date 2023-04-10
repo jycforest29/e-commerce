@@ -1,6 +1,6 @@
 package com.jycforest29.commerce.review.service;
 
-import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
 
 import java.util.List;
 

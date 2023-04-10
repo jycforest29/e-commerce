@@ -2,10 +2,11 @@ package com.jycforest29.commerce.review.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
-import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
-import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.controller.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.service.ReviewService;
-import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
+import com.jycforest29.commerce.utils.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -59,17 +61,18 @@ class ReviewControllerTest extends DockerComposeTestContainer {
         authUserRepository.deleteAll();
     }
 
+    ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
+            "title",
+            "contents",
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            "name",
+            "testuser1"
+    );
+
     @Test
     void 특정_아이템에_대한_리뷰가_모두_리턴된다() throws Exception {
         // given
-        ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
-                "title",
-                "contents",
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                "name",
-                "testuser1"
-        );
         given(reviewService.getReviewListByItem(1L)).willReturn(Arrays.asList(reviewResponseDto));
         // when, then
         mockMvc.perform(MockMvcRequestBuilders.get("/review/{itemId}", 1L)
@@ -83,14 +86,6 @@ class ReviewControllerTest extends DockerComposeTestContainer {
     @Test
     void 특정_아이템에_대한_특정_리뷰가_리턴된다() throws Exception {
         // given
-        ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
-                "title",
-                "contents",
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                "name",
-                "testuser1"
-        );
         given(reviewService.getReviewDetail(1L, 1L)).willReturn(reviewResponseDto);
         // when, then
         mockMvc.perform(MockMvcRequestBuilders.get("/review/{itemId}/{reviewId}", 1L, 1L)
@@ -142,7 +137,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 .title("제목은 10~255 글자여야 합니다.")
                 .contents("내용은 10~255 글자여야 합니다.")
                 .build();
-        ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
+        reviewResponseDto = reviewResponseDto = new ReviewResponseDto(
                 "제목은 10~255 글자여야 합니다.",
                 "내용은 10~255 글자여야 합니다.",
                 LocalDateTime.now(),
@@ -151,7 +146,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 "testuser1"
         );
         given(reviewService.updateReview(1L, 1L, updateReviewRequestDto, "testuser1"))
-                .willReturn(reviewResponseDto);
+                .willReturn(List.of(reviewResponseDto));
         // when, then
         String dtoAsContent = objectMapper.writeValueAsString(updateReviewRequestDto);
         mockMvc.perform(MockMvcRequestBuilders.put("/review/{itemId}/{reviewId}", 1L, 1L)
@@ -159,10 +154,8 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                         .content(dtoAsContent)
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title", "제목은 10~255 글자여야 합니다.")
-                        .value("제목은 10~255 글자여야 합니다."))
-                .andExpect(jsonPath("$.contents", "내용은 10~255 글자여야 합니다.")
-                        .value("내용은 10~255 글자여야 합니다."));
+                .andExpect(jsonPath("$[0].title").value("제목은 10~255 글자여야 합니다."))
+                .andExpect(jsonPath("$[0].contents").value("내용은 10~255 글자여야 합니다."));
     }
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
@@ -179,38 +172,22 @@ class ReviewControllerTest extends DockerComposeTestContainer {
     @Test
     void 로그인한_유저가_특정_리뷰에_좋아요를_누른다() throws Exception {
         // given
-        ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
-                "title",
-                "contents",
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                "name",
-                "testuser1"
-        );
         given(reviewService.likeReview(1L, 1L, "testuser1"))
-                .willReturn(reviewResponseDto);
+                .willReturn(List.of(reviewResponseDto));
         // when, then
         mockMvc.perform(MockMvcRequestBuilders.post("/review/{itemId}/{reviewId}/like", 1L, 1L)
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title", "title").exists())
-                .andExpect(jsonPath("$.contents", "contents").exists());
+                .andExpect(jsonPath("$[0].title").value("title"))
+                .andExpect(jsonPath("$[0].contents").value("contents"));
     }
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     void 로그인한_유저가_특정_리뷰에_누른_좋아요를_취소한다() throws Exception {
         // given
-        ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
-                "title",
-                "contents",
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                "name",
-                "testuser1"
-        );
         given(reviewService.removeLikeReview(1L, 1L, "testuser1"))
-                .willReturn(reviewResponseDto);
+                .willReturn(List.of(reviewResponseDto));
         // when, then
         mockMvc.perform(MockMvcRequestBuilders.delete("/review/{itemId}/{reviewId}/like", 1L, 1L)
                         .with(csrf()))

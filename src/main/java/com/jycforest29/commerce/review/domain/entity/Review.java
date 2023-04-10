@@ -1,7 +1,7 @@
 package com.jycforest29.commerce.review.domain.entity;
 
 import com.jycforest29.commerce.item.domain.entity.Item;
-import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.controller.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;

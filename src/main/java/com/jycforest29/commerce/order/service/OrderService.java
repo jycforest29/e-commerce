@@ -1,10 +1,9 @@
 package com.jycforest29.commerce.order.service;
 
-import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
+import com.jycforest29.commerce.order.controller.dto.MadeOrderResponseDto;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
 public interface OrderService {
     MadeOrderResponseDto makeOrder(Long itemId, int number, String username) throws InterruptedException, ExecutionException;

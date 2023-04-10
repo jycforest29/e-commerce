@@ -72,6 +72,8 @@ dependencies {
 	testImplementation group: 'org.testcontainers', name: 'testcontainers', version: '1.17.6'
 	testImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: '1.17.6'
 	testImplementation group: 'org.testcontainers', name: 'mysql', version: '1.17.6'
+	// batch
+	testImplementation group: 'org.springframework.batch', name: 'spring-batch-test', version: '4.3.8'
 }
 
 test {
@@ -92,11 +94,7 @@ jacocoTestReport {
 					fileTree(dir: it, excludes: [
 					        "**/*Application",
 							"**/*Config",
-							"**/*Dto",
-							"**/*Request",
-							"**/*Response",
 							"**/*Exception",
-							"**/*Repository"
 					])
 				})
 		)
@@ -116,14 +114,9 @@ jacocoTestCoverageVerification {
 			}
 
 			excludes = [
-//					"**/*Application",
-//					"**/*Config",
-//					"**/*Dto",
-//					"**/*Request",
-//					"**/*Response",
-//					"**/*Exception",
-//					"**/*Repository"
-					"*.CacheConfig"
+					"**/*Application.class",
+					"**/*Exception.class",
+					"**/*Config.class"
 			]
 		}
 	}

@@ -1,8 +1,9 @@
 package com.jycforest29.commerce.review.controller;
 
 import com.jycforest29.commerce.common.aop.LoginAuthUser;
-import com.jycforest29.commerce.review.dto.AddReviewRequestDto;
-import com.jycforest29.commerce.review.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.controller.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
+import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ public class ReviewController { // Long과 long의 차이 : Long은 클래스, l
 
 
     @PostMapping("/{itemId}")
-    public ResponseEntity<Object> addReview(@PathVariable("itemId") Long itemId,
+    public ResponseEntity<List<ReviewResponseDto>> addReview(@PathVariable("itemId") Long itemId,
                                             @Valid @RequestBody AddReviewRequestDto addReviewRequestDTO,
                                             @LoginAuthUser String username){
         reviewService.addReview(itemId, addReviewRequestDTO, username);
@@ -39,7 +40,7 @@ public class ReviewController { // Long과 long의 차이 : Long은 클래스, l
     }
 
     @PutMapping("/{itemId}/{reviewId}")
-    public ResponseEntity<ReviewResponseDto> updateReview(@PathVariable("itemId") Long itemId,
+    public ResponseEntity<List<ReviewResponseDto>> updateReview(@PathVariable("itemId") Long itemId,
                                                @PathVariable("reviewId") Long reviewId,
                                                @Valid @RequestBody AddReviewRequestDto addReviewRequestDTO,
                                                @LoginAuthUser String username){
@@ -48,7 +49,7 @@ public class ReviewController { // Long과 long의 차이 : Long은 클래스, l
     }
 
     @DeleteMapping("/{itemId}/{reviewId}")
-    public ResponseEntity<Object> deleteReview(@PathVariable("itemId") Long itemId,
+    public ResponseEntity<List<ReviewResponseDto>> deleteReview(@PathVariable("itemId") Long itemId,
                                                @PathVariable("reviewId") Long reviewId,
                                                @LoginAuthUser String username){
         reviewService.deleteReview(itemId, reviewId, username);
@@ -56,14 +57,14 @@ public class ReviewController { // Long과 long의 차이 : Long은 클래스, l
     }
 
     @PostMapping(value = "/{itemId}/{reviewId}/like")
-    public ResponseEntity<ReviewResponseDto> likeReview(@PathVariable("itemId") Long itemId,
+    public ResponseEntity<List<ReviewResponseDto>> likeReview(@PathVariable("itemId") Long itemId,
                                              @PathVariable("reviewId") Long reviewId,
                                              @LoginAuthUser String username){
         return ResponseEntity.status(HttpStatus.OK).body(reviewService.likeReview(itemId, reviewId, username));
     }
 
     @DeleteMapping(value = "/{itemId}/{reviewId}/like")
-    public ResponseEntity<ReviewResponseDto> removeLikeReview(@PathVariable("itemId") Long itemId,
+    public ResponseEntity<List<ReviewResponseDto>> removeLikeReview(@PathVariable("itemId") Long itemId,
                                                    @PathVariable("reviewId") Long reviewId,
                                                    @LoginAuthUser String username){
         return ResponseEntity.status(HttpStatus.OK).body(reviewService.removeLikeReview(itemId, reviewId, username));

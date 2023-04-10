@@ -1,6 +1,6 @@
 package com.jycforest29.commerce.cart.service;
 
-import com.jycforest29.commerce.cart.domain.dto.CartResponseDto;
+import com.jycforest29.commerce.cart.controller.dto.CartResponseDto;
 import com.jycforest29.commerce.cart.domain.entity.CartUnit;
 import com.jycforest29.commerce.cart.domain.repository.CartUnitRepository;
 import com.jycforest29.commerce.common.exception.CustomException;

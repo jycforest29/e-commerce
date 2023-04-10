@@ -2,10 +2,10 @@ package com.jycforest29.commerce.order.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
-import com.jycforest29.commerce.order.domain.dto.MadeOrderResponseDto;
-import com.jycforest29.commerce.order.domain.dto.OrderUnitResponseDto;
+import com.jycforest29.commerce.order.controller.dto.MadeOrderResponseDto;
+import com.jycforest29.commerce.order.controller.dto.OrderUnitResponseDto;
 import com.jycforest29.commerce.order.service.OrderService;
-import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
+import com.jycforest29.commerce.utils.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -24,8 +24,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -46,16 +44,6 @@ class OrderControllerTest extends DockerComposeTestContainer {
     @Autowired
     private ObjectMapper objectMapper;
 
-    OrderUnitResponseDto orderUnitResponseDto = new OrderUnitResponseDto(
-            "name",
-            1000,
-            1);
-    MadeOrderResponseDto madeOrderResponseDto = new MadeOrderResponseDto(
-            "testuser1",
-            Arrays.asList(orderUnitResponseDto),
-            1000,
-            LocalDateTime.now());
-
     @BeforeEach
     void init(){
         authUserRepository.save(AuthUser.builder()
@@ -69,6 +57,16 @@ class OrderControllerTest extends DockerComposeTestContainer {
     void after(){
         authUserRepository.deleteAll();
     }
+
+    OrderUnitResponseDto orderUnitResponseDto = new OrderUnitResponseDto(
+            "name",
+            1000,
+            1);
+    MadeOrderResponseDto madeOrderResponseDto = new MadeOrderResponseDto(
+            "testuser1",
+            Arrays.asList(orderUnitResponseDto),
+            1000,
+            LocalDateTime.now());
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test

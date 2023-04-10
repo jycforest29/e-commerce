@@ -41,6 +41,10 @@ spring:
       ddl-auto: update
       dialect: org.hibernate.dialect.MySQL8Dialect
       show-sql: true
+  batch:
+    initialize-schema: always
+    job:
+      enabled: true
 
 server:
   port: 8080

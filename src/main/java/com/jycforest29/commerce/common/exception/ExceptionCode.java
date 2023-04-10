@@ -17,7 +17,9 @@ public enum ExceptionCode {
     CANNOT_LIKE_DONE_BY_AUTHUSER(502, "내가 작성한 리뷰에 대해서 좋아요 불가함"),
     // 600번대 : 회원 관련
     NOT_DONE_BY_AUTHUSER(600, "내가 수행한 동작이 아님"),
-    USERNAME_DUPLICATED(601, "USERNAME이 이미 존재함");
+    USERNAME_DUPLICATED(601, "USERNAME이 이미 존재함"),
+    OVER_DUE_DATE(700, "취소 기간 지남");
+
 
     private final int status;
     private final String msg;
