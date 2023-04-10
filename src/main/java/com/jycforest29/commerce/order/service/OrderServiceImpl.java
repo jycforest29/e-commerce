@@ -86,20 +86,20 @@ public class OrderServiceImpl implements OrderService{
     }
 
     private List<OrderUnit> orderAll(HashMap<Long, Integer> pair){
-//        ---------------------------------2 sec 487 ms----------------------------
+//        ---------------------------------동기 처리 - 2 sec 487 ms----------------------------
 //        List<OrderUnit> orderUnitList = pair.entrySet().stream()
 //                .map(cartUnit -> orderAsyncProxy.makeOrderUnitAsync(cartUnit.getKey(), cartUnit.getValue()))
 //                .collect(Collectors.toList());
 //        return orderUnitList;
 
-//        ---------------------------------2 sec 262 ms----------------------------
+//        ---------------------------------비동기 처리 - 2 sec 262 ms----------------------------
 //        List<OrderUnit> orderUnitList = pair.entrySet().stream()
 //                .map(cartUnit -> orderAsyncProxy.makeOrderUnitAsync(cartUnit.getKey(), cartUnit.getValue()))
 //                .map(CompletableFuture::join)
 //                .collect(Collectors.toList());
 //        return orderUnitList;
 
-//        ---------------------------------2 sec 212 ms----------------------------
+//        ---------------------------------비동기 처리 - 2 sec 212 ms----------------------------
         List<CompletableFuture<OrderUnit>> completableFutures = pair.entrySet().stream()
                 .map(cartUnit -> orderAsyncProxy.makeOrderUnitAsync(cartUnit.getKey(), cartUnit.getValue()))
                 .collect(Collectors.toList());
@@ -147,35 +147,32 @@ public class OrderServiceImpl implements OrderService{
             Thread.sleep(100);
         }
         try{
-            for(OrderUnit orderUnit : orderUnitList){
-                orderAsyncProxy.deleteOrderUnitAsync(orderUnit.getItem().getId(), orderUnit.getNumber());
+            if (deleteAll(orderUnitList)){
+                orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
             }
-            orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
         }
         finally {
             redisLockRepository.unlock(itemIdListToLock);
         }
     }
 
-//    private void deleteOrderUnitAsync(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList) {
-//        List<CompletableFuture<Boolean>> completableFutureList = new ArrayList<>();
-//        for(OrderUnit orderUnit : orderUnitList){
-//            completableFutureList.add(CompletableFuture.supplyAsync(() -> {
-//               return orderAsyncProxy.deleteOrderUnitAsync(orderUnit.getItem().getId(), orderUnit.getNumber());
-//            }));
-//        }
-//
-//        CompletableFuture
-//                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
-//                .thenApply(s -> completableFutureList.stream()
-//                        .map(CompletableFuture::join)
-//                        .collect(Collectors.toList()))
-//                .thenAccept(s -> {
-//                    if(!s.contains("false")){
-//                        orderAsyncProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
-//                    }
-//                });
-//    }
+    private Boolean deleteAll(List<OrderUnit> orderUnitList){
+        List<CompletableFuture<Void>> completableFutures = orderUnitList.stream()
+                .map(orderUnit -> orderAsyncProxy
+                        .deleteOrderUnitAsync(orderUnit.getItem().getId(), orderUnit.getNumber()))
+                .collect(Collectors.toList());
+
+        CompletableFuture<List<Void>> allFutureResult = CompletableFuture
+                .allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]))
+                .thenApply(s -> completableFutures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+
+        try{
+            allFutureResult.join();
+            return true;
+        } catch (Exception e){
+            return false;
+        }
+    }
 
     private AuthUser getAuthUser(String username){
         return authUserRepository.findByUsername(username)

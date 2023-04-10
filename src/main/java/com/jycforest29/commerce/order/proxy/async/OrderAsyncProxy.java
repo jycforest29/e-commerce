@@ -58,18 +58,20 @@ public class OrderAsyncProxy {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Async("deleteOrderUnitExecutor")
-    public void deleteOrderUnitAsync(Long itemId, int number){
+    public CompletableFuture<Void> deleteOrderUnitAsync(Long itemId, int number){
         Item item = getItem(itemId);
         item.increaseItemNumber(number);
+        return CompletableFuture.completedFuture(null);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+//    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteOrderWithCommit(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList){
         AuthUser authUser = getAuthUser(username);
         List<Long> orderUnitIdListToDelete = madeOrder.deleteMadeOrder(authUser, orderUnitList);
         orderUnitRepository.deleteAllByOrderUnitIdList(orderUnitIdListToDelete);
         madeOrderRepository.deleteById(madeOrder.getId());
     }
+
 
     private Item getValidateItemByNumber(Long itemId, int number){
         Item item = getItem(itemId);

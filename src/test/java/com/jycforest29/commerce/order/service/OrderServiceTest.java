@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -196,7 +198,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
     }
 
     @Nested
-    class MakeCartFor10Items{
+    class MakeCartFor100Items{
         @Test
         void 장바구니에_담긴_100종류의_아이템을_병렬적으로_주문한다() throws ExecutionException, InterruptedException {
             // given
@@ -223,6 +225,38 @@ class OrderServiceTest extends DockerComposeTestContainer{
         }
     }
     @Nested
+    class DeleteCartFor100Items{
+        @Test
+        void 한번에_주문한_100종류의_아이템을_병렬적으로_취소한다() throws InterruptedException {
+            // given
+            List<OrderUnit> orderUnitList = new ArrayList<>();
+            for (int i = 0; i < 100; i++){
+                Item item = itemRepository.save(
+                        Item.builder()
+                                .name("item "+i)
+                                .price(10000)
+                                .number(1)
+                                .build()
+                );
+                OrderUnit orderUnit = OrderUnit.builder()
+                        .item(item)
+                        .number(1)
+                        .build();
+                orderUnitList.add(orderUnit);
+            }
+            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
+            madeOrder = madeOrderRepository.save(madeOrder);
+            for (OrderUnit orderUnit : orderUnitList){
+                orderUnitRepository.save(orderUnit);
+            }
+            // when
+            orderService.deleteOrder(madeOrder.getId(), authUser.getUsername());
+            // then
+            assertThat(madeOrderRepository.findAll().size()).isEqualTo(0);
+            assertThat(orderUnitRepository.findAll().size()).isEqualTo(0);
+        }
+    }
+    @Nested
     class DeleteOrderConcurrently{
         Item item = itemRepository.save(
                 Item.builder()
@@ -231,8 +265,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
                         .number(0)
                         .build()
         );
-        Long authUserMadeOrderId;
-        Long otherUserMadeOrderId;
+        MadeOrder madeOrder;
+        MadeOrder otherMadeOrder;
 
         void authUser가_item_99개_주문한다(){
             // authUser가 item 99개, otherUser가 item 1개 주문함.
@@ -240,8 +274,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
                     .item(item)
                     .number(99)
                     .build();
-            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, Arrays.asList(orderUnit));
-            authUserMadeOrderId = madeOrderRepository.save(madeOrder).getId();
+            madeOrder = MadeOrder.addOrderUnit(authUser, Arrays.asList(orderUnit));
+            madeOrderRepository.save(madeOrder);
             orderUnitRepository.save(orderUnit);
         }
 
@@ -250,8 +284,8 @@ class OrderServiceTest extends DockerComposeTestContainer{
                     .item(item)
                     .number(1)
                     .build();
-            MadeOrder madeOrder = MadeOrder.addOrderUnit(otherUser, Arrays.asList(orderUnit));
-            otherUserMadeOrderId = madeOrderRepository.save(madeOrder).getId();
+            otherMadeOrder = MadeOrder.addOrderUnit(otherUser, Arrays.asList(orderUnit));
+            madeOrderRepository.save(otherMadeOrder);
             orderUnitRepository.save(orderUnit);
         }
 
@@ -265,7 +299,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(authUserMadeOrderId, authUser.getUsername());
+                    orderService.deleteOrder(madeOrder.getId(), authUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
@@ -274,7 +308,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
             });
             executorService.submit(() -> {
                 try{
-                    orderService.deleteOrder(otherUserMadeOrderId, otherUser.getUsername());
+                    orderService.deleteOrder(otherMadeOrder.getId(), otherUser.getUsername());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
