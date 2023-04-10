@@ -57,7 +57,7 @@ public class OrderAsyncProxy {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-//    @Async("deleteOrderUnitExecutor")
+    @Async("deleteOrderUnitExecutor")
     public void deleteOrderUnitAsync(Long itemId, int number){
         Item item = getItem(itemId);
         item.increaseItemNumber(number);
