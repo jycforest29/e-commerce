@@ -1,7 +1,5 @@
 package com.jycforest29.commerce.common.cache;
 
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.config.CacheConfiguration;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
@@ -18,11 +16,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Objects;
 
 @Configuration
-@EnableCaching
 public class CacheConfig {
     @Bean
     public EhCacheManagerFactoryBean cacheManagerFactoryBean(){

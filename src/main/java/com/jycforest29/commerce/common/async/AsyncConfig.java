@@ -8,7 +8,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.Executor;
 
 @Configuration
-@EnableAsync
 public class AsyncConfig {
     private int CORE_POOL_SIZE = 10;
     private int MAX_POOL_SIZE = 10;

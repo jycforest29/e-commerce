@@ -2,6 +2,6 @@
 
 
 #### 실행방법
-./gradlew clean build -x test
+./gradlew clean build
 
 docker-compose up

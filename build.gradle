@@ -35,8 +35,10 @@ dependencies {
 	implementation group: 'org.springframework.security', name: 'spring-security-config', version: '5.7.5'
 	// jwt
 	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.5'
-	// jpa로 스프링부트와 mysql 연동
+	// mysql
 	implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.30'
+	// mongo
+//	implementation group: 'org.mongodb', name: 'mongo-java-driver', version: '3.12.12'
 	// websocket
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '2.7.6'
 	// redis
@@ -47,6 +49,9 @@ dependencies {
 	implementation group: 'net.sf.ehcache', name: 'ehcache', version: '2.10.9.2'
 	// json
 	implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.7.0'
+	// batch
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-batch', version: '2.7.2'
+
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -69,19 +74,16 @@ dependencies {
 	testImplementation group: 'org.testcontainers', name: 'mysql', version: '1.17.6'
 }
 
-'test' {
+test {
 	useJUnitPlatform()
 	finalizedBy 'jacocoTestReport'
 }
 
-'jacocoTestReport' {
-	dependsOn 'test'
+jacocoTestReport {
 	reports {
 		html.enabled true
 		xml.enabled false
 		csv.enabled false
-
-		html.destination file("src/jacoco/jacoco.html")
 	}
 
 	afterEvaluate {
@@ -102,7 +104,7 @@ dependencies {
 	finalizedBy 'jacocoTestCoverageVerification'
 }
 
-'jacocoTestCoverageVerification' {
+jacocoTestCoverageVerification {
 	violationRules {
 		rule {
 			element = 'CLASS'
@@ -111,17 +113,17 @@ dependencies {
 			limit {
 				counter = 'LINE'
 				value = 'COVEREDRATIO'
-				// minimum
 			}
 
 			excludes = [
-					"**/*Application",
-					"**/*Config",
-					"**/*Dto",
-					"**/*Request",
-					"**/*Response",
-					"**/*Exception",
-					"**/*Repository"
+//					"**/*Application",
+//					"**/*Config",
+//					"**/*Dto",
+//					"**/*Request",
+//					"**/*Response",
+//					"**/*Exception",
+//					"**/*Repository"
+					"*.CacheConfig"
 			]
 		}
 	}

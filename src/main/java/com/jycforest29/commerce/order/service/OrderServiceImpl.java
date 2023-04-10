@@ -14,15 +14,15 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.ast.Or;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFuture;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,11 +38,14 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public MadeOrderResponseDto makeOrder(Long itemId, int number, String username)
             throws InterruptedException, ExecutionException {
+
+        HashMap<Long, Integer> map = new HashMap<>();
+        map.put(itemId, number);
         while(!redisLockRepository.lock(List.of(itemId))){
             Thread.sleep(100);
         }
         try{
-            OrderUnit orderUnit = orderAsyncProxy.makeOrderUnitAsync(itemId, number);
+            OrderUnit orderUnit = orderAll(map).get(0);
             return orderAsyncProxy.madeOrderWithCommit(username, Arrays.asList(orderUnit));
         }finally {
             redisLockRepository.unlock(List.of(itemId));
@@ -55,7 +58,8 @@ public class OrderServiceImpl implements OrderService{
     // -> 각 아이템이 속해있는 모든 테이블에 락을 걸어 한번에 처리해야
     @Transactional
     @Override
-    public MadeOrderResponseDto makeOrderForCart(String username) throws InterruptedException, ExecutionException {
+    public MadeOrderResponseDto makeOrderForCart(String username)
+            throws InterruptedException, ExecutionException {
         // 엔티티 가져옴
         AuthUser authUser = getAuthUser(username);
         Cart cart = authUser.getCart();
@@ -66,40 +70,45 @@ public class OrderServiceImpl implements OrderService{
                 .map(s -> s.getItem().getId())
                 .collect(Collectors.toList());
 
+        HashMap<Long, Integer> map = new HashMap<>();
+        for (CartUnit cartUnit : cartUnitList){
+            map.put(cartUnit.getItem().getId(), cartUnit.getNumber());
+        }
         while(!redisLockRepository.lock(itemIdListToLock)){
             Thread.sleep(100);
         }
         try{
-            List<OrderUnit> orderUnitList = cartUnitList.stream()
-                    .map(s -> orderAsyncProxy.makeOrderUnitAsync(s.getItem().getId(), s.getNumber()))
-                    .collect(Collectors.toList());
+            List<OrderUnit> orderUnitList = orderAll(map);
             return orderAsyncProxy.madeOrderWithCommit(username, orderUnitList);
         }finally {
             redisLockRepository.unlock(itemIdListToLock);
         }
     }
 
-    private MadeOrderResponseDto makeOrderUnitAsync(Map<Long, Integer> map, String username)
-            throws ExecutionException, InterruptedException {
-        List<CompletableFuture<OrderUnit>> completableFutureList = new ArrayList<>();
-        for(Map.Entry<Long, Integer> elem : map.entrySet()){
-            completableFutureList.add(
-                    CompletableFuture.supplyAsync(() -> {
-                        return orderAsyncProxy.makeOrderUnitAsync(elem.getKey(), elem.getValue());
-                    })
-            );
-        }
-        CompletableFuture<List<OrderUnit>> orderUnitList = CompletableFuture
-                .allOf(completableFutureList.toArray(new CompletableFuture[completableFutureList.size()]))
-                // allOf는 void를 반환하므로 stream()으로 리턴하도록 함
-                .thenApply(s -> completableFutureList.stream()
-                        .map(CompletableFuture::join)
-                        .collect(Collectors.toList()));
+    private List<OrderUnit> orderAll(HashMap<Long, Integer> pair){
+//        ---------------------------------2 sec 487 ms----------------------------
+//        List<OrderUnit> orderUnitList = pair.entrySet().stream()
+//                .map(cartUnit -> orderAsyncProxy.makeOrderUnitAsync(cartUnit.getKey(), cartUnit.getValue()))
+//                .collect(Collectors.toList());
+//        return orderUnitList;
 
-        return orderUnitList
-                // thenApply는 future를 반환하여 그 값을 get()으로 반환받을 수 있음
-                .thenApply(o -> orderAsyncProxy.madeOrderWithCommit(username, o))
-                .get();
+//        ---------------------------------2 sec 262 ms----------------------------
+//        List<OrderUnit> orderUnitList = pair.entrySet().stream()
+//                .map(cartUnit -> orderAsyncProxy.makeOrderUnitAsync(cartUnit.getKey(), cartUnit.getValue()))
+//                .map(CompletableFuture::join)
+//                .collect(Collectors.toList());
+//        return orderUnitList;
+
+//        ---------------------------------2 sec 212 ms----------------------------
+        List<CompletableFuture<OrderUnit>> completableFutures = pair.entrySet().stream()
+                .map(cartUnit -> orderAsyncProxy.makeOrderUnitAsync(cartUnit.getKey(), cartUnit.getValue()))
+                .collect(Collectors.toList());
+
+        CompletableFuture<List<OrderUnit>> allFutureResult = CompletableFuture
+                .allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]))
+                .thenApply(s -> completableFutures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+
+        return allFutureResult.join();
     }
 
     @Transactional(readOnly = true)
@@ -177,4 +186,5 @@ public class OrderServiceImpl implements OrderService{
         return madeOrderRepository.findById(madeOrderId)
                 .orElseThrow(() -> new CustomException(ExceptionCode.ENTITY_NOT_FOUND));
     }
+
 }

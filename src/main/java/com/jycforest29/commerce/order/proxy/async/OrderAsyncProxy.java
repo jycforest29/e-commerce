@@ -13,11 +13,13 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -33,16 +35,17 @@ public class OrderAsyncProxy {
     // 함수 호출 시간과 스레드 수행 시간의 차이 때문인지 자꾸 블로킹이 안됨.
     // 그렇다면 모든 OrderUnit에 대해 makeOrderUnitAsync()은 병렬적으로 실행되고 그 결과가 나올때까지 블로킹 되어야 함.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-//    @Async("makeOrderUnitExecutor")
-    public OrderUnit makeOrderUnitAsync(Long itemId, int number){
+    @Async("makeOrderUnitExecutor")
+    public CompletableFuture<OrderUnit> makeOrderUnitAsync(Long itemId, int number){
         Item item = getValidateItemByNumber(itemId, number);
         OrderUnit orderUnit = OrderUnit.builder()
                 .item(item)
                 .number(number)
                 .build();
         item.decreaseItemNumber(number); // dirty checking -> Transactional propagation 고려해야
-        return orderUnit;
+        return CompletableFuture.completedFuture(orderUnit);
     }
+
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public MadeOrderResponseDto madeOrderWithCommit(String username, List<OrderUnit> orderUnitList){

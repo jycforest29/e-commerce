@@ -14,10 +14,7 @@ import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.testcontainers.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -196,9 +193,35 @@ class OrderServiceTest extends DockerComposeTestContainer{
             assertThat(madeOrderRepository.findAll().size()).isEqualTo(2);
             assertThat(orderUnitRepository.findAll().size()).isEqualTo(3);
         }
-
     }
 
+    @Nested
+    class MakeCartFor10Items{
+        @Test
+        void 장바구니에_담긴_100종류의_아이템을_병렬적으로_주문한다() throws ExecutionException, InterruptedException {
+            // given
+            for (int i = 0; i < 100; i++){
+                Item item = itemRepository.save(
+                        Item.builder()
+                                .name("item "+i)
+                                .price(10000)
+                                .number(1)
+                                .build()
+                );
+                CartUnit cartUnit = CartUnit.builder()
+                        .item(item)
+                        .number(1)
+                        .build();
+                authUser.getCart().addCartUnitToCart(cartUnit, 10000);
+                cartUnitRepository.save(cartUnit);
+            }
+            // when
+            orderService.makeOrderForCart(authUser.getUsername());
+            // then
+            assertThat(madeOrderRepository.findAll().size()).isEqualTo(1);
+            assertThat(orderUnitRepository.findAll().size()).isEqualTo(100);
+        }
+    }
     @Nested
     class DeleteOrderConcurrently{
         Item item = itemRepository.save(
