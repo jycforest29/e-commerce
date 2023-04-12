@@ -34,19 +34,11 @@ public class ReviewServiceImpl implements ReviewService{
     private final AuthUserRepository authUserRepository;
     private final ReviewCacheProxy reviewCacheProxy;
 
-    @Cacheable(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
     @Transactional(readOnly = true)
     @Override
     public List<ReviewResponseDto> getReviewListByItem(Long itemId) {
-        // 유효성 검증을 통해 검증 후, 엔티티 가져옴
         Item item = getItem(itemId);
-
-        // 리뷰 좋아요순으로 내림차순 정렬
-        return reviewCacheProxy.findAllByItem(item)
-                .stream()
-                .sorted((a, b) -> a.getReviewLikeUnitList().size() > b.getReviewLikeUnitList().size() ? -1 : 1)
-                .map(s -> ReviewResponseDto.from(s))
-                .collect(Collectors.toList());
+        return reviewCacheProxy.findAllByItem(item);
     }
 
     @Override
@@ -86,7 +78,7 @@ public class ReviewServiceImpl implements ReviewService{
         // DB에 반영
         reviewRepository.save(review);
 
-        return getReviewListByItem(itemId);
+        return reviewCacheProxy.findAllByItem(item);
     }
 
     @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
@@ -105,8 +97,8 @@ public class ReviewServiceImpl implements ReviewService{
 
         // dirty checking 통해 DB에 반영
         review.update(addReviewRequestDTO);
-//        return ReviewResponseDto.from(review);
-        return getReviewListByItem(itemId);
+        Item item = getItem(itemId);
+        return reviewCacheProxy.findAllByItem(item);
     }
 
     @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
@@ -136,7 +128,7 @@ public class ReviewServiceImpl implements ReviewService{
         reviewLikeUnitRepository.deleteAllByReviewId(review.getId());
         reviewRepository.deleteById(review.getId());
 
-        return getReviewListByItem(itemId);
+        return reviewCacheProxy.findAllByItem(item);
     }
 
     @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
@@ -161,8 +153,8 @@ public class ReviewServiceImpl implements ReviewService{
 
         // DB에 반영
         reviewLikeUnitRepository.save(reviewLikeUnit);
-//        return ReviewResponseDto.from(review);
-        return getReviewListByItem(itemId);
+        Item item = getItem(itemId);
+        return reviewCacheProxy.findAllByItem(item);
     }
 
     @CachePut(value = "reviewListByItem", key = "#itemId", cacheManager = "ehCacheManager")
@@ -186,8 +178,8 @@ public class ReviewServiceImpl implements ReviewService{
             // deleteById는 findById + delete
             // deleteById는 findById 조회 시 데이터가 없을 경우 고정으로 발생하는 예외가 존재해 이 부분 커스텀 불가
         reviewLikeUnitRepository.deleteById(reviewLikeUnit.getId());
-//        return ReviewResponseDto.from(review);
-        return getReviewListByItem(itemId);
+        Item item = getItem(itemId);
+        return reviewCacheProxy.findAllByItem(item);
     }
 
     private Item getItem(Long itemId){

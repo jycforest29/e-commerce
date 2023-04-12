@@ -50,8 +50,7 @@ dependencies {
 	// json
 	implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.7.0'
 	// batch
-//	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-batch', version: '2.7.2'
-
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-batch', version: '2.7.2'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -73,7 +72,7 @@ dependencies {
 	testImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: '1.17.6'
 	testImplementation group: 'org.testcontainers', name: 'mysql', version: '1.17.6'
 	// batch
-//	testImplementation group: 'org.springframework.batch', name: 'spring-batch-test', version: '4.3.8'
+	testImplementation group: 'org.springframework.batch', name: 'spring-batch-test', version: '4.3.8'
 }
 
 test {

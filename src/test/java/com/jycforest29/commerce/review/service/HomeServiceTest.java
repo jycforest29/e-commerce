@@ -44,7 +44,6 @@ class HomeServiceTest extends DockerComposeTestContainer{
     private Item item;
     private AuthUser authUser;
     private AuthUser otherUser;
-    private Long otherUserId = 2L;
     private Review review;
     private Review new_review;
     private ReviewLikeUnit reviewLikeUnit;
@@ -78,6 +77,7 @@ class HomeServiceTest extends DockerComposeTestContainer{
                 .title("제목:새롭게 작성된 리뷰의 제목은 10~255 글자여야 합니다.")
                 .contents("내용:새롭게 작성된 리뷰의 내용은 10~255 글자여야 합니다.")
                 .build();
+
         reviewLikeUnit = new ReviewLikeUnit();
 
         // otherUser가 item에 대해 review 작성

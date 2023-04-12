@@ -41,6 +41,7 @@ class HomeControllerTest extends DockerComposeTestContainer {
     private HomeService homeService;
     @Autowired
     private AuthUserRepository authUserRepository;
+    ReviewResponseDto reviewResponseDto;
 
     @BeforeEach
     void init(){
@@ -50,6 +51,15 @@ class HomeControllerTest extends DockerComposeTestContainer {
                 .nickname("testuser")
                 .build()
         );
+
+        reviewResponseDto = ReviewResponseDto.builder()
+                .title("title")
+                .contents("contents")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .username("testuser1")
+                .name("name")
+                .build();
     }
 
     @AfterEach
@@ -57,14 +67,6 @@ class HomeControllerTest extends DockerComposeTestContainer {
         authUserRepository.deleteAll();
     }
 
-    ReviewResponseDto reviewResponseDto = ReviewResponseDto.builder()
-            .title("title")
-            .contents("contents")
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
-            .username("testuser1")
-            .name("name")
-            .build();
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test

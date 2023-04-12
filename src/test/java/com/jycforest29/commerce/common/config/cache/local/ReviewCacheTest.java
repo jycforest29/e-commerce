@@ -5,6 +5,7 @@ import com.jycforest29.commerce.item.domain.repository.ItemRepository;
 import com.jycforest29.commerce.order.domain.entity.MadeOrder;
 import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.review.controller.dto.AddReviewRequestDto;
+import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
 import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
 import com.jycforest29.commerce.review.service.ReviewServiceImpl;
@@ -40,10 +41,10 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
     private ItemRepository itemRepository;
     @MockBean
     private AuthUserRepository authUserRepository;
-    @MockBean
-    private ReviewCacheProxy reviewCacheProxy;
     @Autowired
     private ReviewServiceImpl reviewService;
+    @Autowired
+    private ReviewCacheProxy reviewCacheProxy;
 
     @Nested
     class LocalCacheTest{
@@ -78,20 +79,25 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
         );
 
         @Nested
-        class ReviewListByItemCache{
+        class CacheableTest {
+
             @Test
-            void Cacheable_어노테이션을_테스트한다(){
+            void Cacheable_어노테이션을_테스트한다() {
                 //given
                 given(itemRepository.findById(item.getId()))
                         .willReturn(Optional.ofNullable(item));
-                given(reviewCacheProxy.findAllByItem(item))
+                given(reviewRepository.findAllByItem(item))
                         .willReturn(Arrays.asList(review));
                 //when
                 IntStream.range(0, 10)
-                        .forEach(i -> reviewService.getReviewListByItem(item.getId()));
+                        .forEach(i -> reviewCacheProxy.findAllByItem(item));
                 //then
-                verify(reviewCacheProxy, atMostOnce()).findAllByItem(item);
+                verify(reviewRepository, atMostOnce()).findAllByItem(item);
             }
+        }
+        @Nested
+        class CachePutTest {
+
             @Test
             void itemId에_대한_Review_1개를_추가하여_CachePut_어노테이션을_테스트한다(){
                 //given
@@ -105,14 +111,17 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                         .willReturn(Optional.ofNullable(item));
                 given(reviewRepository.findById(review.getId()))
                         .willReturn(Optional.ofNullable(review));
+                given(reviewRepository.findAllByItem(item))
+                        .willReturn(Arrays.asList(review));
                 given(authUserRepository.findByUsername(authUser.getUsername()))
                         .willReturn(Optional.ofNullable(authUser));
-                given(reviewCacheProxy.findAllByItem(item))
-                        .willReturn(Arrays.asList(review));
                 //when
-                reviewService.addReview(item.getId(), addReviewRequestDto, authUser.getUsername()); // 조회 1번 이하
+                // 조회 1번
+                reviewService.addReview(item.getId(), addReviewRequestDto, authUser.getUsername());
+                // 조회 1번인데 캐싱되어 0번
+                List<ReviewResponseDto> reviewResponseDtoList = reviewService.getReviewListByItem(item.getId());
                 //then
-                assertThat(reviewService.getReviewListByItem(item.getId()).size()).isEqualTo(1); // 조회 0번
+                assertThat(reviewResponseDtoList.size()).isEqualTo(1);
                 verify(reviewRepository, atMostOnce()).findAllByItem(item);
             }
 
@@ -128,7 +137,7 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                         .willReturn(Optional.ofNullable(item));
                 given(reviewRepository.findById(review.getId()))
                         .willReturn(Optional.ofNullable(review));
-                given(reviewCacheProxy.findAllByItem(item))
+                given(reviewRepository.findAllByItem(item))
                         .willReturn(Arrays.asList(review));
                 given(authUserRepository.findByUsername(authUser.getUsername()))
                         .willReturn(Optional.ofNullable(authUser));
@@ -140,17 +149,12 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                         updateReviewRequestDto,
                         authUser.getUsername()
                 );
-                // 조회 1번
-                reviewService.updateReview(
-                        item.getId(),
-                        review.getId(),
-                        updateReviewRequestDto,
-                        authUser.getUsername()
-                );
+                // 조회 1번인데 캐싱됨 -> 0번
+                List<ReviewResponseDto> reviewResponseDtoList = reviewService.getReviewListByItem(item.getId());
                 //then
-                assertThat(reviewService.getReviewListByItem(item.getId()).get(0).getTitle())
-                        .isEqualTo("update_title"); // 조회 1번인데 캐싱됨 -> 0번
-                verify(reviewCacheProxy, times(2)).findAllByItem(item);
+                assertThat(reviewResponseDtoList.get(0).getTitle())
+                        .isEqualTo("update_title");
+                verify(reviewRepository, atMostOnce()).findAllByItem(item);
             }
         }
     }

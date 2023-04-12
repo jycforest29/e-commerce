@@ -12,12 +12,14 @@ import com.jycforest29.commerce.order.domain.repository.OrderUnitRepository;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderCommitProxy {
@@ -40,6 +42,9 @@ public class OrderCommitProxy {
     public void deleteOrderWithCommit(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList){
         AuthUser authUser = getAuthUser(username);
         List<Long> orderUnitIdListToDelete = madeOrder.deleteMadeOrder(authUser, orderUnitList);
+        for (Long a : orderUnitIdListToDelete){
+            log.info("a: "+a);
+        }
         orderUnitRepository.deleteAllByOrderUnitIdList(orderUnitIdListToDelete);
         madeOrderRepository.deleteById(madeOrder.getId());
     }

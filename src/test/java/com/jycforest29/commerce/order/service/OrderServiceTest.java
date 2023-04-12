@@ -226,39 +226,39 @@ class OrderServiceTest extends DockerComposeTestContainer{
             assertThat(orderUnitRepository.findAll().size()).isEqualTo(100);
         }
     }
-    // Batch update returned unexpected row count from update [0]; 에러 발생!
-//    @Nested
-//    class DeleteCartFor100Items{
-//        @Test
-//        void 한번에_주문한_100종류의_아이템을_병렬적으로_취소한다() throws InterruptedException {
-//            // given
-//            List<OrderUnit> orderUnitList = new ArrayList<>();
-//            for (int i = 0; i < 100; i++){
-//                Item item = itemRepository.save(
-//                        Item.builder()
-//                                .name("item "+i)
-//                                .price(10000)
-//                                .number(1)
-//                                .build()
-//                );
-//                OrderUnit orderUnit = OrderUnit.builder()
-//                        .item(item)
-//                        .number(1)
-//                        .build();
-//                orderUnitList.add(orderUnit);
-//            }
-//            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
-//            madeOrder = madeOrderRepository.save(madeOrder);
-//            for (OrderUnit orderUnit : orderUnitList){
-//                orderUnitRepository.save(orderUnit);
-//            }
-//            // when
-//            orderService.deleteOrder(madeOrder.getId(), authUser.getUsername());
-//            // then
-//            assertThat(madeOrderRepository.findAll().size()).isEqualTo(0);
-//            assertThat(orderUnitRepository.findAll().size()).isEqualTo(0);
-//        }
-//    }
+//     Batch update returned unexpected row count from update [0]; 에러 발생!
+    @Nested
+    class DeleteCartFor100Items{
+        @Test
+        void 한번에_주문한_100종류의_아이템을_병렬적으로_취소한다() throws InterruptedException {
+            // given
+            List<OrderUnit> orderUnitList = new ArrayList<>();
+            for (int i = 0; i < 100; i++){
+                Item item = itemRepository.save(
+                        Item.builder()
+                                .name("item "+i)
+                                .price(10000)
+                                .number(1)
+                                .build()
+                );
+                OrderUnit orderUnit = OrderUnit.builder()
+                        .item(item)
+                        .number(1)
+                        .build();
+                orderUnitList.add(orderUnit);
+            }
+            MadeOrder madeOrder = MadeOrder.addOrderUnit(authUser, orderUnitList);
+            madeOrder = madeOrderRepository.save(madeOrder);
+            for (OrderUnit orderUnit : orderUnitList){
+                orderUnitRepository.save(orderUnit);
+            }
+            // when
+            orderService.deleteOrder(madeOrder.getId(), authUser.getUsername());
+            // then
+            assertThat(madeOrderRepository.findAll().size()).isEqualTo(0);
+            assertThat(orderUnitRepository.findAll().size()).isEqualTo(0);
+        }
+    }
     @Nested
     class DeleteOrderConcurrently{
         Item item = itemRepository.save(

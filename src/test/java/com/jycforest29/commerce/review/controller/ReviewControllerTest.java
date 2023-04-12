@@ -4,11 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jycforest29.commerce.common.aop.LoginAuthUserResolver;
 import com.jycforest29.commerce.review.controller.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
-import com.jycforest29.commerce.review.domain.entity.Review;
 import com.jycforest29.commerce.review.service.ReviewService;
-import com.jycforest29.commerce.utils.DockerComposeTestContainer;
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
+import com.jycforest29.commerce.utils.DockerComposeTestContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +46,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
     private AuthUserRepository authUserRepository;
     @Autowired
     private ObjectMapper objectMapper;
+    ReviewResponseDto reviewResponseDto;
     @BeforeEach
     void init(){
         authUserRepository.save(AuthUser.builder()
@@ -54,21 +54,20 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 .password("pw1234@")
                 .nickname("testuser")
                 .build());
+        reviewResponseDto = new ReviewResponseDto(
+                "title",
+                "contents",
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                "name",
+                "testuser1"
+        );
     }
 
     @AfterEach
     void after(){
         authUserRepository.deleteAll();
     }
-
-    ReviewResponseDto reviewResponseDto = new ReviewResponseDto(
-            "title",
-            "contents",
-            LocalDateTime.now(),
-            LocalDateTime.now(),
-            "name",
-            "testuser1"
-    );
 
     @Test
     void 특정_아이템에_대한_리뷰가_모두_리턴된다() throws Exception {
@@ -137,7 +136,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 .title("제목은 10~255 글자여야 합니다.")
                 .contents("내용은 10~255 글자여야 합니다.")
                 .build();
-        reviewResponseDto = reviewResponseDto = new ReviewResponseDto(
+        ReviewResponseDto updatedReviewResponseDto = new ReviewResponseDto(
                 "제목은 10~255 글자여야 합니다.",
                 "내용은 10~255 글자여야 합니다.",
                 LocalDateTime.now(),
@@ -146,7 +145,7 @@ class ReviewControllerTest extends DockerComposeTestContainer {
                 "testuser1"
         );
         given(reviewService.updateReview(1L, 1L, updateReviewRequestDto, "testuser1"))
-                .willReturn(List.of(reviewResponseDto));
+                .willReturn(List.of(updatedReviewResponseDto));
         // when, then
         String dtoAsContent = objectMapper.writeValueAsString(updateReviewRequestDto);
         mockMvc.perform(MockMvcRequestBuilders.put("/review/{itemId}/{reviewId}", 1L, 1L)

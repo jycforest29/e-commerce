@@ -43,6 +43,7 @@ class CartControllerTest extends DockerComposeTestContainer {
     private AuthUserRepository authUserRepository;
     @Autowired
     private ObjectMapper objectMapper;
+    CartResponseDto cartResponseDto;
     @BeforeEach
     void init(){
         authUserRepository.save(AuthUser.builder()
@@ -50,23 +51,24 @@ class CartControllerTest extends DockerComposeTestContainer {
                 .password("pw1234@")
                 .nickname("testuser")
                 .build());
+
+        CartUnitResponseDto cartUnitResponseDto = new CartUnitResponseDto(
+                "name",
+                1000,
+                1,
+                true
+        );
+        cartResponseDto = new CartResponseDto(
+                Arrays.asList(cartUnitResponseDto),
+                1000
+        );
     }
 
     @AfterEach
-    void after(){
+    void endUp(){
         authUserRepository.deleteAll();
     }
 
-    CartUnitResponseDto cartUnitResponseDto = new CartUnitResponseDto(
-            "name",
-            1000,
-            1,
-            true
-    );
-    CartResponseDto cartResponseDto = new CartResponseDto(
-            Arrays.asList(cartUnitResponseDto),
-            1000
-    );
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test

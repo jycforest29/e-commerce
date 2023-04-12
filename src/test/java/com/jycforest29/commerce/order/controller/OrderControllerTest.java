@@ -43,6 +43,7 @@ class OrderControllerTest extends DockerComposeTestContainer {
     private AuthUserRepository authUserRepository;
     @Autowired
     private ObjectMapper objectMapper;
+    MadeOrderResponseDto madeOrderResponseDto;
 
     @BeforeEach
     void init(){
@@ -51,22 +52,21 @@ class OrderControllerTest extends DockerComposeTestContainer {
                 .password("pw1234@")
                 .nickname("testuser")
                 .build());
+        OrderUnitResponseDto orderUnitResponseDto = new OrderUnitResponseDto(
+                "name",
+                1000,
+                1);
+        madeOrderResponseDto = new MadeOrderResponseDto(
+                "testuser1",
+                Arrays.asList(orderUnitResponseDto),
+                1000,
+                LocalDateTime.now());
     }
 
     @AfterEach
-    void after(){
+    void endUp(){
         authUserRepository.deleteAll();
     }
-
-    OrderUnitResponseDto orderUnitResponseDto = new OrderUnitResponseDto(
-            "name",
-            1000,
-            1);
-    MadeOrderResponseDto madeOrderResponseDto = new MadeOrderResponseDto(
-            "testuser1",
-            Arrays.asList(orderUnitResponseDto),
-            1000,
-            LocalDateTime.now());
 
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test

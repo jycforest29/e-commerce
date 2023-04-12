@@ -2,6 +2,7 @@ package com.jycforest29.commerce.order.domain.entity;
 
 import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -11,9 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Getter
 @EntityListeners(value = {AuditingEntityListener.class})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor // test
 @Entity
 public class MadeOrder {
     /*
@@ -22,6 +25,7 @@ public class MadeOrder {
     authuser_id(fk) : Long
     total_price : int
     created_at : LocalDateTime
+    cancelAvaiable : Boolean
     --------------------
     */
     @Id
@@ -75,13 +79,15 @@ public class MadeOrder {
                 .map(s -> s.getId())
                 .collect(Collectors.toList());
 
+        return orderUnitIdListToDelete;
+    }
+
+    public void endUp(){
         // MadeOrder와 OrderUnit의 연관관계 해제
         for(OrderUnit o : orderUnitList){
             o.setMadeOrder(null);
         }
         this.orderUnitList.removeAll(orderUnitList);
         this.totalPrice = 0;
-
-        return orderUnitIdListToDelete;
     }
 }

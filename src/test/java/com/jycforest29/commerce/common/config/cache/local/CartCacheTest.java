@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -48,7 +49,7 @@ public class CartCacheTest extends DockerComposeTestContainer {
                 .number(1)
                 .build();
 
-        final Long ITEM_ID = 1L;
+        Long itemId = 1L;
 
         @Test
         void Cacheable_어노테이션을_테스트한다(){
@@ -67,10 +68,10 @@ public class CartCacheTest extends DockerComposeTestContainer {
             //given
             given(authUserRepository.findByUsername(authUser.getUsername()))
                     .willReturn(Optional.ofNullable(authUser));
-            given(itemRepository.findById(ITEM_ID))
+            given(itemRepository.findById(itemId))
                     .willReturn(Optional.ofNullable(item));
             //when
-            cartService.addCartUnitToCart(ITEM_ID, 1, authUser.getUsername()); // 조회 1번
+            cartService.addCartUnitToCart(itemId, 1, authUser.getUsername()); // 조회 1번
             //then - getCartUnitList은 @Cacheable로 조회함
             assertThat(cartService.getCartUnitList(authUser.getUsername()).getCartUnitResponseDtoList().size())
                     .isEqualTo(1); // 조회 1번이어야 되는데 캐싱됨 -> 0번
@@ -84,7 +85,7 @@ public class CartCacheTest extends DockerComposeTestContainer {
                     .item(item)
                     .number(1)
                     .build();
-            authUser의_카트에_카트_유닛을_추가한다(cartUnit, item);
+            사용자의_카트에_카트_유닛을_추가(authUser, cartUnit, item);
 
             Item otherItem = Item.builder()
                     .name("other_item")
@@ -95,14 +96,14 @@ public class CartCacheTest extends DockerComposeTestContainer {
                     .item(otherItem)
                     .number(1)
                     .build();
-            authUser의_카트에_카트_유닛을_추가한다(otherCartUnit, otherItem);
+            사용자의_카트에_카트_유닛을_추가(authUser, otherCartUnit, otherItem);
 
             given(authUserRepository.findByUsername(authUser.getUsername()))
                     .willReturn(Optional.ofNullable(authUser));
-            given(cartUnitRepository.findById(ITEM_ID))
+            given(cartUnitRepository.findById(itemId))
                     .willReturn(Optional.ofNullable(cartUnit));
-            //when - item 제거
-            cartService.deleteCartUnit(ITEM_ID, authUser.getUsername()); // 조회 1번
+            //when - cartUnit 제거
+            cartService.deleteCartUnit(itemId, authUser.getUsername()); // 조회 1번
             //then
             assertThat(cartService.getCartUnitList(authUser.getUsername()).getCartUnitResponseDtoList().size())
                     .isEqualTo(1); // 조회 1번이어야 되는데 캐싱됨 -> 0번
@@ -118,11 +119,11 @@ public class CartCacheTest extends DockerComposeTestContainer {
                     .item(item)
                     .number(1)
                     .build();
-            authUser의_카트에_카트_유닛을_추가한다(cartUnit, item);
+            사용자의_카트에_카트_유닛을_추가(authUser, cartUnit, item);
 
             given(authUserRepository.findByUsername(authUser.getUsername()))
                     .willReturn(Optional.ofNullable(authUser));
-            given(itemRepository.findById(ITEM_ID))
+            given(itemRepository.findById(itemId))
                     .willReturn(Optional.ofNullable(item));
             //when
             cartService.deleteCartAll(authUser.getUsername()); // 1번
@@ -132,7 +133,8 @@ public class CartCacheTest extends DockerComposeTestContainer {
             verify(authUserRepository, times(2)).findByUsername(authUser.getUsername());
         }
 
-        void authUser의_카트에_카트_유닛을_추가한다(CartUnit cartUnit, Item item){
+        @Transactional
+        void 사용자의_카트에_카트_유닛을_추가(AuthUser authUser, CartUnit cartUnit, Item item){
             authUser.getCart().addCartUnitToCart(cartUnit, item.getPrice());
             cartUnitRepository.saveAndFlush(cartUnit);
         }
