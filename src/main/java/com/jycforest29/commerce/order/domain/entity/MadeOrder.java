@@ -79,15 +79,14 @@ public class MadeOrder {
                 .map(s -> s.getId())
                 .collect(Collectors.toList());
 
-        return orderUnitIdListToDelete;
-    }
-
-    public void endUp(){
         // MadeOrder와 OrderUnit의 연관관계 해제
         for(OrderUnit o : orderUnitList){
             o.setMadeOrder(null);
         }
         this.orderUnitList.removeAll(orderUnitList);
         this.totalPrice = 0;
+
+        return orderUnitIdListToDelete;
     }
+
 }

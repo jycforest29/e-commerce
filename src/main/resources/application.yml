@@ -12,10 +12,7 @@ spring:
   redis:
     host: 127.0.0.1
     port: 6379
-  jpa:
-    hibernate:
-      ddl-auto: update
-      show-sql: true
+
 ---
 spring:
   config:
@@ -27,10 +24,6 @@ spring:
   redis:
     host: 127.0.0.1
     port: 6379
-  jpa:
-    hibernate:
-      ddl-auto: create
-      show-sql: true
 ---
 spring:
   config:
@@ -48,6 +41,11 @@ spring:
       initialize-schema: always
     job:
       enabled: true
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: debug
 
 server:
   port: 8080

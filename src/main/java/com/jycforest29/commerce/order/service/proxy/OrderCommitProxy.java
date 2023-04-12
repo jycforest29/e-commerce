@@ -41,12 +41,12 @@ public class OrderCommitProxy {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteOrderWithCommit(String username, MadeOrder madeOrder, List<OrderUnit> orderUnitList){
         AuthUser authUser = getAuthUser(username);
+        Long madeOrderId = madeOrder.getId();
         List<Long> orderUnitIdListToDelete = madeOrder.deleteMadeOrder(authUser, orderUnitList);
-        for (Long a : orderUnitIdListToDelete){
-            log.info("a: "+a);
-        }
+        log.info("orderUnitIdListToDelete 생성됐당");
         orderUnitRepository.deleteAllByOrderUnitIdList(orderUnitIdListToDelete);
-        madeOrderRepository.deleteById(madeOrder.getId());
+        madeOrderRepository.deleteById(List.of(madeOrderId));
+        log.info("끝났슴당 ");
     }
 
     private Item getValidateItemByNumber(Long itemId, int number){

@@ -179,7 +179,6 @@ class ReviewServiceTest {
         @Test
         void 내가_작성한_리뷰를_삭제한다(){
             //given
-            given(itemRepository.findById(itemId)).willReturn(Optional.of(item));
             given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
             given(authUserRepository.findByUsername(authUser.getUsername())).willReturn(Optional.of(authUser));
             given(reviewLikeUnitRepository.findAllByReview(review)).willReturn(Arrays.asList(reviewLikeUnit));
