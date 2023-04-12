@@ -6,7 +6,15 @@
 
 docker-compose up
 
-#### 기술적 이슈
+### 사용 기술
+- Spring Boot
+- Spring Data Jpa
+- Redis
+- EhCache
+- Test Container
+- Jacoco
+
+#### 해결한 기술적 이슈
 
 - **[Perf] @Async를 사용하여 장바구니 전체 주문 기능 개선하기**
 - [Perf] @Query를 사용해 jpql을 직접 작성하기
@@ -28,3 +36,11 @@ docker-compose up
 - [Refactor] Spring validation 사용하기
 
 - **[Build] 환경에 따른 application.yml 분리 및 동적 포트 바인딩 사용**
+
+#### 보완점
+- N+1 문제 발생 확인 및 해결하기
+- Batch 테스트하기
+- 비동기 구현시 사용한 CompletableFuture 예외처리 하기
+- Jmeter 사용해 부하 테스트 진행하기
+- 스케일 아웃 시 카프카로 로컬 캐시 동기화하기
+- Repository 계층의 JPQL 테스트하기
