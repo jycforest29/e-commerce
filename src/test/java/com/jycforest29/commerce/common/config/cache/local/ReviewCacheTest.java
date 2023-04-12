@@ -7,6 +7,7 @@ import com.jycforest29.commerce.order.domain.entity.OrderUnit;
 import com.jycforest29.commerce.review.controller.dto.AddReviewRequestDto;
 import com.jycforest29.commerce.review.controller.dto.ReviewResponseDto;
 import com.jycforest29.commerce.review.domain.entity.Review;
+import com.jycforest29.commerce.review.domain.entity.ReviewLikeUnit;
 import com.jycforest29.commerce.review.domain.repository.ReviewRepository;
 import com.jycforest29.commerce.review.service.ReviewServiceImpl;
 import com.jycforest29.commerce.review.service.proxy.ReviewCacheProxy;
@@ -14,8 +15,7 @@ import com.jycforest29.commerce.user.domain.entity.AuthUser;
 import com.jycforest29.commerce.user.domain.repository.AuthUserRepository;
 import com.jycforest29.commerce.utils.DockerComposeTestContainer;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -78,8 +78,49 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                 new ArrayList<>()
         );
 
+        AuthUser otherUser = AuthUser.builder()
+                .username("test_username_other")
+                .password("test_password_other")
+                .nickname("test_nickname_other")
+                .build();
+
+        Review moreLikedReview = new Review(
+                1L,
+                addReviewRequestDto.getTitle(),
+                addReviewRequestDto.getContents(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                item,
+                authUser,
+                new ArrayList<>()
+        );
+        ReviewLikeUnit reviewLikeUnit = new ReviewLikeUnit();
+
+        @BeforeEach
+        void init(){
+            authUser.addReview(review);
+            otherUser.addReview(moreLikedReview);
+            item.addReview(review);
+            item.addReview(moreLikedReview);
+            moreLikedReview.addReviewLikeUnit(reviewLikeUnit);
+            authUser.addReviewLikeUnit(reviewLikeUnit);
+        }
+
         @Nested
         class CacheableTest {
+            @Test
+            void 클릭한_아이템의_모든_리뷰가_리뷰의_좋아요개수_기준으로_내림차순_정렬되어_리턴된다(){
+                //given
+                given(itemRepository.findById(item.getId()))
+                        .willReturn(Optional.ofNullable(item));
+                given(reviewRepository.findAllByItem(item))
+                        .willReturn(Arrays.asList(review, moreLikedReview));
+                //when
+                List<ReviewResponseDto> result = reviewService.getReviewListByItem(item.getId());
+                //then
+                assertThat(result.get(0).getUsername()).isEqualTo(otherUser.getUsername());
+                assertThat(result.get(1).getUsername()).isEqualTo(authUser.getUsername());
+            }
 
             @Test
             void Cacheable_어노테이션을_테스트한다() {
@@ -87,7 +128,7 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                 given(itemRepository.findById(item.getId()))
                         .willReturn(Optional.ofNullable(item));
                 given(reviewRepository.findAllByItem(item))
-                        .willReturn(Arrays.asList(review));
+                        .willReturn(Arrays.asList(review, moreLikedReview));
                 //when
                 IntStream.range(0, 10)
                         .forEach(i -> reviewCacheProxy.findAllByItem(item));
@@ -98,6 +139,7 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
         @Nested
         class CachePutTest {
 
+            @Order(3)
             @Test
             void itemId에_대한_Review_1개를_추가하여_CachePut_어노테이션을_테스트한다(){
                 //given
@@ -112,7 +154,7 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                 given(reviewRepository.findById(review.getId()))
                         .willReturn(Optional.ofNullable(review));
                 given(reviewRepository.findAllByItem(item))
-                        .willReturn(Arrays.asList(review));
+                        .willReturn(Arrays.asList(review, moreLikedReview));
                 given(authUserRepository.findByUsername(authUser.getUsername()))
                         .willReturn(Optional.ofNullable(authUser));
                 //when
@@ -121,10 +163,11 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                 // 조회 1번인데 캐싱되어 0번
                 List<ReviewResponseDto> reviewResponseDtoList = reviewService.getReviewListByItem(item.getId());
                 //then
-                assertThat(reviewResponseDtoList.size()).isEqualTo(1);
+                assertThat(reviewResponseDtoList.size()).isEqualTo(2);
                 verify(reviewRepository, atMostOnce()).findAllByItem(item);
             }
 
+            @Order(4)
             @Test
             void Review_필드를_변경하여_CachePut_어노테이션을_테스트한다(){
                 //given
@@ -138,7 +181,7 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                 given(reviewRepository.findById(review.getId()))
                         .willReturn(Optional.ofNullable(review));
                 given(reviewRepository.findAllByItem(item))
-                        .willReturn(Arrays.asList(review));
+                        .willReturn(Arrays.asList(review, moreLikedReview));
                 given(authUserRepository.findByUsername(authUser.getUsername()))
                         .willReturn(Optional.ofNullable(authUser));
                 //when
@@ -152,7 +195,7 @@ public class ReviewCacheTest extends DockerComposeTestContainer {
                 // 조회 1번인데 캐싱됨 -> 0번
                 List<ReviewResponseDto> reviewResponseDtoList = reviewService.getReviewListByItem(item.getId());
                 //then
-                assertThat(reviewResponseDtoList.get(0).getTitle())
+                assertThat(reviewResponseDtoList.get(1).getTitle())
                         .isEqualTo("update_title");
                 verify(reviewRepository, atMostOnce()).findAllByItem(item);
             }
