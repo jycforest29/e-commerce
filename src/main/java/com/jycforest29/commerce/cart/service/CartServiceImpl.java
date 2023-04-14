@@ -78,7 +78,8 @@ public class CartServiceImpl implements CartService{
         return CartResponseDto.from(cart);
     }
 
-    @CacheEvict(value = "cart", key = "#username", cacheManager = "ehCacheManager")
+    // 한명의 사용자 당 Cart는 항상 존재해야 함. 따라서 Cart의 전체 내용을 삭제해도 빈 값을 리턴해야 
+    @CachePut(value = "cart", key = "#username", cacheManager = "ehCacheManager")
     @Transactional
     @Override
     public CartResponseDto deleteCartAll(String username) {

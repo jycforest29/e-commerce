@@ -6,6 +6,7 @@ import com.jycforest29.commerce.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.Min;
@@ -17,7 +18,7 @@ HttpStatus.OK 와 HttpStatus.ACCEPTED의 차이? OK는 처리가 완료되었음
 않았음을 의미
 * */
 
-//@Validated
+@Validated
 @RequiredArgsConstructor
 @RestController
 public class OrderController {

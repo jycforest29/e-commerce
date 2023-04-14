@@ -234,7 +234,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 //        void 한번에_주문한_100종류의_아이템을_병렬적으로_취소한다() throws InterruptedException {
 //            // given
 //            List<OrderUnit> orderUnitList = new ArrayList<>();
-//            for (int i = 0; i < 1; i++){
+//            for (int i = 0; i < 100; i++){
 //                Item item = itemRepository.save(
 //                        Item.builder()
 //                                .name("item "+i)

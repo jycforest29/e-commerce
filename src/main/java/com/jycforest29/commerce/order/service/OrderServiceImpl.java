@@ -155,10 +155,12 @@ public class OrderServiceImpl implements OrderService{
         try{
             if (deleteAll(orderUnitList)){
                 orderCommitProxy.deleteOrderWithCommit(username, madeOrder, orderUnitList);
+                log.info("메서드 끝");
             }
         }
         finally {
             redisLockRepository.unlock(itemIdListToLock);
+            log.info("락 해제됨 ");
         }
     }
 

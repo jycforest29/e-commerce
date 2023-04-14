@@ -1,17 +1,19 @@
 # e-commerce
 
-
 #### 실행방법
 ./gradlew clean build
 
 docker-compose up
 
 #### 사용 기술
-- Spring Boot
+- Java 11
+- Spring Boot 2.7
 - Spring Data Jpa
 - Redis
 - EhCache
+- Mysql
 - Test Container
+- Docker
 - Jacoco
 
 #### 해결한 기술적 이슈
@@ -48,3 +50,4 @@ docker-compose up
 - 스케일 아웃 진행 후 NGINX 리버스 프록시 사용해 성능 확인하기
 - Batch로 랜덤 쿠폰 발행하기 
 - 장바구니를 구현하는 가장 효과적인 방법 찾기(현재는 메인 DB 사용)
+- 

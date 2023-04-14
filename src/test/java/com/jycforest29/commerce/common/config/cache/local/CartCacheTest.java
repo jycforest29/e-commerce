@@ -113,7 +113,7 @@ public class CartCacheTest extends DockerComposeTestContainer {
         }
 
         @Test
-        void CacheEvict_어노테이션을_테스트한다(){
+        void CartUnit을_모두_삭제하여_CachePut_어노테이션을_테스트한다(){
             //given
             CartUnit cartUnit = CartUnit.builder()
                     .item(item)
@@ -129,8 +129,8 @@ public class CartCacheTest extends DockerComposeTestContainer {
             cartService.deleteCartAll(authUser.getUsername()); // 1번
             //then
             assertThat(cartService.getCartUnitList(authUser.getUsername()).getCartUnitResponseDtoList().size())
-                    .isEqualTo(0); // 캐시 모두 삭제했으므로 1번
-            verify(authUserRepository, times(2)).findByUsername(authUser.getUsername());
+                    .isEqualTo(0); // 조회 1번이어야 되는데 캐싱됨 -> 0번
+            verify(authUserRepository, times(1)).findByUsername(authUser.getUsername());
         }
 
         @Transactional

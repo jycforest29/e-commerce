@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -30,10 +31,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
 @ActiveProfiles(profiles = "test")
 @SpringBootTest(properties = "spring.profiles.active:test")
 @AutoConfigureMockMvc
-@Import(LoginAuthUserResolver.class)
+@Import({LoginAuthUserResolver.class, ValidationAutoConfiguration.class})
 class CartControllerTest extends DockerComposeTestContainer {
     @Autowired
     private MockMvc mockMvc;
@@ -83,6 +85,7 @@ class CartControllerTest extends DockerComposeTestContainer {
                 .andExpect(jsonPath("$..name").value("name"))
                 .andExpect(jsonPath("$.totalPrice").value(1000));
     }
+
     @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     void 로그인한_유저의_장바구니를_가져온다() throws Exception {
