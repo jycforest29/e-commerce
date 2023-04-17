@@ -19,31 +19,31 @@ docker-compose up
 #### 해결한 기술적 이슈
 
 - 동시성 문제 해결하기
-  - Lettuce를 사용해 multi key에 대한 동시락 구현하고 롤백 테스트하기 https://github.com/jycforest29/e-commerce/issues/54
-  - @Async와 CompletableFuture를 사용하여 장바구니 전체 주문 기능 개선하기 https://github.com/jycforest29/e-commerce/issues/44
-  - 스레드를 사용한 동시성 로직 테스트 진행하기 https://github.com/jycforest29/e-commerce/issues/39
+  - Lettuce를 사용해 multi key에 대한 동시락 구현하고 롤백 테스트하기 
+  - @Async와 CompletableFuture를 사용하여 장바구니 전체 주문 기능 개선하기 
+  - 스레드를 사용한 동시성 로직 테스트 진행하기 
 - 개발환경 구성하기
-  - Docker, docker-compose, Test container 사용하기 https://github.com/jycforest29/e-commerce/issues/50
-  - application.yml 분리 및 동적 포트 바인딩 사용하기 https://github.com/jycforest29/e-commerce/issues/58
-  - @Slf4j로 로그찍기 https://github.com/jycforest29/e-commerce/issues/15
+  - Docker, docker-compose, Test container 사용하기 
+  - application.yml 분리 및 동적 포트 바인딩 사용하기 
+  - @Slf4j로 로그찍기 
 - 캐싱 사용하기
-  - 프로젝트 구조에 맞는 캐싱 설계하기 https://github.com/jycforest29/e-commerce/issues/63
-  - @Cacheable, @CachePut, @CacheEvict 테스트하기 https://github.com/jycforest29/e-commerce/issues/46
+  - 프로젝트 구조에 맞는 캐싱 설계하기 
+  - @Cacheable, @CachePut, @CacheEvict 테스트하기 
 - 테스트 견고함 높이기
-  - LocalDateTime.now()를 모킹하여 테스트하기 https://github.com/jycforest29/e-commerce/issues/42
-  - Jacoco 사용해 테스트 커버리지 측정하기 https://github.com/jycforest29/e-commerce/issues/60
+  - LocalDateTime.now()를 모킹하여 테스트하기 
+  - Jacoco 사용해 테스트 커버리지 측정하기 
 - JPA 성능 높이기
-  - 벌크 연산시 JPQL 직접 작성해 성능 높이기 https://github.com/jycforest29/e-commerce/issues/30
+  - 벌크 연산시 JPQL 직접 작성해 성능 높이기 
 - 스프링의 AOP 활용해 여러 커스텀 하기 
-  - @ExceptionHandler로 커스텀 예외 사용하기 https://github.com/jycforest29/e-commerce/issues/51
-  - 커스텀 어노테이션을 통해 로그인한 유저의 username을 리턴하고 테스트하기 https://github.com/jycforest29/e-commerce/issues/52
+  - @ExceptionHandler로 커스텀 예외 사용하기 
+  - 커스텀 어노테이션을 통해 로그인한 유저의 username을 리턴하고 테스트하기 
 - 엔티티 설계하기
-  - cascade 적용하지 않고 연관된 엔티티를 개별로 삭제하기 https://github.com/jycforest29/e-commerce/issues/56
-  - 스프링 시큐리티에서 UserDetails 구현시 Role 설정하기 https://github.com/jycforest29/e-commerce/issues/47
+  - cascade 적용하지 않고 연관된 엔티티를 개별로 삭제하기 
+  - 스프링 시큐리티에서 UserDetails 구현시 Role 설정하기
 - DTO 및 파라미터 유효성 검사하기 
-  - Spring validation 사용하기 https://github.com/jycforest29/e-commerce/issues/55 
+  - Spring validation 사용하기 
 - 자바8에서 도입된 기능 적극 사용하기
-  - 자바8의 Stream 사용하기 https://github.com/jycforest29/e-commerce/issues/53 
+  - 자바8의 Stream 사용하기
   - 자바8의 CompletableFuture 사용하기
 
 #### 보완점
