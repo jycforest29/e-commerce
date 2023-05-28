@@ -50,7 +50,7 @@ class CartControllerTest extends DockerComposeTestContainer {
     void init(){
         authUserRepository.save(AuthUser.builder()
                 .username("testuser1")
-                .password("c")
+                .password("pw1234@")
                 .nickname("testuser")
                 .build());
 
