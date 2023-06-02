@@ -23,11 +23,10 @@ public class AuthUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         AuthUser authUser = authUserRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("username에 대한 정보를 찾을 수 없습니다"));
-        UserDetails userDetails = User.builder()
+        return User.builder()
                 .username(username)
                 .password(authUser.getPassword())
                 .authorities(authUser.getAuthorities())
                 .build();
-        return userDetails;
     }
 }

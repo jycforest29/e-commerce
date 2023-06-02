@@ -26,6 +26,11 @@ public class CartController {
         return ResponseEntity.status(HttpStatus.OK).body(cartService.addCartUnitToCart(itemId, number, username));
     }
 
+    @GetMapping(value = "/check")
+    public ResponseEntity<String> getCheck(){
+        return ResponseEntity.status(HttpStatus.OK).body("hi");
+    }
+
     @GetMapping(value = "/cart")
     public ResponseEntity<CartResponseDto> getCartUnitList(@LoginAuthUser String username){
         return ResponseEntity.status(HttpStatus.OK).body(cartService.getCartUnitList(username));
