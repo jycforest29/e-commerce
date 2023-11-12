@@ -202,7 +202,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
     @Nested
     class MakeCartFor100Items{
         @Test
-        void 장바구니에_담긴_100종류의_아이템을_병렬적으로_주문한다() throws ExecutionException, InterruptedException {
+        void 장바구니에_담긴_100종류의_아이템을_동시적으로_주문한다() throws ExecutionException, InterruptedException {
             // given
             for (int i = 0; i < 100; i++){
                 Item item = itemRepository.save(
@@ -231,7 +231,7 @@ class OrderServiceTest extends DockerComposeTestContainer{
 //    @Nested
 //    class DeleteCartFor100Items{
 //        @Test
-//        void 한번에_주문한_100종류의_아이템을_병렬적으로_취소한다() throws InterruptedException {
+//        void 한번에_주문한_100종류의_아이템을_동시으로_취소한다() throws InterruptedException {
 //            // given
 //            List<OrderUnit> orderUnitList = new ArrayList<>();
 //            for (int i = 0; i < 100; i++){

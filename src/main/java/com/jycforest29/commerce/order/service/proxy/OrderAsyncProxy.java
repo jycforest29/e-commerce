@@ -30,7 +30,7 @@ public class OrderAsyncProxy {
     // 왜 장바구니 로직의 비동기 처리가 어려운지?
     // @Transactional(propagation = Propagation.REQUIRES_NEW) 까지 같이 수행되어야 하는데,
     // 함수 호출 시간과 스레드 수행 시간의 차이 때문인지 자꾸 블로킹이 안됨.
-    // 그렇다면 모든 OrderUnit에 대해 makeOrderUnitAsync()은 병렬적으로 실행되고 그 결과가 나올때까지 블로킹 되어야 함.
+    // 그렇다면 모든 OrderUnit에 대해 makeOrderUnitAsync()은 동시적으로 실행되고 그 결과가 나올때까지 블로킹 되어야 함.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Async("makeOrderUnitExecutor")
     public CompletableFuture<OrderUnit> makeOrderUnitAsync(Long itemId, int number){
